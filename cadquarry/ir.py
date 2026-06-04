@@ -681,12 +681,192 @@ class LBracketOp(BaseModel):
         return lines
 
 
+class CBracketOp(BaseModel):
+    """
+    C-shaped (channel / U) bracket: a flat base leg with a vertical leg rising
+    at *each* end, built as three boxes and unioned.  Mounting holes are drilled
+    into each box *before* the union so their placement is valid by construction.
+    Optional triangular gussets reinforce both inner corners.
+
+    Always the base (first) operation when the bracket family samples a channel.
+    """
+    type: Literal["cbracket"] = "cbracket"
+    base_len: Expr
+    vert_len: Expr
+    width: Expr
+    thickness: Expr
+    hole_d: Expr | None = None
+    n_holes: Expr | None = None         # holes per leg
+    gusset_t: Expr | None = None        # gusset thickness; None = no gusset
+    gusset_enabled: Expr | None = None  # ParamRef to bool, or None
+
+    def to_code(self) -> list[str]:  # noqa: C901
+        bl = self.base_len.to_code()
+        vl = self.vert_len.to_code()
+        w = self.width.to_code()
+        t = self.thickness.to_code()
+        lines = [
+            f"    _bl = {bl}",
+            f"    _vl = {vl}",
+            f"    _bw = {w}",
+            f"    _bt = {t}",
+            "    base = cq.Workplane('XY').box(_bl, _bw, _bt, centered=(False, True, False))",
+            "    vert1 = cq.Workplane('XY').box(_bt, _bw, _vl, centered=(False, True, False))",
+            "    vert2 = (cq.Workplane('XY').box(_bt, _bw, _vl, centered=(False, True, False))",
+            "             .translate((_bl - _bt, 0, 0)))",
+        ]
+
+        if self.hole_d is not None:
+            hd = self.hole_d.to_code()
+            n = self.n_holes.to_code() if self.n_holes is not None else "1"
+            lines += [
+                f"    _hd = {hd}",
+                f"    _nh = max(1, int({n}))",
+                "    if _hd > 0:",
+                "        _m = max(_hd, _bt) * 1.2",
+                "        _span_b = _bl - 2 * _bt - 2 * _m",
+                "        if _span_b > 0:",
+                "            _xs = ([_bt + _m + _span_b * i / max(_nh - 1, 1) for i in range(_nh)]"
+                "                   if _nh > 1 else [_bl / 2])",
+                "            base = (base.faces('>Z').workplane(centerOption='CenterOfBoundBox')",
+                "                    .pushPoints([(x - _bl / 2, 0) for x in _xs]).hole(_hd))",
+                "        _span_v = _vl - _bt - 2 * _m",
+                "        if _span_v > 0:",
+                "            _zs = ([_bt + _m + _span_v * i / max(_nh - 1, 1) for i in range(_nh)]"
+                "                   if _nh > 1 else [(_bt + _vl) / 2])",
+                "            vert1 = (vert1.faces('<X').workplane(centerOption='CenterOfBoundBox')",
+                "                     .pushPoints([(0, z - _vl / 2) for z in _zs]).hole(_hd))",
+                "            vert2 = (vert2.faces('>X').workplane(centerOption='CenterOfBoundBox')",
+                "                     .pushPoints([(0, z - _vl / 2) for z in _zs]).hole(_hd))",
+            ]
+
+        lines.append("    result = base.union(vert1).union(vert2)")
+
+        if self.gusset_t is not None:
+            gt = self.gusset_t.to_code()
+            indent = "    "
+            gusset_body = [
+                f"    _gt = {gt}",
+                "    _g = min(_bl / 2, _vl) * 0.55 - _bt",
+                "    if _g > _bt and _gt < _bw:",
+                "        gus1 = (cq.Workplane('XZ').workplane(offset=_gt / 2)",
+                "                .moveTo(_bt, _bt).lineTo(_bt + _g, _bt)",
+                "                .lineTo(_bt, _bt + _g).close().extrude(-_gt))",
+                "        gus2 = (cq.Workplane('XZ').workplane(offset=_gt / 2)",
+                "                .moveTo(_bl - _bt, _bt).lineTo(_bl - _bt - _g, _bt)",
+                "                .lineTo(_bl - _bt, _bt + _g).close().extrude(-_gt))",
+                "        result = result.union(gus1).union(gus2)",
+            ]
+            if self.gusset_enabled is not None:
+                lines.append(f"    if {self.gusset_enabled.to_code()}:")
+                lines += [indent + ln for ln in gusset_body]
+            else:
+                lines += gusset_body
+
+        return lines
+
+
+class ZBracketOp(BaseModel):
+    """
+    Z-shaped (cranked / offset) bracket: a bottom flange, a vertical web, and a
+    top flange that extends in the *opposite* direction from the bottom flange —
+    the classic offset/joggle bracket.  Built as three boxes and unioned, with
+    mounting holes drilled into each flange before the union and optional
+    gussets at both bends.
+
+    Always the base (first) operation when the bracket family samples a Z.
+    """
+    type: Literal["zbracket"] = "zbracket"
+    base_len: Expr
+    vert_len: Expr
+    top_len: Expr
+    width: Expr
+    thickness: Expr
+    hole_d: Expr | None = None
+    n_holes: Expr | None = None         # holes per flange
+    gusset_t: Expr | None = None        # gusset thickness; None = no gusset
+    gusset_enabled: Expr | None = None  # ParamRef to bool, or None
+
+    def to_code(self) -> list[str]:  # noqa: C901
+        bl = self.base_len.to_code()
+        vl = self.vert_len.to_code()
+        tl = self.top_len.to_code()
+        w = self.width.to_code()
+        t = self.thickness.to_code()
+        lines = [
+            f"    _bl = {bl}",
+            f"    _vl = {vl}",
+            f"    _tl = {tl}",
+            f"    _bw = {w}",
+            f"    _bt = {t}",
+            # Bottom flange runs +X from the web; web rises at X in [0, _bt];
+            # top flange runs -X from the web's far edge, offset up to the top.
+            "    base = cq.Workplane('XY').box(_bl, _bw, _bt, centered=(False, True, False))",
+            "    web = cq.Workplane('XY').box(_bt, _bw, _vl, centered=(False, True, False))",
+            "    top = (cq.Workplane('XY').box(_tl, _bw, _bt, centered=(False, True, False))",
+            "           .translate((_bt - _tl, 0, _vl - _bt)))",
+        ]
+
+        if self.hole_d is not None:
+            hd = self.hole_d.to_code()
+            n = self.n_holes.to_code() if self.n_holes is not None else "1"
+            lines += [
+                f"    _hd = {hd}",
+                f"    _nh = max(1, int({n}))",
+                "    if _hd > 0:",
+                "        _m = max(_hd, _bt) * 1.2",
+                # Bottom flange holes: between the web and the free (+X) end.
+                "        _span_b = _bl - _bt - 2 * _m",
+                "        if _span_b > 0:",
+                "            _xs = ([_bt + _m + _span_b * i / max(_nh - 1, 1) for i in range(_nh)]"
+                "                   if _nh > 1 else [(_bt + _bl) / 2])",
+                "            base = (base.faces('>Z').workplane(centerOption='CenterOfBoundBox')",
+                "                    .pushPoints([(x - _bl / 2, 0) for x in _xs]).hole(_hd))",
+                # Top flange holes: between the web and the free (-X) end.
+                "        _span_t = _tl - _bt - 2 * _m",
+                "        if _span_t > 0:",
+                "            _txc = (_bt - _tl) + _tl / 2",
+                "            _xt = ([(_bt - _tl) + _m + _span_t * i / max(_nh - 1, 1) for i in range(_nh)]"
+                "                   if _nh > 1 else [(_bt - _tl) / 2])",
+                "            top = (top.faces('>Z').workplane(centerOption='CenterOfBoundBox')",
+                "                   .pushPoints([(x - _txc, 0) for x in _xt]).hole(_hd))",
+            ]
+
+        lines.append("    result = base.union(web).union(top)")
+
+        if self.gusset_t is not None:
+            gt = self.gusset_t.to_code()
+            indent = "    "
+            gusset_body = [
+                f"    _gt = {gt}",
+                "    _g = min(_bl, _tl, _vl) * 0.4 - _bt",
+                "    if _g > _bt and _gt < _bw:",
+                # Bottom bend: inner corner at (X=_bt, Z=_bt), triangle into +X/+Z.
+                "        gus1 = (cq.Workplane('XZ').workplane(offset=_gt / 2)",
+                "                .moveTo(_bt, _bt).lineTo(_bt + _g, _bt)",
+                "                .lineTo(_bt, _bt + _g).close().extrude(-_gt))",
+                # Top bend: inner corner at (X=0, Z=_vl-_bt), triangle into -X/-Z.
+                "        gus2 = (cq.Workplane('XZ').workplane(offset=_gt / 2)",
+                "                .moveTo(0, _vl - _bt).lineTo(-_g, _vl - _bt)",
+                "                .lineTo(0, _vl - _bt - _g).close().extrude(-_gt))",
+                "        result = result.union(gus1).union(gus2)",
+            ]
+            if self.gusset_enabled is not None:
+                lines.append(f"    if {self.gusset_enabled.to_code()}:")
+                lines += [indent + ln for ln in gusset_body]
+            else:
+                lines += gusset_body
+
+        return lines
+
+
 Operation = Annotated[
     Union[
         BoxOp, ExtrudeOp, RevolveOp,
         HolesOp, CounterboreHolesOp, CountersinkHolesOp,
         FilletOp, ChamferOp,
-        ShellOp, PocketOp, BossOp, RibsOp, LBracketOp,
+        ShellOp, PocketOp, BossOp, RibsOp,
+        LBracketOp, CBracketOp, ZBracketOp,
     ],
     Field(discriminator="type"),
 ]

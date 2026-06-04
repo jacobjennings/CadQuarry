@@ -15,7 +15,7 @@ timeout_seconds = 30
 plate     = 0.22   # flat plates, brackets, flange plates
 revolved  = 0.18   # shafts, bushings, washers — rotational geometry
 block     = 0.15   # prismatic blocks / housings
-bracket   = 0.18   # L-brackets: base + vertical leg + holes + optional gusset
+bracket   = 0.18   # angle brackets: L / C-channel / Z-offset + holes + optional gussets
 flanged   = 0.08   # revolved stub + bolt circle
 ribbed    = 0.07   # base + patterned ribs / webs
 enclosure = 0.07   # shelled box / enclosures
@@ -74,7 +74,7 @@ tier_min      = 0
 tier_max      = 3
 
 [families.bracket]
-leg_min        = 25.0   # length of each leg
+leg_min        = 25.0   # length of each leg / flange
 leg_max        = 90.0
 width_min      = 15.0
 width_max      = 60.0
@@ -82,6 +82,9 @@ thickness_min  = 3.0
 thickness_max  = 8.0
 tier_min       = 1
 tier_max       = 3
+# Relative likelihood of each bracket shape: L (single vertical leg),
+# C (channel / two legs), Z (cranked offset). Need not sum to 1.0.
+shape_weights  = { l = 0.5, c = 0.25, z = 0.25 }
 
 [families.revolved]
 outer_d_min       = 6.0

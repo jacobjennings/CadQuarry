@@ -16,9 +16,11 @@ from typing import Any
 
 from .ir import (
     BoxOp,
+    CBracketOp,
     ChamferOp,
     ExtrudeOp,
     LBracketOp,
+    ZBracketOp,
     PartIR,
     PartMetadata,
     PolygonProfile,
@@ -55,7 +57,7 @@ from .features import (
 # Cross-cutting symmetry modes (Stage D regularity).
 SYMMETRY_MODES = ["mirror_x", "mirror_xy", "radial"]
 
-GENERATOR_VERSION = "0.1.0"
+GENERATOR_VERSION = "0.2.0"
 
 # Default family weights; overridden by config.
 DEFAULT_FAMILY_WEIGHTS = {
@@ -257,11 +259,24 @@ def sample_plate(rng: Random, tier: int, config: dict, seed: int, index: int) ->
 # Family: bracket
 # ---------------------------------------------------------------------------
 
+# Bracket shapes and their default sampling weights.  L stays the most common
+# (it's the simplest sheet-metal bracket), but channels and offset brackets now
+# round out the family so the corpus isn't all right-angle L's.
+DEFAULT_BRACKET_SHAPE_WEIGHTS = {"l": 0.5, "c": 0.25, "z": 0.25}
+
+
 def sample_bracket(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
     """
-    L-bracket: flat base leg + vertical leg, with mounting holes on each leg
-    and an optional corner gusset.  Tier 1 → plain L with holes; Tier 2 → add
-    a gusset; Tier 3 → larger hole count.
+    Angle bracket in one of three shapes, with mounting holes on each leg and
+    optional corner gussets:
+
+      * ``l`` — flat base leg + a single vertical leg (right-angle L).
+      * ``c`` — flat base leg + a vertical leg at *each* end (channel / U).
+      * ``z`` — bottom flange, vertical web, and a top flange that extends the
+        opposite way (cranked / offset Z).
+
+    Tier 1 → plain shape with holes; Tier 2 → add gussets; Tier 3 → larger hole
+    count.  The shape is chosen per part from configurable weights.
     """
     fcfg = config.get("families", {}).get("bracket", {})
     len_lo = fcfg.get("leg_min", 25.0)
@@ -270,6 +285,12 @@ def sample_bracket(rng: Random, tier: int, config: dict, seed: int, index: int) 
     w_hi = fcfg.get("width_max", 60.0)
     t_lo = fcfg.get("thickness_min", 3.0)
     t_hi = fcfg.get("thickness_max", 8.0)
+
+    shape_w = fcfg.get("shape_weights", DEFAULT_BRACKET_SHAPE_WEIGHTS)
+    shape_names = list(shape_w.keys())
+    shape = _weighted_choice(
+        rng, shape_names, [shape_w.get(n, 0.0) for n in shape_names]
+    )
 
     base_def = _nice(rng, len_lo, len_hi)
     vert_def = round(base_def * rng.uniform(0.6, 1.2), 1)
@@ -300,9 +321,22 @@ def sample_bracket(rng: Random, tier: int, config: dict, seed: int, index: int) 
         ),
     }
 
+    # A Z-bracket needs an independent top-flange length.
+    top_len_expr = None
+    if shape == "z":
+        top_def = round(base_def * rng.uniform(0.6, 1.1), 1)
+        top_def = max(len_lo, min(len_hi, top_def))
+        params["top_len"] = ParamSpec(
+            type="float", default=top_def,
+            min=round(len_lo, 1), max=round(len_hi, 1), step=1.0,
+            group="Body", label="Top flange length (mm)",
+        )
+        top_len_expr = ref("top_len")
+
     # Holes on each leg (standard fastener clearance).
     hole_def = snap_fastener_diameter(rng, 3.0, 7.0)
     n_def = 1 if tier < 3 else rng.choice([1, 2])
+    leg_word = "flange" if shape == "z" else "leg"
     params["hole_d"] = ParamSpec(
         type="float", default=hole_def,
         min=3.0, max=round(min(w_def * 0.4, 10.0), 1), step=0.1,
@@ -310,7 +344,7 @@ def sample_bracket(rng: Random, tier: int, config: dict, seed: int, index: int) 
     )
     params["n_holes"] = ParamSpec(
         type="int", default=n_def, min=1, max=3, step=1,
-        group="Holes", label="Holes per leg",
+        group="Holes", label=f"Holes per {leg_word}",
     )
 
     gusset_t_expr = None
@@ -328,8 +362,8 @@ def sample_bracket(rng: Random, tier: int, config: dict, seed: int, index: int) 
         gusset_t_expr = ref("gusset_t")
         gusset_en_expr = ref("gusset")
 
-    ops: list[Operation] = [
-        LBracketOp(
+    if shape == "c":
+        bracket_op: Operation = CBracketOp(
             base_len=ref("base_len"),
             vert_len=ref("vert_len"),
             width=ref("bracket_w"),
@@ -339,7 +373,31 @@ def sample_bracket(rng: Random, tier: int, config: dict, seed: int, index: int) 
             gusset_t=gusset_t_expr,
             gusset_enabled=gusset_en_expr,
         )
-    ]
+    elif shape == "z":
+        bracket_op = ZBracketOp(
+            base_len=ref("base_len"),
+            vert_len=ref("vert_len"),
+            top_len=top_len_expr,
+            width=ref("bracket_w"),
+            thickness=ref("bracket_t"),
+            hole_d=ref("hole_d"),
+            n_holes=ref("n_holes"),
+            gusset_t=gusset_t_expr,
+            gusset_enabled=gusset_en_expr,
+        )
+    else:
+        bracket_op = LBracketOp(
+            base_len=ref("base_len"),
+            vert_len=ref("vert_len"),
+            width=ref("bracket_w"),
+            thickness=ref("bracket_t"),
+            hole_d=ref("hole_d"),
+            n_holes=ref("n_holes"),
+            gusset_t=gusset_t_expr,
+            gusset_enabled=gusset_en_expr,
+        )
+
+    ops: list[Operation] = [bracket_op]
 
     return PartIR(
         id=_make_id(seed, "bracket", index),

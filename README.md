@@ -90,7 +90,7 @@ cadquarry verify dataset/
 | Family | Description | Weight |
 |---|---|---|
 | `plate` | Flat rectangular plates with holes, fillets, pockets | 22% |
-| `bracket` | L-brackets: base + vertical leg, holes, optional gusset | 18% |
+| `bracket` | Angle brackets — L (single leg), C/channel (two legs), Z (cranked offset) — with per-leg holes and optional gussets | 18% |
 | `revolved` | Shafts, bushings, washers — solid of revolution | 18% |
 | `block` | Prismatic blocks/housings with pockets and bosses | 15% |
 | `flanged` | Revolved stub + polar bolt-circle pattern | 8% |

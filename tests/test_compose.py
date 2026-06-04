@@ -123,10 +123,35 @@ class TestFamilySamplers(unittest.TestCase):
 
     def test_bracket_tiers(self):
         from random import Random
+        bracket_ops = {"lbracket", "cbracket", "zbracket"}
         for tier in [1, 2, 3]:
             part = sample_bracket(Random(11), tier=tier, config={}, seed=11, index=0)
             self._check(part)
-            self.assertEqual(part.operations[0].type, "lbracket")
+            self.assertIn(part.operations[0].type, bracket_ops)
+
+    def test_bracket_shapes_forced(self):
+        """Each shape weight, in isolation, yields its dedicated op."""
+        from random import Random
+        cases = {
+            "l": "lbracket",
+            "c": "cbracket",
+            "z": "zbracket",
+        }
+        for shape, op_type in cases.items():
+            cfg = {"families": {"bracket": {"shape_weights": {shape: 1.0}}}}
+            for tier in [1, 2, 3]:
+                part = sample_bracket(Random(7), tier=tier, config=cfg, seed=7, index=0)
+                self._check(part)
+                self.assertEqual(part.operations[0].type, op_type)
+
+    def test_bracket_shapes_all_appear(self):
+        """Across many seeds the default weights surface every shape."""
+        from random import Random
+        seen = set()
+        for seed in range(200):
+            part = sample_bracket(Random(seed), tier=2, config={}, seed=seed, index=0)
+            seen.add(part.operations[0].type)
+        self.assertEqual(seen, {"lbracket", "cbracket", "zbracket"})
 
 
 class TestFilter(unittest.TestCase):
