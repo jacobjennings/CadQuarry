@@ -2,6 +2,7 @@
 CadQuarry CLI
 
   cadquarry generate  — generate a corpus
+  cadquarry build     — generate + export every corpus in the seed ladder
   cadquarry run       — execute a single part with optional param overrides
   cadquarry serve     — launch live customizer for a part (or gallery for corpus)
   cadquarry export    — export geometry artifacts for an existing corpus
@@ -36,6 +37,37 @@ def _load_config(config_path: str | None) -> dict:
     except Exception as exc:
         print(f"[cadquarry] warning: could not load config {config_path!r}: {exc}")
         return {}
+
+
+def _default_seeds_path() -> Path:
+    return Path(__file__).parent.parent / "seeds" / "v1.toml"
+
+
+def _load_publish_ladder(seeds_path: Path) -> dict[str, dict]:
+    """Return {tag: {"count": int, "seed": int}} from [[publish.corpus]]."""
+    with open(seeds_path, "rb") as f:
+        data = tomllib.load(f)
+    ladder: dict[str, dict] = {}
+    for entry in data.get("publish", {}).get("corpus", []):
+        ladder[str(entry["tag"])] = {
+            "count": int(entry["count"]),
+            "seed": int(entry["seed"]),
+        }
+    return ladder
+
+
+def _tag_to_int(tag: str) -> int:
+    """Parse a size tag like '50k' / '1m' into an int, for sorting."""
+    t = tag.lower().strip()
+    mult = 1
+    if t.endswith("k"):
+        mult, t = 1_000, t[:-1]
+    elif t.endswith("m"):
+        mult, t = 1_000_000, t[:-1]
+    try:
+        return int(float(t) * mult)
+    except ValueError:
+        return 0
 
 
 # ---------------------------------------------------------------------------
@@ -196,6 +228,93 @@ def cmd_generate(args: argparse.Namespace) -> int:
         f"  attempts={attempted}  invalid={skipped_invalid}  duplicates={skipped_dup}\n"
         f"  manifest: {manifest}"
     )
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# build — generate (and export) every corpus in the seed ladder in one pass
+# ---------------------------------------------------------------------------
+
+def cmd_build(args: argparse.Namespace) -> int:
+    from .export import export_corpus_geometry
+
+    seeds_path = Path(args.seeds) if args.seeds else _default_seeds_path()
+    if not seeds_path.exists():
+        print(f"error: seed list {seeds_path} not found", file=sys.stderr)
+        return 1
+
+    ladder = _load_publish_ladder(seeds_path)
+    if not ladder:
+        print(f"error: no [[publish.corpus]] entries in {seeds_path}", file=sys.stderr)
+        return 1
+
+    tags = args.sizes or list(ladder)
+    unknown = [t for t in tags if t not in ladder]
+    if unknown:
+        print(
+            f"error: unknown size(s): {unknown}. Available: {', '.join(ladder)}",
+            file=sys.stderr,
+        )
+        return 1
+    tags = sorted(tags, key=_tag_to_int)
+
+    base_out = Path(args.out)
+    do_export = not args.no_export
+    formats = [f.strip() for f in args.formats.split(",")] if do_export else None
+
+    print(
+        f"CadQuarry v{__version__} — building {len(tags)} corpora "
+        f"({', '.join(tags)}) into {base_out}/"
+    )
+    if do_export:
+        print(f"  export formats: {formats}")
+    else:
+        print("  (--no-export: generation only)")
+
+    failures: list[str] = []
+    for tag in tags:
+        spec = ladder[tag]
+        out_dir = base_out / tag
+        print(f"\n=== {tag}: {spec['count']:,} parts (seed {spec['seed']}) -> {out_dir} ===")
+
+        # Reuse an already-complete corpus unless --force; generation is fully
+        # seeded, so an existing manifest of the right size is bit-identical.
+        manifest = out_dir / "manifest.jsonl"
+        skip_gen = False
+        if manifest.exists() and not args.force:
+            n = sum(1 for _ in manifest.open(encoding="utf-8"))
+            if n >= spec["count"]:
+                print(f"  · reusing existing corpus ({n} parts)")
+                skip_gen = True
+
+        if not skip_gen:
+            gen_args = argparse.Namespace(
+                count=spec["count"], seed=spec["seed"], out=str(out_dir),
+                config=args.config, timeout=args.timeout, no_exec=False,
+                workers=args.workers, family=None, tier=None, verbose=args.verbose,
+            )
+            rc = cmd_generate(gen_args)
+            if rc != 0:
+                failures.append(f"{tag} (generate)")
+                continue
+
+        if do_export:
+            print(f"  · exporting {formats} …")
+            try:
+                counts = export_corpus_geometry(
+                    out_dir, formats=formats, n_workers=args.workers,
+                    timeout=args.timeout, verbose=args.verbose,
+                )
+                for fmt, cnt in counts.items():
+                    print(f"    {fmt}: {cnt} files written")
+            except Exception as exc:
+                print(f"  export failed for {tag}: {exc}", file=sys.stderr)
+                failures.append(f"{tag} (export)")
+
+    if failures:
+        print(f"\nDone with errors: {', '.join(failures)}")
+        return 1
+    print(f"\nDone. Built {len(tags)} corpora under {base_out}/")
     return 0
 
 
@@ -436,11 +555,27 @@ def build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--tier", type=int, default=None, help="Force a complexity tier (0-3)")
     gen.add_argument("--verbose", "-v", action="store_true")
 
+    # build
+    bld = sub.add_parser(
+        "build",
+        help="Generate (and export geometry for) every corpus in the seed ladder in one pass",
+    )
+    bld.add_argument("--sizes", nargs="+", metavar="TAG", help="Subset of ladder tags to build (default: all)")
+    bld.add_argument("--out", default="datasets", metavar="DIR", help="Base output dir; each corpus -> <DIR>/<tag>/ (default: datasets)")
+    bld.add_argument("--formats", default="step,stl,render", help="Export formats per corpus (default: step,stl,render)")
+    bld.add_argument("--no-export", action="store_true", help="Generate only; skip geometry export")
+    bld.add_argument("--config", default=None, metavar="TOML", help="Config file (default: configs/default.toml)")
+    bld.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: seeds/v1.toml)")
+    bld.add_argument("--timeout", type=float, default=60.0, metavar="SEC", help="Per-part timeout for generate and export")
+    bld.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
+    bld.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
+    bld.add_argument("--verbose", "-v", action="store_true")
+
     # run
     run = sub.add_parser("run", help="Execute a part with optional parameter overrides")
     run.add_argument("part", help="Path to the .py part file")
     run.add_argument("--set", action="append", metavar="KEY=VALUE", help="Parameter override; repeat for multiple (e.g. --set plate_w=60 --set n_holes=6)")
-    run.add_argument("--export", metavar="FORMAT", help="Export format: stl, step")
+    run.add_argument("--export", metavar="FORMAT", help="Export format: stl, step, svg, render, pointcloud")
     run.add_argument("--out", default=None, metavar="PATH", help="Output path for export")
     run.add_argument("--timeout", type=float, default=30.0)
 
@@ -454,7 +589,7 @@ def build_parser() -> argparse.ArgumentParser:
     # export
     exp = sub.add_parser("export", help="Export geometry artifacts for an existing corpus")
     exp.add_argument("dataset", metavar="DIR")
-    exp.add_argument("--formats", default="step,stl", help="Comma-separated: step,stl,svg,pointcloud,render")
+    exp.add_argument("--formats", default="step,stl,render", help="Comma-separated: step,stl,svg,pointcloud,render (default: step,stl,render)")
     exp.add_argument("--timeout", type=float, default=60.0)
     exp.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel export workers (0 = auto)")
     exp.add_argument("--verbose", "-v", action="store_true")
@@ -477,6 +612,7 @@ def main() -> None:
 
     handlers = {
         "generate": cmd_generate,
+        "build": cmd_build,
         "run": cmd_run,
         "serve": cmd_serve,
         "export": cmd_export,
