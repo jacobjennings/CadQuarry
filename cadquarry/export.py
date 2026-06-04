@@ -69,6 +69,33 @@ _MESH_FORMATS = {"pointcloud", "render"}
 
 ALL_FORMATS = sorted(_BREP_FORMATS | _MESH_FORMATS)
 
+# Default geometry formats produced by `cadquarry export` and export_part().
+DEFAULT_FORMATS = ["step", "stl", "render"]
+
+# Named viewpoints for multi-angle renders: (elevation_deg, azimuth_deg) for
+# matplotlib's view_init.  Four canonical CAD views (front/top/right + a
+# standard isometric) plus the four isometric corners — eight angles per part.
+STANDARD_VIEWS: dict[str, tuple[float, float]] = {
+    "front":  (0.0,   -90.0),
+    "top":    (90.0,  -90.0),
+    "right":  (0.0,     0.0),
+    "iso":    (28.0,  -55.0),
+    "iso_fr": (30.0,  -45.0),
+    "iso_fl": (30.0, -135.0),
+    "iso_br": (30.0,   45.0),
+    "iso_bl": (30.0,  135.0),
+}
+
+
+def render_deps_available() -> bool:
+    """True if the optional render dependencies (trimesh + matplotlib) import."""
+    try:
+        import trimesh  # noqa: F401
+        import matplotlib  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
 
 def export_part(
     py_path: Path,
@@ -89,9 +116,12 @@ def export_part(
 
     'pointcloud' and 'render' are derived from a triangulated mesh, so an STL
     is produced internally (and removed afterwards if not requested directly).
+
+    'render' writes one PNG per standard viewpoint into a per-part directory
+    (renders/{id}/{view}.png); the returned dict maps 'render' to that dir.
     """
     if formats is None:
-        formats = ["step", "stl"]
+        formats = list(DEFAULT_FORMATS)
 
     brep = [f for f in formats if f in _BREP_FORMATS]
     mesh = [f for f in formats if f in _MESH_FORMATS]
@@ -146,9 +176,10 @@ def export_part(
                     if out_dir.name == "geometry" else out_dir / f"{stem}.ply"
                 exported["pointcloud"] = export_pointcloud(stl_path, pc_out, n_points=n_points)
             if "render" in mesh:
-                rn_out = out_dir.parent / "renders" / f"{stem}.png" \
-                    if out_dir.name == "geometry" else out_dir / f"{stem}.png"
-                exported["render"] = export_render(stl_path, rn_out)
+                rn_out = out_dir.parent / "renders" / stem \
+                    if out_dir.name == "geometry" else out_dir / "renders" / stem
+                export_renders(stl_path, rn_out)
+                exported["render"] = rn_out
 
             # Drop the STL if it was only an intermediate.
             if not stl_requested and stl_path.exists():
@@ -193,15 +224,20 @@ def export_pointcloud(
     return out_path
 
 
-def export_render(
+def export_renders(
     stl_path: Path,
-    out_path: Path,
+    out_dir: Path,
+    views: dict[str, tuple[float, float]] | None = None,
     size: int = 512,
-    elev: float = 28.0,
-    azim: float = -55.0,
-) -> Path:
+) -> dict[str, Path]:
     """
-    Render a shaded thumbnail PNG of a mesh, headless.
+    Render shaded thumbnail PNGs of a mesh from multiple viewpoints, headless.
+
+    One PNG is written per named view into out_dir (e.g. ``out_dir/iso.png``).
+    The mesh is loaded and Lambert-shaded once; only the camera moves between
+    views, so eight angles cost little more than one.  ``views`` maps a view
+    name to (elevation_deg, azimuth_deg); defaults to ``STANDARD_VIEWS``.
+    Returns {view_name: png_path}.
 
     Uses trimesh to load the STL and matplotlib (Agg backend) to draw a shaded
     triangle surface.  Both are optional dependencies kept out of the core data
@@ -220,12 +256,15 @@ def export_render(
             "pip install 'cadquarry[export]' matplotlib"
         ) from exc
 
+    if views is None:
+        views = STANDARD_VIEWS
+
     mesh = trimesh.load_mesh(str(stl_path))
     verts = np.asarray(mesh.vertices)
     faces = np.asarray(mesh.faces)
     tris = verts[faces]
 
-    # Simple Lambert shading from a fixed light direction.
+    # Simple Lambert shading from a fixed light direction (computed once).
     normals = np.asarray(mesh.face_normals)
     light = np.array([0.3, -0.5, 0.8])
     light = light / np.linalg.norm(light)
@@ -233,29 +272,52 @@ def export_render(
     base = np.array([0.40, 0.55, 0.85])
     facecolors = np.clip(intensity[:, None] * base[None, :], 0, 1)
 
-    fig = plt.figure(figsize=(size / 100, size / 100), dpi=100)
-    ax = fig.add_subplot(111, projection="3d")
-    coll = Poly3DCollection(tris, facecolors=facecolors, edgecolors="none")
-    ax.add_collection3d(coll)
-
-    # Equal aspect cube around the part.
+    # Equal aspect cube around the part (shared by every view).
     mins = verts.min(axis=0)
     maxs = verts.max(axis=0)
     center = (mins + maxs) / 2
     span = float((maxs - mins).max()) * 0.6 or 1.0
-    ax.set_xlim(center[0] - span, center[0] + span)
-    ax.set_ylim(center[1] - span, center[1] + span)
-    ax.set_zlim(center[2] - span, center[2] + span)
-    try:
-        ax.set_box_aspect((1, 1, 1))
-    except Exception:
-        pass
-    ax.view_init(elev=elev, azim=azim)
-    ax.set_axis_off()
 
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written: dict[str, Path] = {}
+    for name, (elev, azim) in views.items():
+        fig = plt.figure(figsize=(size / 100, size / 100), dpi=100)
+        ax = fig.add_subplot(111, projection="3d")
+        # Poly3DCollection consumes its colors, so build a fresh one per view.
+        coll = Poly3DCollection(tris, facecolors=facecolors.copy(), edgecolors="none")
+        ax.add_collection3d(coll)
+        ax.set_xlim(center[0] - span, center[0] + span)
+        ax.set_ylim(center[1] - span, center[1] + span)
+        ax.set_zlim(center[2] - span, center[2] + span)
+        try:
+            ax.set_box_aspect((1, 1, 1))
+        except Exception:
+            pass
+        ax.view_init(elev=elev, azim=azim)
+        ax.set_axis_off()
+
+        out_path = out_dir / f"{name}.png"
+        fig.savefig(str(out_path), transparent=True, bbox_inches="tight", pad_inches=0)
+        plt.close(fig)
+        written[name] = out_path
+    return written
+
+
+def export_render(
+    stl_path: Path,
+    out_path: Path,
+    size: int = 512,
+    elev: float = 28.0,
+    azim: float = -55.0,
+) -> Path:
+    """
+    Render a single shaded thumbnail PNG of a mesh, headless.
+
+    Thin single-view wrapper around :func:`export_renders`; kept for callers
+    that want one fixed angle at an explicit file path.
+    """
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(str(out_path), transparent=True, bbox_inches="tight", pad_inches=0)
-    plt.close(fig)
+    export_renders(stl_path, out_path.parent, views={out_path.stem: (elev, azim)}, size=size)
     return out_path
 
 
@@ -271,8 +333,9 @@ def export_corpus_geometry(
     Export geometry for all parts in a dataset directory.
 
     B-rep formats (step/stl/svg) land in <dataset>/geometry/, point clouds in
-    <dataset>/pointclouds/, and renders in <dataset>/renders/.
-    Returns counts of {format: n_exported}.
+    <dataset>/pointclouds/, and multi-angle renders in
+    <dataset>/renders/{id}/{view}.png (one PNG per STANDARD_VIEWS angle).
+    Returns counts of {format: n_exported}; 'render' counts parts rendered.
 
     The expensive per-part cost is importing cadquery and rebuilding the solid;
     we amortise it across a pool of persistent workers (see
@@ -281,13 +344,23 @@ def export_corpus_geometry(
     from .execute import WorkerPool, default_worker_count
 
     if formats is None:
-        formats = ["step", "stl"]
+        formats = list(DEFAULT_FORMATS)
 
     brep = [f for f in formats if f in _BREP_FORMATS]
     mesh = [f for f in formats if f in _MESH_FORMATS]
     unknown = [f for f in formats if f not in ALL_FORMATS]
     if unknown:
         raise ValueError(f"Unknown export format(s): {unknown}. Valid: {ALL_FORMATS}")
+
+    # 'render' is on by default but needs optional deps; degrade gracefully with
+    # a single clear warning instead of failing every part silently.
+    if "render" in mesh and not render_deps_available():
+        print(
+            "[cadquarry] warning: skipping renders — install render deps with "
+            "pip install 'cadquarry[export]' matplotlib"
+        )
+        mesh = [f for f in mesh if f != "render"]
+        formats = [f for f in formats if f != "render"]
 
     parts_dir = dataset_dir / "parts"
     geo_dir = dataset_dir / "geometry"
@@ -355,8 +428,9 @@ def export_corpus_geometry(
                     pc_out = geo_dir.parent / "pointclouds" / f"{pid}.ply"
                     exported["pointcloud"] = export_pointcloud(stl_path, pc_out, n_points=n_points)
                 if "render" in mesh:
-                    rn_out = geo_dir.parent / "renders" / f"{pid}.png"
-                    exported["render"] = export_render(stl_path, rn_out)
+                    rn_out = geo_dir.parent / "renders" / pid
+                    export_renders(stl_path, rn_out)
+                    exported["render"] = rn_out
                 if not stl_requested and stl_path.exists():
                     try:
                         stl_path.unlink()
