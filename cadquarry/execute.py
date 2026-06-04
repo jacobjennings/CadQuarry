@@ -16,10 +16,14 @@ from __future__ import annotations
 
 import json
 import os
+import queue
+import select
 import subprocess
 import sys
 import tempfile
 import textwrap
+import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -229,3 +233,210 @@ def get_stl(path: Path, params: dict[str, Any] | None = None, timeout: float = 3
             pass
         return data
     return None
+
+
+# ---------------------------------------------------------------------------
+# Persistent worker pool
+# ---------------------------------------------------------------------------
+#
+# The one-subprocess-per-part path above is fine for single, interactive
+# executions (viewer / `cadquarry run`).  For batch generation/export the
+# ~1-1.5s cadquery import cost dominates, so we keep a pool of long-lived
+# workers (cadquarry._worker) that import cadquery once and then service many
+# jobs over a pipe.
+#
+# Determinism: a worker's response is a pure function of the request (same
+# source + overrides => identical metrics), independent of which worker runs
+# it or in what order, so parallel execution does not change any output.
+#
+# Killability: each worker handles one job at a time.  A job that hangs OCC is
+# bounded by the same hard wall-clock timeout as before — on timeout the parent
+# SIGKILLs that worker and respawns a fresh one, losing only the single bad
+# job rather than the batch.
+
+
+class _Worker:
+    """A single long-lived cadquery worker subprocess."""
+
+    def __init__(self, timeout: float) -> None:
+        self.timeout = timeout
+        self.proc: subprocess.Popen | None = None
+        self._r_fd: int = -1
+        self._buf = b""
+        self._spawn()
+
+    def _spawn(self) -> None:
+        r_fd, w_fd = os.pipe()
+        env = dict(os.environ)
+        env["CQ_RESULT_FD"] = str(w_fd)
+        # Make the write end inheritable across exec.
+        os.set_inheritable(w_fd, True)
+        self.proc = subprocess.Popen(
+            [sys.executable, "-m", "cadquarry._worker"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            pass_fds=(w_fd,),
+            env=env,
+        )
+        os.close(w_fd)  # only the child writes to it
+        self._r_fd = r_fd
+        self._buf = b""
+
+    def _readline(self, deadline: float) -> bytes | None:
+        """Read one newline-terminated line, or None on timeout/EOF."""
+        while b"\n" not in self._buf:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return None
+            ready, _, _ = select.select([self._r_fd], [], [], remaining)
+            if not ready:
+                return None
+            chunk = os.read(self._r_fd, 65536)
+            if not chunk:
+                return None  # worker died / closed pipe
+            self._buf += chunk
+        line, self._buf = self._buf.split(b"\n", 1)
+        return line
+
+    def run(self, req: dict[str, Any]) -> dict[str, Any]:
+        """Dispatch one request, enforcing the hard timeout via kill+respawn."""
+        payload = (json.dumps(req) + "\n").encode("utf-8")
+        try:
+            assert self.proc is not None and self.proc.stdin is not None
+            self.proc.stdin.write(payload)
+            self.proc.stdin.flush()
+        except (BrokenPipeError, OSError):
+            self._kill_respawn()
+            return {"success": False, "error": "worker pipe broken before dispatch"}
+
+        deadline = time.monotonic() + self.timeout
+        line = self._readline(deadline)
+        if line is None:
+            self._kill_respawn()
+            return {"success": False, "error": f"Execution timed out after {self.timeout}s"}
+        try:
+            return json.loads(line.decode("utf-8"))
+        except Exception as exc:  # malformed — treat as failure, recycle worker
+            self._kill_respawn()
+            return {"success": False, "error": f"malformed worker response: {exc}"}
+
+    def _kill_respawn(self) -> None:
+        if self.proc is not None:
+            try:
+                self.proc.kill()
+            except Exception:
+                pass
+            try:
+                self.proc.wait(timeout=5)
+            except Exception:
+                pass
+        if self._r_fd >= 0:
+            try:
+                os.close(self._r_fd)
+            except OSError:
+                pass
+            self._r_fd = -1
+        self._spawn()
+
+    def close(self) -> None:
+        if self.proc is not None:
+            try:
+                if self.proc.stdin is not None:
+                    self.proc.stdin.close()
+            except Exception:
+                pass
+            try:
+                self.proc.terminate()
+            except Exception:
+                pass
+            try:
+                self.proc.wait(timeout=5)
+            except Exception:
+                try:
+                    self.proc.kill()
+                except Exception:
+                    pass
+        if self._r_fd >= 0:
+            try:
+                os.close(self._r_fd)
+            except OSError:
+                pass
+            self._r_fd = -1
+
+
+class WorkerPool:
+    """
+    A pool of persistent cadquery workers.
+
+    Use ``map(jobs)`` with ``jobs`` an iterable of ``(key, request)`` pairs;
+    it returns ``{key: response_dict}`` once every job has completed.  Each
+    request is a dict understood by ``cadquarry._worker`` (op="analyze" or
+    op="export").  Jobs run concurrently across workers; ordering of results
+    is the caller's responsibility (keys are preserved).
+    """
+
+    def __init__(self, n_workers: int, timeout: float = 30.0) -> None:
+        self.n_workers = max(1, int(n_workers))
+        self.timeout = timeout
+        self._job_q: queue.Queue = queue.Queue()
+        self._workers = [_Worker(timeout) for _ in range(self.n_workers)]
+        self._threads: list[threading.Thread] = []
+        for w in self._workers:
+            t = threading.Thread(target=self._worker_loop, args=(w,), daemon=True)
+            t.start()
+            self._threads.append(t)
+
+    def _worker_loop(self, worker: _Worker) -> None:
+        while True:
+            item = self._job_q.get()
+            try:
+                if item is None:
+                    return
+                key, req, results, on_done = item
+                results[key] = worker.run(req)
+                on_done()
+            finally:
+                self._job_q.task_done()
+
+    def map(self, jobs: list[tuple[Any, dict[str, Any]]]) -> dict[Any, dict[str, Any]]:
+        results: dict[Any, dict[str, Any]] = {}
+        jobs = list(jobs)
+        if not jobs:
+            return results
+        remaining = {"n": len(jobs)}
+        lock = threading.Lock()
+        done_ev = threading.Event()
+
+        def on_done() -> None:
+            with lock:
+                remaining["n"] -= 1
+                if remaining["n"] == 0:
+                    done_ev.set()
+
+        for key, req in jobs:
+            self._job_q.put((key, req, results, on_done))
+        done_ev.wait()
+        return results
+
+    def close(self) -> None:
+        for _ in self._workers:
+            self._job_q.put(None)
+        for t in self._threads:
+            t.join(timeout=10)
+        for w in self._workers:
+            w.close()
+
+    def __enter__(self) -> "WorkerPool":
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()
+
+
+def default_worker_count(requested: int | None = None) -> int:
+    """Pick a sensible worker count: explicit value, else ~CPU-bound default."""
+    if requested and requested > 0:
+        return requested
+    cpu = os.cpu_count() or 4
+    return max(1, min(cpu, 24))

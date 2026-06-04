@@ -44,8 +44,8 @@ def _load_config(config_path: str | None) -> dict:
 
 def cmd_generate(args: argparse.Namespace) -> int:
     from .compose import compose
-    from .emit import emit_source, write_part, emit_meta_json, emit_params_json
-    from .execute import execute_source
+    from .emit import emit_source, write_part, emit_meta_json
+    from .execute import ExecuteResult, WorkerPool, default_worker_count
     from .filter import is_valid, compute_signature, DedupStore, QualityConfig
     from .dataset import DatasetWriter
 
@@ -58,6 +58,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
     family = args.family or None
     tier = args.tier if args.tier is not None else None
     verbose = args.verbose
+    n_workers = default_worker_count(getattr(args, "workers", None))
 
     qcfg = QualityConfig(
         min_volume_mm3=config.get("quality", {}).get("min_volume_mm3", 1.0),
@@ -76,56 +77,118 @@ def cmd_generate(args: argparse.Namespace) -> int:
     print(f"Output: {out_dir}")
     if no_exec:
         print("  (--no-exec: skipping execution validation)")
+    else:
+        print(f"  (executing in {n_workers} persistent workers)")
 
-    while accepted < count:
-        # Derive a per-part seed from the global seed + attempt index
-        part_seed = (seed * 1_000_003 + attempted) & 0xFFFFFFFF
-        part = compose(part_seed, index=attempted, config=config, family=family, tier=tier)
-        attempted += 1
+    def compose_attempt(i: int):
+        part_seed = (seed * 1_000_003 + i) & 0xFFFFFFFF
+        return compose(part_seed, index=i, config=config, family=family, tier=tier)
 
-        ir_hash = part.ir_hash()
-        if dedup.is_duplicate(ir_hash):
-            skipped_dup += 1
-            continue
-
-        code = emit_source(part)
-
-        geo_sig = None
-        if not no_exec:
-            result = execute_source(code, timeout=timeout)
-            valid, reason = is_valid(result, qcfg)
-            if not valid:
-                skipped_invalid += 1
-                if verbose:
-                    print(f"  REJECT {part.id}: {reason}")
-                continue
-            geo_sig_obj = compute_signature(result)
-            if dedup.is_duplicate(ir_hash, geo_sig_obj):
-                skipped_dup += 1
-                continue
-            dedup.register(ir_hash, geo_sig_obj)
-            geo_sig = geo_sig_obj.to_dict()
-        else:
-            dedup.register(ir_hash)
-
+    # The accept/reject/dedup decision is intrinsically sequential (a part is a
+    # duplicate of an *earlier accepted* part), and the manifest order must not
+    # depend on completion order.  We therefore keep the decision loop strictly
+    # in attempt order, but feed it execution results that were computed ahead
+    # of time, in parallel.  Execution results are pure functions of the source,
+    # so this is bit-for-bit identical to the old sequential path — only faster.
+    def accept_one(part, geo_sig) -> None:
+        nonlocal accepted
         paths = write_part(part, out_dir, geometry_signature=geo_sig)
         meta = emit_meta_json(part, geo_sig)
         writer.add_record(meta, paths, geo_sig)
         accepted += 1
-
         if verbose or accepted % max(1, count // 20) == 0:
             print(
                 f"  [{accepted:>{len(str(count))}}/{count}] "
                 f"{part.id}  family={part.metadata.family}  tier={part.metadata.tier}"
             )
 
-        if attempted > count * 10 and accepted < count // 2:
-            print(
-                f"[cadquarry] warning: high rejection rate "
-                f"({skipped_invalid} invalid, {skipped_dup} dup of {attempted} attempts). "
-                "Consider relaxing the quality config or widening parameter ranges."
-            )
-            break
+    if no_exec:
+        # No execution → nothing to parallelise; identical to the legacy loop.
+        while accepted < count:
+            part = compose_attempt(attempted)
+            attempted += 1
+            ir_hash = part.ir_hash()
+            if dedup.is_duplicate(ir_hash):
+                skipped_dup += 1
+                continue
+            dedup.register(ir_hash)
+            accept_one(part, None)
+            if attempted > count * 10 and accepted < count // 2:
+                print(
+                    f"[cadquarry] warning: high rejection rate "
+                    f"({skipped_invalid} invalid, {skipped_dup} dup of {attempted} attempts). "
+                    "Consider relaxing the quality config or widening parameter ranges."
+                )
+                break
+    else:
+        pool = WorkerPool(n_workers, timeout=timeout)
+        stop = False
+        try:
+            while accepted < count and not stop:
+                # Speculatively compose + execute a window of upcoming attempts.
+                # Over-shooting only wastes (cheap) executions; it never changes
+                # which parts are accepted, because the decision loop below is
+                # the sole authority and runs in strict attempt order.
+                remaining = count - accepted
+                batch_n = max(n_workers, remaining + remaining // 3 + n_workers)
+                batch = []
+                jobs = []
+                for j in range(batch_n):
+                    i = attempted + j
+                    part = compose_attempt(i)
+                    ir_hash = part.ir_hash()
+                    batch.append((i, part, ir_hash))
+                    # Pre-skip exact IR duplicates already accepted in a prior
+                    # batch to avoid wasted execution (the decision loop applies
+                    # the same check, so this is purely an optimisation).
+                    if dedup.is_duplicate(ir_hash):
+                        continue
+                    code = emit_source(part)
+                    jobs.append((i, {"op": "analyze", "code": code, "overrides": {}, "stl_out": ""}))
+
+                results = pool.map(jobs)
+
+                for (i, part, ir_hash) in batch:
+                    attempted += 1
+                    if dedup.is_duplicate(ir_hash):
+                        skipped_dup += 1
+                        continue
+                    res_dict = results.get(i)
+                    if res_dict is None:
+                        # Should not happen (every non-pre-skipped attempt was
+                        # executed); treat defensively as a failed execution.
+                        res_dict = {"success": False, "error": "missing execution result"}
+                    result = ExecuteResult.from_dict(res_dict)
+                    valid, reason = is_valid(result, qcfg)
+                    if not valid:
+                        skipped_invalid += 1
+                        if verbose:
+                            print(f"  REJECT {part.id}: {reason}")
+                        continue
+                    geo_sig_obj = compute_signature(result)
+                    if dedup.is_duplicate(ir_hash, geo_sig_obj):
+                        skipped_dup += 1
+                        continue
+                    dedup.register(ir_hash, geo_sig_obj)
+                    accept_one(part, geo_sig_obj.to_dict())
+
+                    if accepted >= count:
+                        stop = True
+                        break
+
+                    # Matches the legacy loop: the early-stop check is only
+                    # reachable immediately after an acceptance (every reject /
+                    # dup path `continue`s past it).
+                    if attempted > count * 10 and accepted < count // 2:
+                        print(
+                            f"[cadquarry] warning: high rejection rate "
+                            f"({skipped_invalid} invalid, {skipped_dup} dup of {attempted} attempts). "
+                            "Consider relaxing the quality config or widening parameter ranges."
+                        )
+                        stop = True
+                        break
+        finally:
+            pool.close()
 
     manifest = writer.finalize()
     print(
@@ -250,7 +313,7 @@ def cmd_export(args: argparse.Namespace) -> int:
     print(f"Exporting {formats} for corpus in {dataset_dir} …")
     counts = export_corpus_geometry(
         dataset_dir, formats=formats,
-        timeout=args.timeout, verbose=args.verbose,
+        n_workers=args.workers, timeout=args.timeout, verbose=args.verbose,
     )
     for fmt, n in counts.items():
         print(f"  {fmt}: {n} files written")
@@ -368,6 +431,7 @@ def build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--config", default=None, metavar="TOML", help="Config file (default: configs/default.toml)")
     gen.add_argument("--timeout", type=float, default=30.0, metavar="SEC", help="Execution timeout per part")
     gen.add_argument("--no-exec", action="store_true", help="Skip execution validation (faster, less safe)")
+    gen.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel execution workers (0 = auto)")
     gen.add_argument("--family", default=None, help="Force a part family (plate, revolved, block, …)")
     gen.add_argument("--tier", type=int, default=None, help="Force a complexity tier (0-3)")
     gen.add_argument("--verbose", "-v", action="store_true")
@@ -392,6 +456,7 @@ def build_parser() -> argparse.ArgumentParser:
     exp.add_argument("dataset", metavar="DIR")
     exp.add_argument("--formats", default="step,stl", help="Comma-separated: step,stl,svg,pointcloud,render")
     exp.add_argument("--timeout", type=float, default=60.0)
+    exp.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel export workers (0 = auto)")
     exp.add_argument("--verbose", "-v", action="store_true")
 
     # verify
