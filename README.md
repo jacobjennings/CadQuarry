@@ -24,13 +24,18 @@ is reproducible bit-for-bit from a seed.
 
 The committed sample renders its real geometry directly in your browser:
 
-- **[▶ Open the demo-1k preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/jacobjennings/CadQuarry/main/sample/demo-1k/preview.html)** (via htmlpreview.github.io)
-- Or enable GitHub Pages and visit `…/sample/demo-1k/preview.html`.
+- **[▶ Open the demo-1k preview](https://jacobjennings.github.io/CadQuarry/sample/demo-1k/preview.html)** (GitHub Pages)
+- Fallback proxy: [via htmlpreview.github.io](https://htmlpreview.github.io/?https://raw.githubusercontent.com/jacobjennings/CadQuarry/main/sample/demo-1k/preview.html).
 - Or locally: `python -m http.server` inside `sample/demo-1k/` and open `preview.html`.
+
+GitHub Pages is the primary link: it serves `preview.html` as real HTML from the
+same origin as its data (`manifest.jsonl`, `stl/`), so the page and its lazy-loaded
+geometry just work. The site is built by an Actions workflow
+([`.github/workflows/pages.yml`](.github/workflows/pages.yml)) on every push to `main`.
 
 > Note: opening `preview.html` from a bare `raw.githubusercontent.com` URL shows
 > source, not a rendered page — GitHub serves raw files as `text/plain`. Use the
-> htmlpreview link or GitHub Pages, which serve it as real HTML.
+> Pages link (or the htmlpreview fallback), which serve it as real HTML.
 
 ---
 
