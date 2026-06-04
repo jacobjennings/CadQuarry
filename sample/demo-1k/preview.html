@@ -220,18 +220,14 @@
   </div>
 </div>
 
-<script type="importmap">
-{ "imports": {
-  "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
-  "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
-} }
-</script>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-
-const loader = new STLLoader();
+<!-- Classic global builds (no ES modules / import maps) so this page also runs
+     through the htmlpreview.github.io proxy, which re-injects scripts as
+     classic <script> and cannot execute modules or import maps. -->
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script>
+const loader = new THREE.STLLoader();
 
 // ── Mini card renderer (one-shot) ──
 window.renderCard = function(canvas, buffer, color) {
@@ -269,7 +265,7 @@ function ensureModalViewer() {
   mRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   mScene = new THREE.Scene();
   mCamera = new THREE.PerspectiveCamera(45, 1, .01, 1e5);
-  mControls = new OrbitControls(mCamera, canvas);
+  mControls = new THREE.OrbitControls(mCamera, canvas);
   mControls.enableDamping = true; mControls.dampingFactor = .08;
   mScene.add(new THREE.AmbientLight(0xffffff, .5));
   const k = new THREE.DirectionalLight(0xffffff, 1.25); k.position.set(1,1.6,1); mScene.add(k);
