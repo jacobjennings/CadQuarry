@@ -1,0 +1,75 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "block_498d69a3_0685",
+  "params": {
+    "block_w": {
+      "type": "float",
+      "default": 70,
+      "min": 15.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block width (mm)"
+    },
+    "block_d": {
+      "type": "float",
+      "default": 44.9,
+      "min": 6.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block depth (mm)"
+    },
+    "block_h": {
+      "type": "float",
+      "default": 100.0,
+      "min": 4.5,
+      "max": 200.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block height (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 6.4,
+      "min": 2.0,
+      "max": 10.1,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    },
+    "boss_d": {
+      "type": "float",
+      "default": 10.7,
+      "min": 5.3,
+      "max": 21.4,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss diameter (mm)"
+    },
+    "boss_h": {
+      "type": "float",
+      "default": 9.6,
+      "min": 3.8,
+      "max": 24.0,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss height (mm)"
+    },
+    "boss_bore_d": {
+      "type": "float",
+      "default": 5.3,
+      "min": 2.0,
+      "max": 7.5,
+      "step": 0.1,
+      "group": "Boss",
+      "label": "Bore diameter (mm)"
+    },
+    "filleted2": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Fillet corners"
+    }
+  }
+}

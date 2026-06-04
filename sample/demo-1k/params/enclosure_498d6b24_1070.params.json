@@ -1,0 +1,51 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "enclosure_498d6b24_1070",
+  "params": {
+    "enc_w": {
+      "type": "float",
+      "default": 35,
+      "min": 30.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Enclosure width (mm)"
+    },
+    "enc_d": {
+      "type": "float",
+      "default": 19.7,
+      "min": 12.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Enclosure depth (mm)"
+    },
+    "enc_h": {
+      "type": "float",
+      "default": 17.4,
+      "min": 7.0,
+      "max": 34.8,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Enclosure height (mm)"
+    },
+    "wall_t": {
+      "type": "float",
+      "default": 5.7,
+      "min": 2.0,
+      "max": 6.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Wall thickness (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 3.2,
+      "min": 2.0,
+      "max": 4.4,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    }
+  }
+}

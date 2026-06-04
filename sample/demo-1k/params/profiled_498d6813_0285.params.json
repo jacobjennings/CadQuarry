@@ -1,0 +1,24 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "profiled_498d6813_0285",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 26.03,
+      "min": 13.0,
+      "max": 52.1,
+      "step": 1.0,
+      "group": "Profile",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 161.8,
+      "min": 48.5,
+      "max": 485.4,
+      "step": 5.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    }
+  }
+}

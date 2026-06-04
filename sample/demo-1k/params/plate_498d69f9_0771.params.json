@@ -1,0 +1,57 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "plate_498d69f9_0771",
+  "params": {
+    "plate_w": {
+      "type": "float",
+      "default": 55.92,
+      "min": 20.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate width (mm)"
+    },
+    "plate_d": {
+      "type": "float",
+      "default": 42.5,
+      "min": 8.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate depth (mm)"
+    },
+    "thickness": {
+      "type": "float",
+      "default": 5.0,
+      "min": 2.0,
+      "max": 12.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Thickness (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 6.4,
+      "min": 2.0,
+      "max": 9.6,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    },
+    "cs_angle": {
+      "type": "float",
+      "default": 82.0,
+      "min": 60.0,
+      "max": 120.0,
+      "step": 15.0,
+      "group": "Holes",
+      "label": "Countersink angle (\u00b0)"
+    },
+    "filleted": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Fillet corners"
+    }
+  }
+}

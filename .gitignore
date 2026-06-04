@@ -216,3 +216,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ── CadQuarry ──────────────────────────────────────────────────────────────
+# Generated corpora are large and reproducible from seeds; keep them out of git.
+/dataset/
+/datasets/
+/dataset-repro/
+.hf_build/
+
+# The committed sample corpus lives under sample/ and MUST be tracked, even
+# though the Python template above ignores any directory literally named
+# `parts/`. Re-include the whole sample tree (directories first, then files).
+!/sample/
+!/sample/**/
+!/sample/**

@@ -1,0 +1,78 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "revolved_498d6857_0353",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 49.15,
+      "min": 6.0,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 90.6,
+      "min": 27.2,
+      "max": 271.8,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    },
+    "inner_d": {
+      "type": "float",
+      "default": 16.3,
+      "min": 2.0,
+      "max": 34.4,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Bore diameter (mm)"
+    },
+    "flange_d": {
+      "type": "float",
+      "default": 77.5,
+      "min": 59.0,
+      "max": 147.4,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Flange diameter (mm)"
+    },
+    "flange_h": {
+      "type": "float",
+      "default": 23.0,
+      "min": 6.9,
+      "max": 45.3,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Flange height (mm)"
+    },
+    "groove_depth": {
+      "type": "float",
+      "default": 3.48,
+      "min": 1.39,
+      "max": 10.44,
+      "step": 0.1,
+      "group": "Body",
+      "label": "Groove depth (mm)"
+    },
+    "groove_w": {
+      "type": "float",
+      "default": 8.93,
+      "min": 3.57,
+      "max": 26.79,
+      "step": 0.2,
+      "group": "Body",
+      "label": "Groove width (mm)"
+    },
+    "groove_pos": {
+      "type": "float",
+      "default": 25.6,
+      "min": 13.6,
+      "max": 77.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Groove position (mm)"
+    }
+  }
+}

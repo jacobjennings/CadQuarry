@@ -1,0 +1,66 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "plate_498d6ae3_1005",
+  "params": {
+    "plate_w": {
+      "type": "float",
+      "default": 90,
+      "min": 20.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate width (mm)"
+    },
+    "plate_d": {
+      "type": "float",
+      "default": 81.9,
+      "min": 8.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate depth (mm)"
+    },
+    "thickness": {
+      "type": "float",
+      "default": 6.0,
+      "min": 2.0,
+      "max": 12.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Thickness (mm)"
+    },
+    "bolt_d": {
+      "type": "float",
+      "default": 3.2,
+      "min": 3.0,
+      "max": 13.0,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Bolt hole diameter (mm)"
+    },
+    "bolt_r": {
+      "type": "float",
+      "default": 27.0,
+      "min": 18.0,
+      "max": 40.5,
+      "step": 1.0,
+      "group": "Holes",
+      "label": "Bolt circle radius (mm)"
+    },
+    "n_bolts": {
+      "type": "int",
+      "default": 8,
+      "min": 3,
+      "max": 12,
+      "step": 1,
+      "group": "Holes",
+      "label": "Number of bolts"
+    },
+    "filleted": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Fillet corners"
+    }
+  }
+}

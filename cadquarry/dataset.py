@@ -140,6 +140,62 @@ def load_manifest(dataset_dir: Path) -> list[dict[str, Any]]:
     return records
 
 
+def pack_corpus_jsonl(
+    dataset_dir: Path,
+    out_path: Path,
+    include_source: bool = True,
+) -> int:
+    """
+    Flatten a corpus directory into a single self-contained JSONL file.
+
+    Each line is one part with the parametric source and parameter schema
+    inlined, so the file is directly browsable in the HuggingFace dataset
+    viewer and loadable via ``datasets.load_dataset(..., data_files=...)``
+    without any sidecar files.  Returns the number of records written.
+
+    Columns: part_id, family, tier, seed, symmetry, op_count, ir_hash,
+    generator_version, license, geometry_signature (struct), params (struct),
+    and source (the full .py text, when ``include_source``).
+    """
+    records = load_manifest(dataset_dir)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    n = 0
+    with out_path.open("w", encoding="utf-8") as out:
+        for rec in records:
+            pid = rec.get("part_id")
+            if not pid:
+                continue
+            row: dict[str, Any] = {
+                "part_id": pid,
+                "family": rec.get("family"),
+                "tier": rec.get("tier"),
+                "seed": rec.get("seed"),
+                "symmetry": rec.get("symmetry"),
+                "op_count": rec.get("op_count"),
+                "ir_hash": rec.get("ir_hash"),
+                "generator_version": rec.get("generator_version") or rec.get("cadquarry_version"),
+                "license": rec.get("license", "CC0-1.0"),
+                "geometry_signature": rec.get("geometry_signature"),
+            }
+            params_rel = rec.get("paths", {}).get("params")
+            if params_rel:
+                params_path = dataset_dir / params_rel
+                if params_path.exists():
+                    try:
+                        row["params"] = json.loads(params_path.read_text(encoding="utf-8")).get("params")
+                    except (OSError, json.JSONDecodeError):
+                        row["params"] = None
+            if include_source:
+                py_rel = rec.get("paths", {}).get("py")
+                if py_rel:
+                    py_path = dataset_dir / py_rel
+                    if py_path.exists():
+                        row["source"] = py_path.read_text(encoding="utf-8")
+            out.write(json.dumps(row) + "\n")
+            n += 1
+    return n
+
+
 def corpus_stats(dataset_dir: Path) -> dict[str, Any]:
     """Return summary statistics for an existing corpus."""
     records = load_manifest(dataset_dir)
