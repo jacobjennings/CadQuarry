@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "revolved_498d69b8_0706",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 43.26,
+      "min": 6.0,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 70.3,
+      "min": 21.1,
+      "max": 210.9,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    },
+    "inner_d": {
+      "type": "float",
+      "default": 16.6,
+      "min": 2.0,
+      "max": 30.3,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Bore diameter (mm)"
+    }
+  }
+}

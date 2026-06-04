@@ -1,0 +1,42 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "revolved_498d675f_0105",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 47.45,
+      "min": 6.0,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 119.3,
+      "min": 35.8,
+      "max": 320.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    },
+    "flange_d": {
+      "type": "float",
+      "default": 71.5,
+      "min": 56.9,
+      "max": 142.4,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Flange diameter (mm)"
+    },
+    "flange_h": {
+      "type": "float",
+      "default": 17.6,
+      "min": 5.3,
+      "max": 59.6,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Flange height (mm)"
+    }
+  }
+}

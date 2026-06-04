@@ -6,6 +6,34 @@ Every generated part is a pure Python function of its parameters — tweak any s
 
 ---
 
+## Where things live
+
+CadQuarry is split across two homes so that the code/data license split maps
+onto the platforms instead of needing prose:
+
+| | Home | License | Contents |
+|---|---|---|---|
+| **Generator** | this GitHub repo | Apache-2.0 | code, seed lists, docs, a committed **1,000-part sample** in [`sample/demo-1k/`](sample/demo-1k/) |
+| **Full corpus** | [Hugging Face dataset](https://huggingface.co/datasets/jacobjennings/cadquarry) | CC0-1.0 | the size ladder (1k → 500k), browsable in the dataset viewer, `load_dataset`-able |
+
+The published corpus is a **convenience artifact** — the generator plus the
+seed list ([`seeds/v1.toml`](seeds/v1.toml)) is the canonical source. Everything
+is reproducible bit-for-bit from a seed.
+
+### 🔎 Live in-browser preview (no install)
+
+The committed sample renders its real geometry directly in your browser:
+
+- **[▶ Open the demo-1k preview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/jacobjennings/CadQuarry/main/sample/demo-1k/preview.html)** (via htmlpreview.github.io)
+- Or enable GitHub Pages and visit `…/sample/demo-1k/preview.html`.
+- Or locally: `python -m http.server` inside `sample/demo-1k/` and open `preview.html`.
+
+> Note: opening `preview.html` from a bare `raw.githubusercontent.com` URL shows
+> source, not a rendered page — GitHub serves raw files as `text/plain`. Use the
+> htmlpreview link or GitHub Pages, which serve it as real HTML.
+
+---
+
 ## What it does
 
 - Generates large batches of unique, executable [CadQuery](https://cadquery.readthedocs.io) programs across a broad operation vocabulary (plates, shafts, blocks, enclosures, flanged hubs, ribbed structures, profiled extrusions).
@@ -167,6 +195,59 @@ cadquarry verify dataset-repro/
 ```
 
 Same seed + same generator version → identical `manifest.jsonl` and identical geometry signatures.
+
+---
+
+## Committed sample (`sample/demo-1k/`)
+
+A pinned 1,000-part corpus is checked into the repo so anyone can inspect the
+format, run the customizer, and preview the data without downloading anything:
+
+```
+sample/demo-1k/
+├── manifest.jsonl       one record per part
+├── parts/{id}.py        parametric CadQuery source
+├── params/{id}.params.json
+├── meta/{id}.meta.json
+├── stl/{id}.stl         compact binary meshes (for the in-browser preview)
+├── DATASET_CARD.md
+└── preview.html         self-contained gallery (three.js, lazy-loaded geometry)
+```
+
+It is corpus `demo-1k` from `seeds/v1.toml` (seed `1234`). Regenerate it:
+
+```bash
+cadquarry generate --seed 1234 --count 1000 --out sample/demo-1k/
+python scripts/export_stl.py sample/demo-1k       # refresh preview meshes
+```
+
+---
+
+## Publishing the full corpus to Hugging Face
+
+[`scripts/publish_to_hf.py`](scripts/publish_to_hf.py) builds the reproducible
+size ladder (1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k, 500k) and uploads each as a
+`load_dataset` config of one HF dataset. Each size is packed into a single
+`corpus.jsonl` with the parametric `source` and `params` inlined.
+
+```bash
+pip install -e ".[publish]"          # adds huggingface_hub
+
+# Build + upload the small configs to your own repo
+python scripts/publish_to_hf.py --sizes 1k 2k 5k --repo-id <user>/cadquarry
+
+# Build everything (large; 500k generation takes a while)
+python scripts/publish_to_hf.py --all
+
+# Generate + pack locally without uploading (inspect .hf_build/)
+python scripts/publish_to_hf.py --sizes 1k --dry-run
+```
+
+**Secrets.** The script reads your token from the `HF_TOKEN` environment
+variable (or a prior `huggingface-cli login`) and **never prints, logs, or
+commits it**. Nothing secret is stored in the repo, so the script works as-is
+for anyone with their own HF account who wants to regenerate or fork the data.
+The size ladder's seeds live in `seeds/v1.toml` under `[[publish.corpus]]`.
 
 ---
 

@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "profiled_498d69e5_0751",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 18.15,
+      "min": 9.1,
+      "max": 36.3,
+      "step": 1.0,
+      "group": "Profile",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 162.3,
+      "min": 48.7,
+      "max": 486.9,
+      "step": 5.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    },
+    "inner_d": {
+      "type": "float",
+      "default": 8.7,
+      "min": 2.0,
+      "max": 14.5,
+      "step": 0.5,
+      "group": "Profile",
+      "label": "Bore diameter (mm)"
+    }
+  }
+}

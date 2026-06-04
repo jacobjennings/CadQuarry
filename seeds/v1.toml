@@ -48,3 +48,62 @@ seed        = 770077
 count       = 50000
 config      = "configs/default.toml"
 description = "Large corpus for downstream dataset use."
+
+# ---------------------------------------------------------------------------
+# Published HuggingFace size ladder
+# ---------------------------------------------------------------------------
+# These are the corpora `scripts/publish_to_hf.py` builds and uploads as
+# configs of the HuggingFace dataset.  Each `tag` becomes a load_dataset
+# config name; `seed` + `count` + the generator version pin it bit-for-bit.
+# The `1k` entry is the same corpus committed under `sample/demo-1k/`.
+
+[publish]
+# Default destination dataset name. With no "user/" namespace it resolves to
+# "<your-hf-username>/cadquarry" from your token, so this works for anyone.
+# Override with --repo-id or the CADQUARRY_HF_REPO env var.
+repo_id = "cadquarry"
+
+[[publish.corpus]]
+tag = "1k"
+count = 1000
+seed = 1234
+
+[[publish.corpus]]
+tag = "2k"
+count = 2000
+seed = 2468
+
+[[publish.corpus]]
+tag = "5k"
+count = 5000
+seed = 50500
+
+[[publish.corpus]]
+tag = "10k"
+count = 10000
+seed = 20260603
+
+[[publish.corpus]]
+tag = "20k"
+count = 20000
+seed = 200200
+
+[[publish.corpus]]
+tag = "50k"
+count = 50000
+seed = 770077
+
+[[publish.corpus]]
+tag = "100k"
+count = 100000
+seed = 100100
+
+[[publish.corpus]]
+tag = "200k"
+count = 200000
+seed = 220220
+
+[[publish.corpus]]
+tag = "500k"
+count = 500000
+seed = 500500

@@ -1,0 +1,66 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "block_498d687d_0391",
+  "params": {
+    "block_w": {
+      "type": "float",
+      "default": 55,
+      "min": 15.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block width (mm)"
+    },
+    "block_d": {
+      "type": "float",
+      "default": 25.7,
+      "min": 6.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block depth (mm)"
+    },
+    "block_h": {
+      "type": "float",
+      "default": 100.0,
+      "min": 4.5,
+      "max": 200.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block height (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 3.2,
+      "min": 2.0,
+      "max": 5.8,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    },
+    "boss_d": {
+      "type": "float",
+      "default": 23.7,
+      "min": 11.8,
+      "max": 47.4,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss diameter (mm)"
+    },
+    "boss_h": {
+      "type": "float",
+      "default": 11.4,
+      "min": 4.6,
+      "max": 28.5,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss height (mm)"
+    },
+    "filleted2": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Fillet corners"
+    }
+  }
+}

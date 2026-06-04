@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CadQuarry · demo-1k preview</title>
+<style>
+  :root {
+    --bg: #16161a;
+    --bg2: #1a1a1e;
+    --surface: #222228;
+    --surface2: #2c2c34;
+    --border: #34343f;
+    --text: #e9e9f2;
+    --text2: #9494ad;
+    --text3: #6b6b82;
+    --accent: #5b8fff;
+    --accent2: #7eb8ff;
+    --green: #4caf82;
+    --font: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --radius: 8px;
+    --plate:#5b8fff; --bracket:#ff9f5b; --revolved:#7be0ae; --block:#e8a95b;
+    --enclosure:#c47bf0; --flanged:#f07b7b; --ribbed:#7bd9e8; --profiled:#e8d87b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+
+  /* ── Header ──────────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(22,22,26,.82);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner { max-width: 1400px; margin: 0 auto; padding: 14px 24px; }
+  .header-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .logo { font-weight: 800; font-size: 20px; letter-spacing: .01em; }
+  .logo span { color: var(--text2); font-weight: 400; }
+  .badge {
+    font-family: var(--mono); font-size: 11px; padding: 3px 9px;
+    border-radius: 99px; background: var(--surface2); color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .badge.cc0 { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+  .header-links { margin-left: auto; display: flex; gap: 16px; font-size: 13px; align-items: center; }
+  .tagline { color: var(--text2); font-size: 13px; margin-top: 6px; max-width: 760px; line-height: 1.5; }
+
+  /* ── Stat strip ──────────────────────────────────────── */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 16px; }
+  .stat .num { font-size: 22px; font-weight: 700; font-family: var(--mono); }
+  .stat .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; }
+
+  /* ── Layout ──────────────────────────────────────────── */
+  main { max-width: 1400px; margin: 0 auto; padding: 22px 24px 80px; display: grid; grid-template-columns: 240px 1fr; gap: 26px; }
+  @media (max-width: 880px){ main { grid-template-columns: 1fr; } aside { position: static !important; } }
+
+  aside { position: sticky; top: 96px; align-self: start; display: flex; flex-direction: column; gap: 22px; max-height: calc(100vh - 120px); overflow-y: auto; padding-right: 4px; }
+  .panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 10px; font-weight: 600; }
+
+  /* distribution bars */
+  .dist-row { display: grid; grid-template-columns: 74px 1fr 38px; align-items: center; gap: 8px; margin-bottom: 7px; cursor: pointer; }
+  .dist-row .name { font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dist-row:hover .name { color: var(--text); }
+  .dist-row.active .name { color: var(--text); font-weight: 600; }
+  .bar { height: 8px; border-radius: 5px; background: var(--surface2); overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 5px; }
+  .dist-row .pct { font-size: 11px; color: var(--text3); font-family: var(--mono); text-align: right; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 4px 11px; border-radius: 99px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text2); transition: all .12s; }
+  .chip:hover { background: var(--surface2); color: var(--text); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Content ─────────────────────────────────────────── */
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+  .search { flex: 1; min-width: 180px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 13px; color: var(--text); font-size: 14px; outline: none; }
+  .search:focus { border-color: var(--accent); }
+  .count { font-size: 12px; color: var(--text3); white-space: nowrap; }
+  .select { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 11px; color: var(--text); font-size: 13px; outline: none; cursor: pointer; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(186px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  .card .preview { height: 150px; background: radial-gradient(circle at 50% 35%, #20202a, #141418); position: relative; display: flex; align-items: center; justify-content: center; }
+  .card .preview canvas { width: 100% !important; height: 100% !important; }
+  .card .preview .ph { color: var(--text3); font-size: 11px; font-family: var(--mono); }
+  .card .info { padding: 9px 11px 11px; }
+  .card .pid { font-family: var(--mono); font-size: 10px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+  .tags { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+  .tag { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+  .tag.fam { background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); }
+  .tag.tier { background: var(--surface2); color: var(--text2); }
+  .tag.ops { background: var(--surface2); color: var(--text3); margin-left: auto; }
+
+  .sentinel { grid-column: 1/-1; text-align: center; color: var(--text3); padding: 16px; font-size: 12px; }
+  .empty { grid-column: 1/-1; text-align: center; color: var(--text3); padding: 60px 20px; }
+
+  /* ── Modal ───────────────────────────────────────────── */
+  .modal-bg { position: fixed; inset: 0; background: rgba(8,8,11,.72); backdrop-filter: blur(4px); z-index: 50; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; width: min(1080px, 100%); height: min(720px, 92vh); display: grid; grid-template-columns: 1.15fr 1fr; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+  @media (max-width: 760px){ .modal { grid-template-columns: 1fr; grid-template-rows: 280px 1fr; height: 92vh; } }
+  .modal .view { position: relative; background: radial-gradient(circle at 50% 40%, #20202a, #121216); }
+  .modal .view canvas { width: 100% !important; height: 100% !important; display: block; }
+  .modal .view .vinfo { position: absolute; left: 12px; bottom: 10px; font-family: var(--mono); font-size: 11px; color: var(--text2); }
+  .modal .view .vhint { position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: var(--text3); }
+  .modal .side { display: flex; flex-direction: column; border-left: 1px solid var(--border); min-height: 0; }
+  .modal .side-head { padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .modal .side-head .mpid { font-family: var(--mono); font-size: 13px; color: var(--text); word-break: break-all; }
+  .modal .side-head .mtags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .modal .side-body { overflow-y: auto; padding: 16px 18px; min-height: 0; }
+  .kv { display: grid; grid-template-columns: 110px 1fr; gap: 4px 10px; font-size: 12px; margin-bottom: 16px; }
+  .kv .k { color: var(--text3); }
+  .kv .v { font-family: var(--mono); color: var(--text); }
+  .src-h { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin: 4px 0 8px; display:flex; align-items:center; gap:10px;}
+  pre.src { background: #101014; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 11.5px; line-height: 1.55; color: #c9d1e8; overflow-x: auto; white-space: pre; }
+  .mclose { position: absolute; top: 12px; right: 14px; z-index: 2; background: rgba(0,0,0,.4); border: 1px solid var(--border); color: var(--text); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 16px; line-height: 1; }
+  .mclose:hover { background: var(--surface2); }
+  .dl { display: inline-flex; gap: 6px; }
+  .dl a { font-size: 11px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); }
+  .dl a:hover { background: var(--surface2); color: var(--text); text-decoration: none; }
+
+  .banner { background: #3a2a18; border: 1px solid #6b4a22; color: #f0c98a; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; margin: 0 auto 18px; max-width: 1400px; }
+  footer { max-width: 1400px; margin: 0 auto; padding: 0 24px 50px; color: var(--text3); font-size: 12px; line-height: 1.7; }
+  code.inl { font-family: var(--mono); background: var(--surface2); padding: 1px 6px; border-radius: 4px; color: var(--accent2); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo">Cad<span>Quarry</span></div>
+      <span class="badge" id="b-name">demo-1k</span>
+      <span class="badge" id="b-ver">v—</span>
+      <span class="badge cc0">CC0-1.0 data</span>
+      <div class="header-links">
+        <a id="lnk-repo" href="https://github.com/jacobjennings/CadQuarry" target="_blank">GitHub repo ↗</a>
+        <a id="lnk-hf" href="https://huggingface.co/datasets/jacobjennings/cadquarry" target="_blank">Full corpus on HF ↗</a>
+      </div>
+    </div>
+    <p class="tagline">A 1,000-part sample of procedurally generated, execution-validated, fully parametric CadQuery programs. Every part is a pure function of its parameters and reproducible bit-for-bit from a single seed. This page renders the committed geometry directly in your browser — no install, no download.</p>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<div class="banner" id="banner" style="display:none"></div>
+
+<main>
+  <aside>
+    <div>
+      <div class="panel-title">Families</div>
+      <div id="fam-dist"></div>
+    </div>
+    <div>
+      <div class="panel-title">Tiers</div>
+      <div id="tier-dist"></div>
+    </div>
+    <div>
+      <div class="panel-title">Tier filter</div>
+      <div class="chips" id="tier-chips">
+        <button class="chip active" data-tier="">All</button>
+        <button class="chip" data-tier="0">0</button>
+        <button class="chip" data-tier="1">1</button>
+        <button class="chip" data-tier="2">2</button>
+        <button class="chip" data-tier="3">3</button>
+      </div>
+    </div>
+  </aside>
+
+  <section>
+    <div class="toolbar">
+      <input class="search" id="search" type="text" placeholder="Search by part id, family…">
+      <select class="select" id="sort">
+        <option value="default">Sort: manifest order</option>
+        <option value="volume">Volume ↑</option>
+        <option value="volume-d">Volume ↓</option>
+        <option value="ops">Op count ↑</option>
+        <option value="ops-d">Op count ↓</option>
+        <option value="faces-d">Faces ↓</option>
+      </select>
+      <span class="count" id="count">…</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+</main>
+
+<footer>
+  <p><strong>Reproducibility.</strong> This sample is corpus <code class="inl" id="f-name">demo-1k</code>, generated by CadQuarry <code class="inl" id="f-ver">v—</code> from seed <code class="inl" id="f-seed">—</code>. Regenerate it bit-for-bit:</p>
+  <p><code class="inl">cadquarry generate --seed <span id="f-seed2">—</span> --count 1000 --out demo-1k/</code></p>
+  <p style="margin-top:10px">The generator + seed is the canonical artifact; the data here (and the larger corpora on Hugging Face) is a convenience. Generator code is Apache-2.0; generated data is CC0-1.0.</p>
+</footer>
+
+<!-- ── Modal ── -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="view" id="m-view">
+      <button class="mclose" id="m-close">×</button>
+      <canvas id="m-canvas"></canvas>
+      <div class="vinfo" id="m-vinfo"></div>
+      <div class="vhint">drag to orbit · scroll to zoom</div>
+    </div>
+    <div class="side">
+      <div class="side-head">
+        <div class="mpid" id="m-pid"></div>
+        <div class="mtags" id="m-tags"></div>
+      </div>
+      <div class="side-body">
+        <div class="kv" id="m-kv"></div>
+        <div class="src-h">Parametric source <span class="dl" id="m-dl"></span></div>
+        <pre class="src" id="m-src">loading…</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+const loader = new STLLoader();
+
+// ── Mini card renderer (one-shot) ──
+window.renderCard = function(canvas, buffer, color) {
+  try {
+    const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    r.setPixelRatio(Math.min(devicePixelRatio, 2));
+    r.setSize(canvas.clientWidth || 186, canvas.clientHeight || 150, false);
+    const s = new THREE.Scene();
+    const c = new THREE.PerspectiveCamera(42, (canvas.clientWidth||186)/(canvas.clientHeight||150), .01, 1e5);
+    const geo = loader.parse(buffer); geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color||'#9aa8c8'), metalness:.28, roughness:.5 }));
+    s.add(m);
+    s.add(new THREE.AmbientLight(0xffffff, .55));
+    const d1 = new THREE.DirectionalLight(0xffffff, 1.25); d1.position.set(1,1.6,1.1); s.add(d1);
+    const d2 = new THREE.DirectionalLight(0x88aaff, .4); d2.position.set(-1,-.6,-.8); s.add(d2);
+    const box = new THREE.Box3().setFromObject(m);
+    const ctr = box.getCenter(new THREE.Vector3());
+    const sz = box.getSize(new THREE.Vector3());
+    const md = Math.max(sz.x, sz.y, sz.z) || 1;
+    c.position.copy(ctr).add(new THREE.Vector3(md*0.95, md*0.8, md*1.1));
+    c.lookAt(ctr); c.near = md*0.01; c.far = md*20; c.updateProjectionMatrix();
+    r.render(s, c);
+    // free GL resources; the rendered framebuffer persists on the canvas
+    geo.dispose(); m.material.dispose();
+    setTimeout(() => r.dispose(), 30);
+  } catch(e) { /* leave placeholder */ }
+};
+
+// ── Modal viewer (persistent) ──
+let mRenderer, mScene, mCamera, mControls, mMesh, mRAF;
+function ensureModalViewer() {
+  if (mRenderer) return;
+  const canvas = document.getElementById('m-canvas');
+  mRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  mRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  mScene = new THREE.Scene();
+  mCamera = new THREE.PerspectiveCamera(45, 1, .01, 1e5);
+  mControls = new OrbitControls(mCamera, canvas);
+  mControls.enableDamping = true; mControls.dampingFactor = .08;
+  mScene.add(new THREE.AmbientLight(0xffffff, .5));
+  const k = new THREE.DirectionalLight(0xffffff, 1.25); k.position.set(1,1.6,1); mScene.add(k);
+  const f = new THREE.DirectionalLight(0x88aaff, .45); f.position.set(-1,-.5,-.7); mScene.add(f);
+  const grid = new THREE.GridHelper(400, 24, 0x2a2a35, 0x24242c); mScene.userData.grid = grid; mScene.add(grid);
+  const resize = () => {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    mRenderer.setSize(w, h, false); mCamera.aspect = w/h; mCamera.updateProjectionMatrix();
+  };
+  new ResizeObserver(resize).observe(canvas);
+  (function loop(){ mRAF = requestAnimationFrame(loop); mControls.update(); mRenderer.render(mScene, mCamera); })();
+}
+window.loadModalMesh = function(buffer, color) {
+  ensureModalViewer();
+  if (mMesh) { mScene.remove(mMesh); mMesh.geometry.dispose(); }
+  const geo = loader.parse(buffer); geo.computeVertexNormals();
+  mMesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color||'#9aa8c8'), metalness:.3, roughness:.5 }));
+  mScene.add(mMesh);
+  const box = new THREE.Box3().setFromObject(mMesh);
+  const ctr = box.getCenter(new THREE.Vector3());
+  const sz = box.getSize(new THREE.Vector3());
+  const md = Math.max(sz.x, sz.y, sz.z) || 1;
+  mControls.target.copy(ctr);
+  mCamera.position.copy(ctr).add(new THREE.Vector3(md*0.8, md*0.7, md*1.0));
+  mCamera.near = md*0.005; mCamera.far = md*30; mCamera.updateProjectionMatrix();
+  mControls.update();
+  if (mScene.userData.grid) mScene.userData.grid.position.y = box.min.y;
+  document.getElementById('m-vinfo').textContent =
+    `${sz.x.toFixed(1)} × ${sz.y.toFixed(1)} × ${sz.z.toFixed(1)} mm · ${(geo.attributes.position.count/3).toLocaleString()} tris`;
+};
+</script>
+
+<script>
+// ── App ─────────────────────────────────────────────────
+const CFG = {
+  name: 'demo-1k',
+  repo: 'https://github.com/jacobjennings/CadQuarry',
+  hf: 'https://huggingface.co/datasets/jacobjennings/cadquarry',
+};
+const FAMILY_COLORS = {
+  plate:'#5b8fff', bracket:'#ff9f5b', revolved:'#7be0ae', block:'#e8a95b',
+  enclosure:'#c47bf0', flanged:'#f07b7b', ribbed:'#7bd9e8', profiled:'#e8d87b',
+};
+
+// ── Data base URL resolution (local / GitHub Pages / htmlpreview proxy) ──
+function dataBase() {
+  const p = new URLSearchParams(location.search);
+  if (p.has('data')) { const b = p.get('data'); return b.endsWith('/') ? b : b + '/'; }
+  // htmlpreview.github.io/?https://raw.githubusercontent.com/.../preview.html
+  const raw = decodeURIComponent(location.search.replace(/^\?/, ''));
+  if (/^https?:\/\//.test(raw) && raw.includes('githubusercontent')) {
+    return raw.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
+  }
+  return location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
+}
+const BASE = dataBase();
+
+let RECORDS = [], VIEW = [];
+let famFilter = null, tierFilter = '', query = '', sortMode = 'default';
+
+const $ = s => document.querySelector(s);
+let grid;
+
+function famColor(f){ return FAMILY_COLORS[f] || '#5b8fff'; }
+function sig(r){ return r.geometry_signature || {}; }
+
+async function boot() {
+  grid = $('#grid');
+  $('#lnk-repo').href = CFG.repo;
+  $('#lnk-hf').href = CFG.hf;
+  try {
+    const res = await fetch(BASE + 'manifest.jsonl', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const txt = await res.text();
+    RECORDS = txt.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  } catch (e) {
+    showBanner('Could not load <code>manifest.jsonl</code> from <code>' + BASE + '</code>. ' +
+      'If you are opening this directly from a GitHub <em>raw</em> URL, use the htmlpreview proxy or GitHub Pages instead — raw URLs serve HTML as plain text. ' +
+      'You can also append <code>?data=&lt;url-to-folder&gt;/</code>.');
+    return;
+  }
+  if (!RECORDS.length) { showBanner('Manifest is empty.'); return; }
+  renderHeader();
+  renderDistributions();
+  wireControls();
+  applyFilters();
+}
+
+function showBanner(html){ const b = $('#banner'); b.innerHTML = html; b.style.display = 'block'; $('#count').textContent = ''; }
+
+function renderHeader() {
+  const ver = (RECORDS[0] || {}).generator_version || (RECORDS[0]||{}).cadquarry_version || '?';
+  const seed = (RECORDS[0] || {}).seed;
+  $('#b-name').textContent = CFG.name;
+  $('#b-ver').textContent = 'v' + ver;
+  $('#f-name').textContent = CFG.name;
+  $('#f-ver').textContent = 'v' + ver;
+  // The manifest stores per-part seeds; the corpus seed lives in DATASET_CARD.
+  fetch(BASE + 'DATASET_CARD.md').then(r => r.ok ? r.text() : '').then(md => {
+    const m = md.match(/Seed\s*\|\s*(\d+)/i);
+    const s = m ? m[1] : '1234';
+    $('#f-seed').textContent = s; $('#f-seed2').textContent = s;
+  }).catch(() => { $('#f-seed').textContent = '1234'; $('#f-seed2').textContent = '1234'; });
+
+  const fams = new Set(RECORDS.map(r => r.family));
+  const totalVol = RECORDS.reduce((a, r) => a + (sig(r).volume || 0), 0);
+  const avgFaces = RECORDS.reduce((a, r) => a + (sig(r).n_faces || 0), 0) / RECORDS.length;
+  $('#stats').innerHTML = [
+    ['Parts', RECORDS.length.toLocaleString()],
+    ['Families', fams.size],
+    ['Avg faces', avgFaces.toFixed(0)],
+    ['Validated', '100%'],
+  ].map(([l, n]) => `<div class="stat"><div class="num">${n}</div><div class="lbl">${l}</div></div>`).join('');
+}
+
+function distBars(el, counts, colorFn, onClick, activeKey) {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  const max = Math.max(...Object.values(counts), 1);
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  el.innerHTML = '';
+  for (const [key, n] of entries) {
+    const row = document.createElement('div');
+    row.className = 'dist-row' + (String(activeKey) === String(key) ? ' active' : '');
+    row.innerHTML = `<span class="name">${key}</span>
+      <span class="bar"><i style="width:${(n/max*100).toFixed(1)}%;background:${colorFn(key)}"></i></span>
+      <span class="pct">${(n/total*100).toFixed(0)}%</span>`;
+    row.onclick = () => onClick(key);
+    el.appendChild(row);
+  }
+}
+
+function renderDistributions() {
+  const fam = {}, tier = {};
+  for (const r of RECORDS) { fam[r.family] = (fam[r.family]||0)+1; const t='T'+r.tier; tier[t]=(tier[t]||0)+1; }
+  distBars($('#fam-dist'), fam, famColor, k => setFamily(famFilter === k ? null : k), famFilter);
+  distBars($('#tier-dist'), tier, () => '#6b7a99', k => setTier(tierFilter === k.slice(1) ? '' : k.slice(1)), tierFilter ? 'T'+tierFilter : null);
+}
+
+function setFamily(f){ famFilter = f; renderDistributions(); applyFilters(); }
+function setTier(t){
+  tierFilter = t;
+  document.querySelectorAll('#tier-chips .chip').forEach(c => c.classList.toggle('active', c.dataset.tier === t));
+  renderDistributions(); applyFilters();
+}
+
+function wireControls() {
+  $('#search').addEventListener('input', e => { query = e.target.value.toLowerCase().trim(); applyFilters(); });
+  $('#sort').addEventListener('change', e => { sortMode = e.target.value; applyFilters(); });
+  document.querySelectorAll('#tier-chips .chip').forEach(c => c.onclick = () => setTier(c.dataset.tier));
+  $('#m-close').onclick = closeModal;
+  $('#modal-bg').onclick = e => { if (e.target.id === 'modal-bg') closeModal(); };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+}
+
+function applyFilters() {
+  let v = RECORDS;
+  if (famFilter) v = v.filter(r => r.family === famFilter);
+  if (tierFilter !== '') v = v.filter(r => String(r.tier) === tierFilter);
+  if (query) v = v.filter(r => (r.part_id||'').toLowerCase().includes(query) || (r.family||'').includes(query));
+  const s = sortMode;
+  if (s !== 'default') {
+    v = v.slice().sort((a, b) => {
+      if (s === 'volume') return (sig(a).volume||0) - (sig(b).volume||0);
+      if (s === 'volume-d') return (sig(b).volume||0) - (sig(a).volume||0);
+      if (s === 'ops') return (a.op_count||0) - (b.op_count||0);
+      if (s === 'ops-d') return (b.op_count||0) - (a.op_count||0);
+      if (s === 'faces-d') return (sig(b).n_faces||0) - (sig(a).n_faces||0);
+      return 0;
+    });
+  }
+  VIEW = v;
+  $('#count').textContent = v.length.toLocaleString() + ' / ' + RECORDS.length.toLocaleString() + ' parts';
+  renderGrid();
+}
+
+// Incremental rendering for large result sets.
+let shown = 0; const PAGE = 60;
+function renderGrid() {
+  grid.innerHTML = ''; shown = 0;
+  if (!VIEW.length) { grid.innerHTML = '<div class="empty">No parts match these filters.</div>'; return; }
+  appendPage();
+}
+function appendPage() {
+  const slice = VIEW.slice(shown, shown + PAGE);
+  for (const r of slice) grid.appendChild(makeCard(r));
+  shown += slice.length;
+  const old = grid.querySelector('.sentinel'); if (old) old.remove();
+  if (shown < VIEW.length) {
+    const sent = document.createElement('div');
+    sent.className = 'sentinel'; sent.textContent = `loading more… (${shown}/${VIEW.length})`;
+    grid.appendChild(sent);
+    pageObserver.observe(sent);
+  }
+}
+const pageObserver = new IntersectionObserver(es => {
+  for (const e of es) if (e.isIntersecting) { pageObserver.unobserve(e.target); appendPage(); }
+}, { rootMargin: '600px' });
+
+const cardObserver = new IntersectionObserver(es => {
+  for (const e of es) if (e.isIntersecting) { cardObserver.unobserve(e.target); loadCardMesh(e.target); }
+}, { rootMargin: '300px' });
+
+function makeCard(r) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const c = famColor(r.family);
+  card.innerHTML = `
+    <div class="preview" data-pid="${r.part_id}"><span class="ph">●●●</span></div>
+    <div class="info">
+      <div class="pid">${r.part_id}</div>
+      <div class="tags">
+        <span class="tag fam" style="--c:${c}">${r.family||'?'}</span>
+        <span class="tag tier">T${r.tier ?? '?'}</span>
+        <span class="tag ops">${r.op_count ?? '?'} ops</span>
+      </div>
+    </div>`;
+  card.onclick = () => openModal(r);
+  cardObserver.observe(card.querySelector('.preview'));
+  return card;
+}
+
+function stlURL(r) { return BASE + 'stl/' + r.part_id + '.stl'; }
+
+async function loadCardMesh(prev) {
+  const pid = prev.dataset.pid;
+  const r = RECORDS.find(x => x.part_id === pid); if (!r) return;
+  try {
+    const buf = await (await fetch(stlURL(r))).arrayBuffer();
+    prev.innerHTML = '<canvas></canvas>';
+    const cv = prev.querySelector('canvas');
+    requestAnimationFrame(() => window.renderCard(cv, buf, famColor(r.family)));
+  } catch (e) { prev.querySelector('.ph')?.replaceWith(Object.assign(document.createElement('span'), {className:'ph', textContent:'no preview'})); }
+}
+
+// ── Modal ──
+async function openModal(r) {
+  $('#modal-bg').classList.add('open');
+  const c = famColor(r.family);
+  $('#m-pid').textContent = r.part_id;
+  $('#m-tags').innerHTML =
+    `<span class="tag fam" style="--c:${c}">${r.family||'?'}</span>` +
+    `<span class="tag tier">Tier ${r.tier ?? '?'}</span>` +
+    `<span class="tag ops">${r.op_count ?? '?'} ops</span>`;
+  const g = sig(r);
+  $('#m-kv').innerHTML = [
+    ['Volume', g.volume != null ? g.volume.toLocaleString() + ' mm³' : '—'],
+    ['Surface', g.surface_area != null ? g.surface_area.toLocaleString() + ' mm²' : '—'],
+    ['Faces / edges', `${g.n_faces ?? '—'} / ${g.n_edges ?? '—'}`],
+    ['Vertices', g.n_vertices ?? '—'],
+    ['Symmetry', r.symmetry || '—'],
+    ['IR hash', r.ir_hash || '—'],
+    ['Seed', r.seed ?? '—'],
+  ].map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join('');
+  const pyURL = BASE + (r.paths?.py || ('parts/' + r.part_id + '.py'));
+  $('#m-dl').innerHTML =
+    `<a href="${pyURL}" target="_blank" download>.py</a>` +
+    `<a href="${stlURL(r)}" target="_blank" download>.stl</a>`;
+  $('#m-src').textContent = 'loading…';
+  fetch(pyURL).then(x => x.text()).then(t => { $('#m-src').textContent = t; }).catch(() => { $('#m-src').textContent = '(source unavailable)'; });
+  try {
+    const buf = await (await fetch(stlURL(r))).arrayBuffer();
+    window.loadModalMesh(buf, c);
+  } catch (e) { $('#m-vinfo').textContent = 'mesh unavailable'; }
+}
+function closeModal() { $('#modal-bg').classList.remove('open'); }
+
+// Deferred <script type="module"> runs before DOMContentLoaded, so by this
+// point window.renderCard / window.loadModalMesh are defined.
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+</script>
+</body>
+</html>

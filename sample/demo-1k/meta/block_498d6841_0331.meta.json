@@ -1,0 +1,25 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "block_498d6841_0331",
+  "seed": 1234004033,
+  "generator_version": "0.1.0",
+  "family": "block",
+  "tier": 2,
+  "symmetry": "mirror_x",
+  "op_count": 3,
+  "ir_hash": "215335dfc890d26e",
+  "license": "CC0-1.0",
+  "geometry_signature": {
+    "version": 2,
+    "volume": 383000.0,
+    "surface_area": 39100.0,
+    "principal_moments": [
+      314000000.0,
+      379000000.0,
+      574000000.0
+    ],
+    "n_faces": 14,
+    "n_edges": 36,
+    "n_vertices": 24
+  }
+}

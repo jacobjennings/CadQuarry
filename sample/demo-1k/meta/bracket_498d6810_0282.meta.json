@@ -1,0 +1,25 @@
+{
+  "cadquarry_version": "0.1.0",
+  "part_id": "bracket_498d6810_0282",
+  "seed": 1234003984,
+  "generator_version": "0.1.0",
+  "family": "bracket",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "bb4a16f8cb69b5af",
+  "license": "CC0-1.0",
+  "geometry_signature": {
+    "version": 2,
+    "volume": 29200.0,
+    "surface_area": 13700.0,
+    "principal_moments": [
+      10400000.0,
+      30499999.999999996,
+      32999999.999999996
+    ],
+    "n_faces": 10,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}
