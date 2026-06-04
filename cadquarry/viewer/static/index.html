@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CadQuarry</title>
+<style>
+  :root {
+    --bg: #1a1a1e;
+    --surface: #25252b;
+    --surface2: #2f2f38;
+    --border: #3a3a45;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --accent: #5b8fff;
+    --accent2: #7eb8ff;
+    --green: #4caf82;
+    --red: #e05e5e;
+    --yellow: #e8b84b;
+    --family-plate: #5b8fff;
+    --family-revolved: #7be0ae;
+    --family-block: #e8a95b;
+    --family-enclosure: #c47bf0;
+    --family-flanged: #f07b7b;
+    --family-ribbed: #7bd9e8;
+    --family-profiled: #e8d87b;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Navbar ─────────────────────────────────────────── */
+  .navbar {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 48px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .navbar-logo {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    color: var(--accent2);
+  }
+  .navbar-logo span { color: var(--text2); font-weight: 400; }
+  .navbar-tabs { display: flex; gap: 4px; }
+  .tab-btn {
+    padding: 5px 14px;
+    border-radius: var(--radius);
+    border: none;
+    background: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    transition: background .15s, color .15s;
+  }
+  .tab-btn:hover { background: var(--surface2); color: var(--text); }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+  .navbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .status-pill {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-family: var(--mono);
+  }
+  .status-pill.ok { background: #1f3c2a; color: var(--green); }
+  .status-pill.err { background: #3c1f1f; color: var(--red); }
+  .status-pill.busy { background: #2a2a1f; color: var(--yellow); }
+
+  /* ── Main layout ─────────────────────────────────────── */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Panel (left sidebar) ────────────────────────────── */
+  .panel {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .panel-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+  .panel-scroll::-webkit-scrollbar { width: 5px; }
+  .panel-scroll::-webkit-scrollbar-track { background: transparent; }
+  .panel-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Parameter groups ────────────────────────────────── */
+  .param-group { margin-bottom: 6px; }
+  .param-group-header {
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+  .param-group-header:hover { background: var(--surface2); }
+  .param-group-header .chevron { font-size: 9px; margin-left: auto; transition: transform .15s; }
+  .param-group-header.collapsed .chevron { transform: rotate(-90deg); }
+  .param-group-body { padding: 2px 4px 4px 4px; }
+  .param-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 4px;
+    border-radius: var(--radius);
+    transition: background .1s;
+  }
+  .param-row:hover { background: var(--surface2); }
+  .param-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .param-name { font-family: var(--mono); font-size: 11px; color: var(--accent2); }
+  .param-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    min-width: 52px;
+    text-align: right;
+  }
+  .param-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+  }
+  .param-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .param-slider::-webkit-slider-thumb:hover { background: var(--accent2); }
+  .param-number {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .param-number:focus { border-color: var(--accent); }
+  .param-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 36px; height: 20px;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .toggle-track::before {
+    content: '';
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text2);
+    transition: transform .2s, background .2s;
+  }
+  input:checked + .toggle-track { background: var(--accent); }
+  input:checked + .toggle-track::before { transform: translateX(16px); background: #fff; }
+  .param-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    color: var(--text);
+    font-size: 12px;
+    outline: none;
+  }
+
+  /* ── 3D Viewer ───────────────────────────────────────── */
+  .viewer-area {
+    flex: 1;
+    position: relative;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  #three-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .viewer-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26,26,30,.8);
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .viewer-overlay.visible { opacity: 1; }
+  .viewer-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .viewer-error {
+    position: absolute;
+    bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: #3c1f1f;
+    color: var(--red);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    max-width: 400px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .viewer-error.visible { opacity: 1; }
+  .viewer-actions {
+    position: absolute;
+    top: 12px; right: 12px;
+    display: flex; gap: 6px;
+  }
+  .viewer-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .viewer-btn:hover { background: var(--surface2); color: var(--text); }
+  .viewer-info {
+    position: absolute;
+    bottom: 12px; left: 12px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+    line-height: 1.7;
+  }
+
+  /* ── Gallery ─────────────────────────────────────────── */
+  #gallery-view { display: flex; flex: 1; overflow: hidden; }
+  .gallery-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .gallery-sidebar h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text2); margin-bottom: 8px; }
+  .filter-group { margin-bottom: 14px; }
+  .filter-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .filter-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text2);
+    transition: all .15s;
+  }
+  .chip:hover { background: var(--surface2); color: var(--text); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .gallery-main { flex: 1; overflow-y: auto; padding: 16px; }
+  .gallery-main::-webkit-scrollbar { width: 6px; }
+  .gallery-main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .gallery-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .gallery-search {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+  .gallery-search:focus { border-color: var(--accent); }
+  .gallery-count { font-size: 12px; color: var(--text2); white-space: nowrap; }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .gallery-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s;
+  }
+  .gallery-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .gallery-card-preview {
+    height: 140px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .gallery-card-preview canvas { width: 100% !important; height: 100% !important; }
+  .gallery-card-info { padding: 8px 10px; }
+  .gallery-card-id { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gallery-card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 99px;
+    font-weight: 600;
+  }
+  .tag-family {
+    background: color-mix(in srgb, var(--tag-color, var(--accent)) 20%, transparent);
+    color: var(--tag-color, var(--accent));
+    border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 40%, transparent);
+  }
+  .tag-tier { background: var(--surface2); color: var(--text2); }
+
+  /* Panel actions */
+  .panel-actions {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .btn {
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+    font-family: var(--font);
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-row { display: flex; gap: 6px; }
+  .btn-row .btn { flex: 1; }
+
+  /* Part info panel */
+  .part-info { padding: 10px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .part-info-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+  .part-info-label { font-size: 11px; color: var(--text2); min-width: 60px; }
+  .part-info-val { font-family: var(--mono); font-size: 11px; color: var(--text); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-logo">Cad<span>Quarry</span></div>
+  <div class="navbar-tabs" id="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('customizer')">Customizer</button>
+    <button class="tab-btn" onclick="switchTab('gallery')">Gallery</button>
+  </div>
+  <div class="navbar-right">
+    <span class="status-pill busy" id="status-pill">loading…</span>
+  </div>
+</nav>
+
+<!-- ── CUSTOMIZER VIEW ─────────────────────────────── -->
+<div class="main" id="customizer-view">
+  <aside class="panel">
+    <div class="panel-header">Parameters</div>
+    <div class="panel-scroll" id="params-container">
+      <div style="color:var(--text2);font-size:12px;padding:12px;">Loading parameters…</div>
+    </div>
+    <div class="part-info" id="part-info" style="display:none;">
+      <div class="part-info-row"><span class="part-info-label">Family</span><span class="part-info-val" id="info-family">—</span></div>
+      <div class="part-info-row"><span class="part-info-label">Tier</span><span class="part-info-val" id="info-tier">—</span></div>
+      <div class="part-info-row"><span class="part-info-label">Ops</span><span class="part-info-val" id="info-ops">—</span></div>
+    </div>
+    <div class="panel-actions">
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="resetParams()">Reset</button>
+        <button class="btn btn-ghost" onclick="copyCode()">Copy code</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="exportSTL()">Export STL</button>
+        <button class="btn btn-ghost" onclick="exportSTEP()">Export STEP</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="viewer-area" id="viewer-area">
+    <canvas id="three-canvas"></canvas>
+    <div class="viewer-overlay" id="loading-overlay">
+      <div class="viewer-spinner"></div>
+    </div>
+    <div class="viewer-error" id="viewer-error"></div>
+    <div class="viewer-actions">
+      <button class="viewer-btn" onclick="resetCamera()">⟳ View</button>
+    </div>
+    <div class="viewer-info" id="viewer-info"></div>
+  </div>
+</div>
+
+<!-- ── GALLERY VIEW ────────────────────────────────── -->
+<div class="main" id="gallery-view" style="display:none;">
+  <aside class="gallery-sidebar">
+    <div class="filter-group">
+      <h3>Family</h3>
+      <div class="filter-chips" id="family-chips"></div>
+    </div>
+    <div class="filter-group">
+      <h3>Tier</h3>
+      <div class="filter-chips" id="tier-chips">
+        <button class="chip active" onclick="toggleTierFilter(this, null)">All</button>
+        <button class="chip" onclick="toggleTierFilter(this, 0)">0</button>
+        <button class="chip" onclick="toggleTierFilter(this, 1)">1</button>
+        <button class="chip" onclick="toggleTierFilter(this, 2)">2</button>
+        <button class="chip" onclick="toggleTierFilter(this, 3)">3</button>
+      </div>
+    </div>
+  </aside>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="gallery-toolbar" style="padding:12px 16px 0;">
+      <input type="text" class="gallery-search" placeholder="Search by part ID…" oninput="filterGallery()" id="gallery-search">
+      <span class="gallery-count" id="gallery-count">0 parts</span>
+    </div>
+    <div class="gallery-main">
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Scripts ────────────────────────────────────── -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+// ── Three.js setup ─────────────────────────────────────
+const canvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1e);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 10000);
+camera.position.set(100, 80, 120);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 0, 0);
+
+// Lighting
+const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 1.2);
+key.position.set(100, 150, 80);
+key.castShadow = true;
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x6080ff, 0.4);
+fill.position.set(-80, -30, -60);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.3);
+rim.position.set(0, -80, 100);
+scene.add(rim);
+
+// Grid
+const grid = new THREE.GridHelper(200, 20, 0x2a2a35, 0x2a2a35);
+scene.add(grid);
+
+// Part material
+const mat = new THREE.MeshStandardMaterial({
+  color: 0x8899bb,
+  metalness: 0.25,
+  roughness: 0.55,
+});
+
+let mesh = null;
+const loader = new STLLoader();
+
+function fitCamera(box) {
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const fov = camera.fov * (Math.PI / 180);
+  const dist = maxDim / (2 * Math.tan(fov / 2)) * 1.8;
+  controls.target.copy(center);
+  camera.position.copy(center).add(new THREE.Vector3(dist * 0.7, dist * 0.6, dist * 0.8));
+  camera.near = dist * 0.001;
+  camera.far = dist * 10;
+  camera.updateProjectionMatrix();
+  controls.update();
+  grid.position.y = box.min.y;
+}
+
+window.resetCamera = function() {
+  if (mesh) {
+    const box = new THREE.Box3().setFromObject(mesh);
+    fitCamera(box);
+  }
+};
+
+function loadSTLBuffer(buffer) {
+  if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); }
+  const geo = loader.parse(buffer);
+  geo.computeVertexNormals();
+  mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  const box = new THREE.Box3().setFromObject(mesh);
+  fitCamera(box);
+  const size = box.getSize(new THREE.Vector3());
+  document.getElementById('viewer-info').textContent =
+    `${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)} mm  ` +
+    `(${(geo.attributes.position.count / 3).toLocaleString()} triangles)`;
+}
+
+// Resize
+const ro = new ResizeObserver(() => {
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+});
+ro.observe(canvas.parentElement);
+
+// Render loop
+(function loop() {
+  requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+// Expose to window for non-module JS
+window._loadSTLBuffer = loadSTLBuffer;
+window._three = { scene, camera, controls, renderer };
+
+// Gallery card previews (mini three.js instances)
+window._renderGalleryCard = function(canvas, stlBuffer) {
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  r.setPixelRatio(1);
+  r.setSize(canvas.width, canvas.height);
+  r.setClearColor(0x1a1a1e);
+  const s = new THREE.Scene();
+  const c = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 10000);
+  const geo = loader.parse(stlBuffer);
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, mat.clone());
+  s.add(m);
+  s.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const d = new THREE.DirectionalLight(0xffffff, 1.2);
+  d.position.set(1, 2, 1.5);
+  s.add(d);
+  const box = new THREE.Box3().setFromObject(m);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxD = Math.max(size.x, size.y, size.z);
+  c.position.copy(center).add(new THREE.Vector3(maxD, maxD * 0.8, maxD));
+  c.lookAt(center);
+  r.render(s, c);
+};
+</script>
+
+<script>
+// ── App state ──────────────────────────────────────────
+let _params = {};        // live param values
+let _schema = {};        // PARAMS schema from server
+let _execTimeout = null;
+let _currentTab = 'customizer';
+
+// Gallery
+let _allRecords = [];
+let _familyFilter = null;
+let _tierFilter = null;
+
+// ── Tab switching ──────────────────────────────────────
+function switchTab(tab) {
+  _currentTab = tab;
+  document.getElementById('customizer-view').style.display = tab === 'customizer' ? 'flex' : 'none';
+  document.getElementById('gallery-view').style.display = tab === 'gallery' ? 'flex' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['customizer','gallery'][i] === tab);
+  });
+  if (tab === 'gallery' && _allRecords.length === 0) loadGallery();
+}
+
+// ── Status pill ────────────────────────────────────────
+function setStatus(text, cls) {
+  const pill = document.getElementById('status-pill');
+  pill.textContent = text;
+  pill.className = 'status-pill ' + cls;
+}
+
+// ── Params init ────────────────────────────────────────
+async function loadParams() {
+  try {
+    const r = await fetch('/api/params');
+    if (!r.ok) throw new Error(r.statusText);
+    _schema = await r.json();
+    _params = {};
+    for (const [k, v] of Object.entries(_schema)) _params[k] = v.default;
+    renderParams();
+    loadInfo();
+    triggerExecute();
+  } catch(e) {
+    setStatus('no part', 'err');
+    document.getElementById('params-container').innerHTML =
+      '<div style="padding:16px;color:var(--text2);font-size:13px;">' +
+      'No part loaded.<br><br>Open via:<br><code style="font-family:var(--mono)">cadquarry serve --part part.py</code></div>';
+  }
+}
+
+async function loadInfo() {
+  try {
+    const r = await fetch('/api/info');
+    if (!r.ok) return;
+    const info = await r.json();
+    const panel = document.getElementById('part-info');
+    panel.style.display = 'block';
+    document.getElementById('info-family').textContent = info.family || '—';
+    document.getElementById('info-tier').textContent = info.tier != null ? 'Tier ' + info.tier : '—';
+    document.getElementById('info-ops').textContent = info.op_count != null ? info.op_count + ' ops' : '—';
+  } catch(_) {}
+}
+
+// ── Render controls ────────────────────────────────────
+function renderParams() {
+  const container = document.getElementById('params-container');
+  const groups = {};
+  for (const [name, spec] of Object.entries(_schema)) {
+    const g = spec.group || 'Body';
+    (groups[g] = groups[g] || []).push([name, spec]);
+  }
+  container.innerHTML = '';
+  for (const [group, entries] of Object.entries(groups)) {
+    const gDiv = document.createElement('div');
+    gDiv.className = 'param-group';
+    const header = document.createElement('div');
+    header.className = 'param-group-header';
+    header.innerHTML = `<span>${group}</span><span class="chevron">▾</span>`;
+    header.onclick = () => {
+      header.classList.toggle('collapsed');
+      body.style.display = header.classList.contains('collapsed') ? 'none' : '';
+    };
+    gDiv.appendChild(header);
+    const body = document.createElement('div');
+    body.className = 'param-group-body';
+    for (const [name, spec] of entries) {
+      body.appendChild(buildParamRow(name, spec));
+    }
+    gDiv.appendChild(body);
+    container.appendChild(gDiv);
+  }
+}
+
+function buildParamRow(name, spec) {
+  const row = document.createElement('div');
+  row.className = 'param-row';
+  const typ = spec.type;
+
+  if (typ === 'float' || typ === 'int') {
+    const min = spec.min ?? 0, max = spec.max ?? 100, step = spec.step ?? (typ === 'int' ? 1 : 0.1);
+    const val = _params[name];
+    row.innerHTML = `
+      <div class="param-label">
+        <span class="param-name">${name}</span>
+        <span class="param-value" id="val-${name}">${formatNum(val)}</span>
+      </div>
+      <div style="color:var(--text2);font-size:11px;margin-bottom:2px;">${spec.label || name}</div>
+      <input class="param-slider" type="range" min="${min}" max="${max}" step="${step}" value="${val}"
+        oninput="onSlider('${name}', this.value)">
+      <input class="param-number" type="number" min="${min}" max="${max}" step="${step}" value="${val}"
+        id="num-${name}" onchange="onNumber('${name}', this.value)">
+    `;
+  } else if (typ === 'bool') {
+    const checked = _params[name] ? 'checked' : '';
+    row.innerHTML = `
+      <div class="param-label">
+        <span class="param-name">${name}</span>
+      </div>
+      <div class="param-toggle">
+        <label class="toggle-switch">
+          <input type="checkbox" ${checked} onchange="onBool('${name}', this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+        <span style="font-size:12px;color:var(--text2);">${spec.label || name}</span>
+      </div>
+    `;
+  } else if (typ === 'enum') {
+    const choices = spec.choices || [];
+    const opts = choices.map(c => `<option value="${c}" ${c === _params[name] ? 'selected' : ''}>${c}</option>`).join('');
+    row.innerHTML = `
+      <div class="param-label"><span class="param-name">${name}</span></div>
+      <div style="color:var(--text2);font-size:11px;margin-bottom:3px;">${spec.label || name}</div>
+      <select class="param-select" onchange="onEnum('${name}', this.value)">${opts}</select>
+    `;
+  }
+  return row;
+}
+
+function formatNum(v) { return typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(2)) : v; }
+
+function onSlider(name, value) {
+  const spec = _schema[name];
+  _params[name] = spec.type === 'int' ? parseInt(value) : parseFloat(value);
+  const numEl = document.getElementById('num-' + name);
+  const valEl = document.getElementById('val-' + name);
+  if (numEl) numEl.value = value;
+  if (valEl) valEl.textContent = formatNum(_params[name]);
+  debouncedExecute();
+}
+
+function onNumber(name, value) {
+  const spec = _schema[name];
+  const v = spec.type === 'int' ? parseInt(value) : parseFloat(value);
+  if (isNaN(v)) return;
+  _params[name] = Math.max(spec.min ?? -Infinity, Math.min(spec.max ?? Infinity, v));
+  const slider = document.querySelector(`input[type=range][oninput="onSlider('${name}', this.value)"]`);
+  if (slider) slider.value = _params[name];
+  const valEl = document.getElementById('val-' + name);
+  if (valEl) valEl.textContent = formatNum(_params[name]);
+  debouncedExecute();
+}
+
+function onBool(name, checked) { _params[name] = checked; debouncedExecute(); }
+function onEnum(name, value) { _params[name] = value; debouncedExecute(); }
+
+function debouncedExecute() {
+  if (_execTimeout) clearTimeout(_execTimeout);
+  _execTimeout = setTimeout(triggerExecute, 200);
+}
+
+async function triggerExecute() {
+  setStatus('executing…', 'busy');
+  document.getElementById('loading-overlay').classList.add('visible');
+  document.getElementById('viewer-error').classList.remove('visible');
+
+  const t0 = performance.now();
+  try {
+    const r = await fetch('/api/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_params),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ error: r.statusText }));
+      throw new Error(err.error || r.statusText);
+    }
+    const buf = await r.arrayBuffer();
+    window._loadSTLBuffer(buf);
+    const ms = (performance.now() - t0).toFixed(0);
+    setStatus(`${ms} ms`, 'ok');
+  } catch(e) {
+    setStatus('error', 'err');
+    const errEl = document.getElementById('viewer-error');
+    errEl.textContent = e.message;
+    errEl.classList.add('visible');
+    setTimeout(() => errEl.classList.remove('visible'), 4000);
+  } finally {
+    document.getElementById('loading-overlay').classList.remove('visible');
+  }
+}
+
+function resetParams() {
+  for (const [k, v] of Object.entries(_schema)) _params[k] = v.default;
+  renderParams();
+  triggerExecute();
+}
+
+async function copyCode() {
+  try {
+    const r = await fetch('/api/params');
+    const schema = await r.json();
+    const p = Object.entries(schema).map(([k,v]) => `    ${JSON.stringify(k)}: ${JSON.stringify(_params[k] ?? v.default)}`).join(',\n');
+    await navigator.clipboard.writeText(`build({\n${p}\n})`);
+    setStatus('copied!', 'ok');
+    setTimeout(() => setStatus(_schema ? 'ready' : 'idle', 'ok'), 1500);
+  } catch(_) {}
+}
+
+async function exportSTL() {
+  try {
+    const r = await fetch('/api/execute', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(_params),
+    });
+    if (!r.ok) throw new Error('Export failed');
+    const buf = await r.arrayBuffer();
+    const blob = new Blob([buf], {type: 'model/stl'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'part.stl';
+    a.click(); URL.revokeObjectURL(a.href);
+  } catch(e) { alert('STL export failed: ' + e.message); }
+}
+
+async function exportSTEP() {
+  alert('STEP export requires running: cadquarry run part.py --export step');
+}
+
+// ── Gallery ────────────────────────────────────────────
+async function loadGallery() {
+  try {
+    const r = await fetch('/api/manifest');
+    _allRecords = await r.json();
+    buildFamilyChips();
+    filterGallery();
+  } catch(e) {
+    document.getElementById('gallery-grid').innerHTML =
+      '<div style="color:var(--text2);padding:20px;">No dataset loaded.<br><br>' +
+      'Use: <code style="font-family:var(--mono)">cadquarry serve --dataset ./dataset</code></div>';
+  }
+}
+
+function buildFamilyChips() {
+  const families = [...new Set(_allRecords.map(r => r.family).filter(Boolean))].sort();
+  const container = document.getElementById('family-chips');
+  container.innerHTML = '<button class="chip active" onclick="toggleFamilyFilter(this, null)">All</button>';
+  const colors = {
+    plate:'var(--family-plate)',revolved:'var(--family-revolved)',
+    block:'var(--family-block)',enclosure:'var(--family-enclosure)',
+    flanged:'var(--family-flanged)',ribbed:'var(--family-ribbed)',
+    profiled:'var(--family-profiled)',
+  };
+  for (const f of families) {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.style.setProperty('--tag-color', colors[f] || 'var(--accent)');
+    btn.textContent = f;
+    btn.onclick = () => toggleFamilyFilter(btn, f);
+    container.appendChild(btn);
+  }
+}
+
+function toggleFamilyFilter(btn, value) {
+  _familyFilter = value;
+  document.querySelectorAll('#family-chips .chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterGallery();
+}
+
+function toggleTierFilter(btn, value) {
+  _tierFilter = value;
+  document.querySelectorAll('#tier-chips .chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterGallery();
+}
+
+function filterGallery() {
+  const q = (document.getElementById('gallery-search')?.value || '').toLowerCase();
+  let records = _allRecords;
+  if (_familyFilter) records = records.filter(r => r.family === _familyFilter);
+  if (_tierFilter !== null) records = records.filter(r => r.tier === _tierFilter);
+  if (q) records = records.filter(r => (r.part_id || '').toLowerCase().includes(q));
+  document.getElementById('gallery-count').textContent = records.length + ' parts';
+  renderGalleryGrid(records.slice(0, 200));  // limit to 200 for perf
+}
+
+const _cardObserver = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    if (e.isIntersecting) {
+      _cardObserver.unobserve(e.target);
+      loadCardPreview(e.target);
+    }
+  }
+}, { rootMargin: '100px' });
+
+const FAMILY_COLORS = {
+  plate:'#5b8fff',revolved:'#7be0ae',block:'#e8a95b',enclosure:'#c47bf0',
+  flanged:'#f07b7b',ribbed:'#7bd9e8',profiled:'#e8d87b',
+};
+
+function renderGalleryGrid(records) {
+  const grid = document.getElementById('gallery-grid');
+  grid.innerHTML = '';
+  for (const rec of records) {
+    const card = document.createElement('div');
+    card.className = 'gallery-card';
+    card.dataset.partId = rec.part_id;
+    const color = FAMILY_COLORS[rec.family] || '#5b8fff';
+    card.innerHTML = `
+      <div class="gallery-card-preview" data-part-id="${rec.part_id}">
+        <canvas width="180" height="140"></canvas>
+      </div>
+      <div class="gallery-card-info">
+        <div class="gallery-card-id">${rec.part_id}</div>
+        <div class="gallery-card-tags">
+          <span class="tag tag-family" style="--tag-color:${color}">${rec.family || '?'}</span>
+          <span class="tag tag-tier">T${rec.tier ?? '?'}</span>
+        </div>
+      </div>
+    `;
+    card.onclick = () => openInCustomizer(rec.part_id);
+    grid.appendChild(card);
+    _cardObserver.observe(card.querySelector('.gallery-card-preview'));
+  }
+}
+
+async function loadCardPreview(previewEl) {
+  const partId = previewEl.dataset.partId;
+  const canvas = previewEl.querySelector('canvas');
+  try {
+    const r = await fetch('/api/stl/' + partId);
+    if (!r.ok) return;
+    const buf = await r.arrayBuffer();
+    window._renderGalleryCard(canvas, buf);
+  } catch(_) {
+    canvas.style.opacity = '0.3';
+  }
+}
+
+function openInCustomizer(partId) {
+  window.open('/customizer?part=parts/' + partId + '.py', '_blank');
+}
+
+// ── Init ───────────────────────────────────────────────
+const isCustomizer = window.location.pathname.includes('customizer') ||
+                     window.location.search.includes('part=');
+if (isCustomizer) {
+  switchTab('customizer');
+  loadParams();
+} else {
+  // Detect mode from server
+  fetch('/api/manifest').then(r => {
+    if (r.ok) { switchTab('gallery'); loadGallery(); }
+    else { switchTab('customizer'); loadParams(); }
+  }).catch(() => { switchTab('customizer'); loadParams(); });
+}
+</script>
+
+</body>
+</html>

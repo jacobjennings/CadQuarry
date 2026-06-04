@@ -1,0 +1,144 @@
+# CadQuarry default generation configuration.
+# Override any section by passing --config path/to/custom.toml to cadquarry generate.
+
+[generation]
+seed    = 42
+count   = 100
+timeout_seconds = 30
+
+# ---------------------------------------------------------------------------
+# Part family weights
+# Must sum to approximately 1.0.  Families without a sampler are silently
+# dropped, so adding a new family here before the code exists is safe.
+# ---------------------------------------------------------------------------
+[distribution.families]
+plate     = 0.22   # flat plates, brackets, flange plates
+revolved  = 0.18   # shafts, bushings, washers — rotational geometry
+block     = 0.15   # prismatic blocks / housings
+bracket   = 0.18   # L-brackets: base + vertical leg + holes + optional gusset
+flanged   = 0.08   # revolved stub + bolt circle
+ribbed    = 0.07   # base + patterned ribs / webs
+enclosure = 0.07   # shelled box / enclosures
+profiled  = 0.05   # long constant cross-section extrusions
+
+# ---------------------------------------------------------------------------
+# Complexity tier weights (global; clamped per family by FAMILY_TIER_SPANS)
+# Tier 0 = single feature, Tier 3 = deep tree with patterns
+# ---------------------------------------------------------------------------
+[distribution.tiers]
+tier0 = 0.25
+tier1 = 0.40
+tier2 = 0.25
+tier3 = 0.10
+
+# ---------------------------------------------------------------------------
+# Cross-cutting regularity probabilities
+# ---------------------------------------------------------------------------
+[distribution.regularities]
+symmetry_prob         = 0.60   # fraction of parts with some symmetry
+nice_numbers_prob     = 0.50   # snap dimensions to round numbers
+standard_holes_prob   = 0.70   # use metric fastener clearance sizes
+
+# ---------------------------------------------------------------------------
+# Quality / validity filters
+# ---------------------------------------------------------------------------
+[quality]
+min_volume_mm3      = 1.0
+max_bbox_ratio      = 20.0     # max(dims) / min(dims)
+enable_wall_check   = false    # opt-in thin-wall detection (slow)
+min_wall_thickness_mm = 0.5
+
+# ---------------------------------------------------------------------------
+# Geometry signature quantization for dedup
+# These values are versioned — do not change them after first publishing a
+# corpus or you will break seed reproducibility.
+# ---------------------------------------------------------------------------
+[dedup]
+volume_sig_figs     = 3
+surface_area_sig_figs = 3
+moment_sig_figs     = 3        # for future principal-moment extension
+
+# ---------------------------------------------------------------------------
+# Per-family dimension ranges (all dimensions in mm unless noted)
+# ---------------------------------------------------------------------------
+
+[families.plate]
+width_min     = 20.0
+width_max     = 120.0
+aspect_min    = 1.0
+aspect_max    = 3.0
+thickness_min = 2.0
+thickness_max = 12.0
+hole_margin_factor = 0.15   # min(hole_to_edge) / min(plate_w, plate_d)
+tier_min      = 0
+tier_max      = 3
+
+[families.bracket]
+leg_min        = 25.0   # length of each leg
+leg_max        = 90.0
+width_min      = 15.0
+width_max      = 60.0
+thickness_min  = 3.0
+thickness_max  = 8.0
+tier_min       = 1
+tier_max       = 3
+
+[families.revolved]
+outer_d_min       = 6.0
+outer_d_max       = 80.0
+length_to_d_min   = 0.2   # length = outer_d * U[l2d_min, l2d_max]
+length_to_d_max   = 4.0
+tier_min          = 0
+tier_max          = 2
+
+[families.block]
+width_min     = 15.0
+width_max     = 100.0
+aspect_min    = 1.0
+aspect_max    = 2.5
+height_factor_min = 0.5   # height = width * U[hf_min, hf_max]
+height_factor_max = 2.0
+tier_min      = 1
+tier_max      = 3
+
+[families.enclosure]
+width_min          = 30.0
+width_max          = 120.0
+aspect_min         = 1.0
+aspect_max         = 2.5
+wall_thickness_min = 2.0
+wall_thickness_max = 6.0
+tier_min           = 1
+tier_max           = 3
+
+[families.flanged]
+outer_d_min           = 20.0
+outer_d_max           = 100.0
+flange_d_factor_min   = 1.6
+flange_d_factor_max   = 2.4
+n_bolts_choices       = [4, 6, 8, 12]
+tier_min              = 1
+tier_max              = 3
+
+[families.ribbed]
+width_min     = 30.0
+width_max     = 100.0
+aspect_min    = 1.0
+aspect_max    = 2.0
+tier_min      = 1
+tier_max      = 3
+
+[families.profiled]
+circle_d_min  = 8.0
+circle_d_max  = 50.0
+tier_min      = 0
+tier_max      = 2
+
+# ---------------------------------------------------------------------------
+# Standard fastener / stock sizes used by regularities
+# ---------------------------------------------------------------------------
+[fasteners]
+# Metric close-fit clearance diameters (M3 through M12)
+clearance_diameters = [3.2, 4.3, 5.3, 6.4, 8.4, 10.5, 13.0]
+# Common machined/stock thicknesses
+stock_thicknesses   = [2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0]
