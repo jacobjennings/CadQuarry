@@ -262,7 +262,7 @@ def export_render(
 def export_corpus_geometry(
     dataset_dir: Path,
     formats: list[str] | None = None,
-    n_workers: int = 4,
+    n_workers: int = 0,
     timeout: float = 60.0,
     verbose: bool = False,
     n_points: int = 2048,
@@ -273,9 +273,21 @@ def export_corpus_geometry(
     B-rep formats (step/stl/svg) land in <dataset>/geometry/, point clouds in
     <dataset>/pointclouds/, and renders in <dataset>/renders/.
     Returns counts of {format: n_exported}.
+
+    The expensive per-part cost is importing cadquery and rebuilding the solid;
+    we amortise it across a pool of persistent workers (see
+    ``execute.WorkerPool``) so the whole corpus shares one set of imports.
     """
+    from .execute import WorkerPool, default_worker_count
+
     if formats is None:
         formats = ["step", "stl"]
+
+    brep = [f for f in formats if f in _BREP_FORMATS]
+    mesh = [f for f in formats if f in _MESH_FORMATS]
+    unknown = [f for f in formats if f not in ALL_FORMATS]
+    if unknown:
+        raise ValueError(f"Unknown export format(s): {unknown}. Valid: {ALL_FORMATS}")
 
     parts_dir = dataset_dir / "parts"
     geo_dir = dataset_dir / "geometry"
@@ -283,20 +295,82 @@ def export_corpus_geometry(
 
     counts: dict[str, int] = {f: 0 for f in formats}
 
-    # Simple sequential export — parallel via multiprocessing is a future opt.
+    # Each part needs an STL on disk if the user asked for it or if any
+    # mesh-derived format (pointcloud/render) was requested.
+    stl_requested = "stl" in brep
+    need_stl = stl_requested or bool(mesh)
+    run_formats = list(brep)
+    if need_stl and "stl" not in run_formats:
+        run_formats.append("stl")
+
+    geo_dir.mkdir(parents=True, exist_ok=True)
+
+    n = default_worker_count(n_workers)
+    pool = WorkerPool(n, timeout=timeout)
+    try:
+        # Phase 1: run every part's B-rep export in parallel across workers.
+        results: dict[str, dict] = {}
+        if run_formats:
+            jobs = [
+                (
+                    py_path.stem,
+                    {
+                        "op": "export",
+                        "part_file": str(py_path),
+                        "formats": run_formats,
+                        "out_dir": str(geo_dir),
+                        "overrides": {},
+                    },
+                )
+                for py_path in py_files
+            ]
+            results = pool.map(jobs)
+    finally:
+        pool.close()
+
+    # Phase 2: tally B-rep outputs and derive mesh-based artifacts (trimesh /
+    # matplotlib run in this process; they never import cadquery).
     for py_path in py_files:
         pid = py_path.stem
+        exported: dict[str, Path] = {}
+        data = results.get(pid)
+        if data is None and run_formats:
+            if verbose:
+                print(f"  FAILED {pid}: no export result")
+            continue
+        if data is not None:
+            if not data.get("success"):
+                if verbose:
+                    print(f"  FAILED {pid}: {data.get('error', 'unknown export error')}")
+                continue
+            for p in data.get("files", []):
+                exported[Path(p).suffix.lstrip(".")] = Path(p)
+
         try:
-            exported = export_part(
-                py_path, geo_dir, formats=formats, timeout=timeout, n_points=n_points
-            )
-            for fmt, path in exported.items():
-                if fmt in counts and path.exists():
-                    counts[fmt] = counts.get(fmt, 0) + 1
-                    if verbose:
-                        print(f"  exported {pid}.{fmt}")
+            if mesh:
+                stl_path = exported.get("stl")
+                if stl_path is None or not stl_path.exists():
+                    raise RuntimeError("STL needed for mesh export was not produced")
+                if "pointcloud" in mesh:
+                    pc_out = geo_dir.parent / "pointclouds" / f"{pid}.ply"
+                    exported["pointcloud"] = export_pointcloud(stl_path, pc_out, n_points=n_points)
+                if "render" in mesh:
+                    rn_out = geo_dir.parent / "renders" / f"{pid}.png"
+                    exported["render"] = export_render(stl_path, rn_out)
+                if not stl_requested and stl_path.exists():
+                    try:
+                        stl_path.unlink()
+                    except OSError:
+                        pass
+                    exported.pop("stl", None)
         except Exception as exc:
             if verbose:
-                print(f"  FAILED {pid}: {exc}")
+                print(f"  FAILED {pid} (mesh): {exc}")
+
+        for fmt, path in exported.items():
+            if fmt in counts and path.exists():
+                counts[fmt] = counts.get(fmt, 0) + 1
+                if verbose:
+                    print(f"  exported {pid}.{fmt}")
 
     return counts
