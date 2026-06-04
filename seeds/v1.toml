@@ -1,0 +1,50 @@
+# CadQuarry v1 published seed list
+#
+# Each [[corpus]] entry fully specifies a reproducible corpus: the published
+# generator at `generator_version` plus the listed `seed`, `count`, and
+# `config` regenerate it bit-for-bit (same manifest, same geometry signatures).
+#
+# Reproduce any entry:
+#   cadquarry generate --seed <seed> --count <count> \
+#       --config <config> --out datasets/<name>/
+#
+# Because generation is fully seeded, the data is a convenience artifact —
+# this file plus the generator is the actual deliverable.
+
+[meta]
+generator_version = "0.1.0"   # cadquarry.__version__ this list targets
+signature_version = 2         # geometry-signature definition (filter.SIGNATURE_VERSION)
+config            = "configs/default.toml"
+data_license      = "CC0-1.0"
+
+# ---------------------------------------------------------------------------
+# Canonical corpora
+# ---------------------------------------------------------------------------
+
+[[corpus]]
+name        = "smoke"
+seed        = 42
+count       = 100
+config      = "configs/default.toml"
+description = "Small smoke-test corpus across all families and tiers."
+
+[[corpus]]
+name        = "demo-1k"
+seed        = 1234
+count       = 1000
+config      = "configs/default.toml"
+description = "Mid-size demonstration corpus; good for gallery browsing."
+
+[[corpus]]
+name        = "v1-10k"
+seed        = 20260603
+count       = 10000
+config      = "configs/default.toml"
+description = "Reference 10k corpus realizing the default family/tier distribution."
+
+[[corpus]]
+name        = "v1-50k"
+seed        = 770077
+count       = 50000
+config      = "configs/default.toml"
+description = "Large corpus for downstream dataset use."
