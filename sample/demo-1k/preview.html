@@ -229,14 +229,32 @@
 <script>
 const loader = new THREE.STLLoader();
 
-// ── Mini card renderer (one-shot) ──
+// ── Shared single-context card renderer ──
+// Browsers cap the number of simultaneous WebGL contexts (~16) and silently drop
+// the oldest once you exceed it — which blanked out thumbnails as you scrolled.
+// So we keep exactly ONE GL context: render each thumbnail into this offscreen
+// renderer, then blit the pixels into the card's own lightweight 2D canvas.
+let cardRenderer = null;
+function getCardRenderer() {
+  if (cardRenderer) return cardRenderer;
+  // preserveDrawingBuffer so drawImage() can read the framebuffer after render.
+  const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  r.setPixelRatio(1); // device pixels are managed explicitly below
+  r.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); cardRenderer = null; }, false);
+  cardRenderer = r;
+  return r;
+}
+
 window.renderCard = function(canvas, buffer, color) {
   try {
-    const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    r.setPixelRatio(Math.min(devicePixelRatio, 2));
-    r.setSize(canvas.clientWidth || 186, canvas.clientHeight || 150, false);
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const w = canvas.clientWidth || 186, h = canvas.clientHeight || 150;
+    const pw = Math.max(1, Math.round(w * dpr)), ph = Math.max(1, Math.round(h * dpr));
+
+    const r = getCardRenderer();
+    r.setSize(pw, ph, false);
     const s = new THREE.Scene();
-    const c = new THREE.PerspectiveCamera(42, (canvas.clientWidth||186)/(canvas.clientHeight||150), .01, 1e5);
+    const c = new THREE.PerspectiveCamera(42, pw / ph, .01, 1e5);
     const geo = loader.parse(buffer); geo.computeVertexNormals();
     const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color||'#9aa8c8'), metalness:.28, roughness:.5 }));
     s.add(m);
@@ -250,9 +268,13 @@ window.renderCard = function(canvas, buffer, color) {
     c.position.copy(ctr).add(new THREE.Vector3(md*0.95, md*0.8, md*1.1));
     c.lookAt(ctr); c.near = md*0.01; c.far = md*20; c.updateProjectionMatrix();
     r.render(s, c);
-    // free GL resources; the rendered framebuffer persists on the canvas
+
+    // Blit the GL framebuffer into the card's 2D canvas, then free GL objects.
+    canvas.width = pw; canvas.height = ph;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, pw, ph);
+    ctx.drawImage(r.domElement, 0, 0, pw, ph);
     geo.dispose(); m.material.dispose();
-    setTimeout(() => r.dispose(), 30);
   } catch(e) { /* leave placeholder */ }
 };
 
