@@ -80,6 +80,39 @@ Family weights, tier distributions, and per-family dimension ranges are all tuna
 
 ---
 
+## Performance
+
+Generation validates every part by execution. The expensive step is importing
+CadQuery/OCP (~1–1.5s), so CadQuarry runs a pool of **persistent workers** that
+import CadQuery once and then build many parts each, fanning the work across
+cores. Sampling stays seeded per-part and the accept/dedup decision stays in
+strict attempt order, so output is **bit-for-bit identical regardless of worker
+count** — the same seed always yields the same corpus.
+
+Measured on an **AMD Ryzen Threadripper 9960X (24C/48T)** with the default
+24-worker pool (`generate`, execution-validated, no geometry export):
+
+| Dataset size | Estimated time | Notes |
+|---|---|---|
+| 5,000   | ~20 s     | |
+| 10,000  | ~40 s     | |
+| 25,000  | ~1 m 45 s | |
+| 50,000  | ~3 m 25 s | |
+| 100,000 | ~6 m 50 s | |
+| 200,000 | ~13 m 30 s | |
+
+Throughput is roughly **~250 accepted parts/sec** (sustained) after a ~2s
+worker warm-up. Anchored on real runs: 200 parts in **2.6s**, 2,000 in **9.9s**.
+For reference, the legacy one-subprocess-per-part path managed ~0.85 parts/sec
+(~90× slower) — a 50k corpus would have taken **over 16 hours** instead of
+minutes.
+
+Tune the pool with `--workers N` (default: `min(cores, 24)`). Estimates scale
+roughly linearly with core count and exclude STEP/STL/point-cloud export
+(`cadquarry export`, which uses the same worker pool).
+
+---
+
 ## Parametric format
 
 Every generated `.py` file is self-contained and customizer-compatible:
