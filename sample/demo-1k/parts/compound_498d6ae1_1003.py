@@ -19,11 +19,11 @@ def build(p):
 
     result = cq.Workplane('XY').box(p["block_w"], p["block_d"], p["block_h"])
     result = (
-        result.faces('<Y').workplane()
+        result.faces('<Y').workplane(centerOption='CenterOfBoundBox')
         .polygon(p["spig_sides"], p["spig_r"] * 2).extrude(p["spig_len"])
     )
     result = (
-        result.faces('<Y').workplane()
+        result.faces('<Y').workplane(centerOption='CenterOfBoundBox')
         .hole(p["spig_bore"])
     )
     result = (

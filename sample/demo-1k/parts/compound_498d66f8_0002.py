@@ -15,7 +15,7 @@ def build(p):
 
     result = (cq.Workplane('XY').circle(p["shaft_d"] / 2).extrude(p["shaft_len"]))
     result = (
-        result.faces('>Z').workplane()
+        result.faces('>Z').workplane(centerOption='CenterOfBoundBox')
         .circle(p["step_d"] / 2).extrude(p["step_len"])
     )
     return result

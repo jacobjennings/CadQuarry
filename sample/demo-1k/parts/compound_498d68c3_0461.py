@@ -19,7 +19,7 @@ def build(p):
 
     result = cq.Workplane('XY').box(p["block_w"], p["block_d"], p["block_h"])
     result = (
-        result.faces('>Y').workplane()
+        result.faces('>Y').workplane(centerOption='CenterOfBoundBox')
         .rect(p["tab_a"], p["tab_b"]).extrude(p["tab_t"])
     )
     result = (

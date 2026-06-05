@@ -17,7 +17,7 @@ def build(p):
 
     result = cq.Workplane('XY').box(p["block_w"], p["block_d"], p["block_h"])
     result = (
-        result.faces('<X').workplane()
+        result.faces('<X').workplane(centerOption='CenterOfBoundBox')
         .slot2D(p["spig_slot_l"], p["spig_w"]).extrude(p["spig_len"])
     )
     return result

@@ -19,11 +19,11 @@ def build(p):
 
     result = cq.Workplane('XY').box(p["base_w"], p["base_d"], p["base_h"])
     result = (
-        result.faces('>Z').workplane()
+        result.faces('>Z').workplane(centerOption='CenterOfBoundBox')
         .circle(p["col_d"] / 2).extrude(p["col_h"])
     )
     result = (
-        result.faces('>Z').workplane()
+        result.faces('>Z').workplane(centerOption='CenterOfBoundBox')
         .hole(p["col_bore"])
     )
     result = (

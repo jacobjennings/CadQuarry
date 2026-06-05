@@ -36,7 +36,7 @@ def build(p):
     if p["filleted2"]:
         result = result.edges('|Z').fillet(min(p["block_w"], p["block_d"]) * 0.10233407540982035)
     result = (
-        result.faces('>Y').workplane()
+        result.faces('>Y').workplane(centerOption='CenterOfBoundBox')
         .circle(p["side_tube_d"] / 2).extrude(p["side_tube_len"])
     )
     return result

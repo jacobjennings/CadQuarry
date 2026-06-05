@@ -82,6 +82,7 @@ def _analyze(req: dict[str, Any]) -> dict[str, Any]:
     n_faces = len(result.faces("").vals())
     n_edges = len(result.edges("").vals())
     n_verts = len(result.vertices("").vals())
+    n_solids = len(result.solids().vals())
 
     if stl_out:
         import cadquery as _cq
@@ -96,6 +97,7 @@ def _analyze(req: dict[str, Any]) -> dict[str, Any]:
         "n_faces": n_faces,
         "n_edges": n_edges,
         "n_vertices": n_verts,
+        "n_solids": n_solids,
     }
 
 

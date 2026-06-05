@@ -37,11 +37,11 @@ def build(p):
     if p["filleted2"]:
         result = result.edges('|Z').fillet(min(p["block_w"], p["block_d"]) * 0.05745752719791228)
     result = (
-        result.faces('>X').workplane()
+        result.faces('>X').workplane(centerOption='CenterOfBoundBox')
         .circle(p["side_tube_d"] / 2).extrude(p["side_tube_len"])
     )
     result = (
-        result.faces('>X').workplane()
+        result.faces('>X').workplane(centerOption='CenterOfBoundBox')
         .hole(p["side_bore_d"])
     )
     return result

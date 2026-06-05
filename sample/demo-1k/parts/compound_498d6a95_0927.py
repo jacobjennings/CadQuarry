@@ -18,11 +18,11 @@ def build(p):
 
     result = (cq.Workplane('XY').polygon(p["base_sides"], p["base_r"] * 2).extrude(p["base_h"]))
     result = (
-        result.faces('>Z').workplane()
+        result.faces('>Z').workplane(centerOption='CenterOfBoundBox')
         .circle(p["col_d"] / 2).extrude(p["col_h"])
     )
     result = (
-        result.faces('>Z').workplane()
+        result.faces('>Z').workplane(centerOption='CenterOfBoundBox')
         .hole(p["col_bore"])
     )
     if p["filleted"]:
