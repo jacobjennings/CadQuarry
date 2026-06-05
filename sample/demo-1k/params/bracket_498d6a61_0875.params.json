@@ -1,10 +1,10 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "bracket_498d6a61_0875",
   "params": {
     "base_len": {
       "type": "float",
-      "default": 32.6,
+      "default": 77.51,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -13,7 +13,7 @@
     },
     "vert_len": {
       "type": "float",
-      "default": 31.4,
+      "default": 72.4,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -22,7 +22,7 @@
     },
     "bracket_w": {
       "type": "float",
-      "default": 40.09,
+      "default": 50,
       "min": 15.0,
       "max": 60.0,
       "step": 1.0,
@@ -31,7 +31,7 @@
     },
     "bracket_t": {
       "type": "float",
-      "default": 3.0,
+      "default": 8.0,
       "min": 3.0,
       "max": 8.0,
       "step": 0.5,

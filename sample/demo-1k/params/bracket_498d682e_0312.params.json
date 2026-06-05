@@ -1,10 +1,10 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "bracket_498d682e_0312",
   "params": {
     "base_len": {
       "type": "float",
-      "default": 31.11,
+      "default": 86.52,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -13,7 +13,7 @@
     },
     "vert_len": {
       "type": "float",
-      "default": 30.0,
+      "default": 52.7,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -22,7 +22,7 @@
     },
     "bracket_w": {
       "type": "float",
-      "default": 15.0,
+      "default": 30,
       "min": 15.0,
       "max": 60.0,
       "step": 1.0,
@@ -31,7 +31,7 @@
     },
     "bracket_t": {
       "type": "float",
-      "default": 4.0,
+      "default": 5.0,
       "min": 3.0,
       "max": 8.0,
       "step": 0.5,
@@ -40,9 +40,9 @@
     },
     "hole_d": {
       "type": "float",
-      "default": 5.3,
+      "default": 3.2,
       "min": 3.0,
-      "max": 6.0,
+      "max": 10.0,
       "step": 0.1,
       "group": "Holes",
       "label": "Hole diameter (mm)"

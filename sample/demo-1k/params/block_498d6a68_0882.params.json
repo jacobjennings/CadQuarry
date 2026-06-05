@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "block_498d6a68_0882",
   "params": {
     "block_w": {
@@ -40,8 +40,8 @@
     },
     "pocket_w": {
       "type": "float",
-      "default": 23.3,
-      "min": 11.7,
+      "default": 25.7,
+      "min": 12.8,
       "max": 40.1,
       "step": 1.0,
       "group": "Pocket",
@@ -49,8 +49,8 @@
     },
     "pocket_d": {
       "type": "float",
-      "default": 9.6,
-      "min": 4.8,
+      "default": 8.9,
+      "min": 4.5,
       "max": 16.7,
       "step": 1.0,
       "group": "Pocket",
@@ -58,8 +58,8 @@
     },
     "pocket_h": {
       "type": "float",
-      "default": 11.5,
-      "min": 4.6,
+      "default": 14.3,
+      "min": 5.7,
       "max": 29.7,
       "step": 0.5,
       "group": "Pocket",

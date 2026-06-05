@@ -1,25 +1,12 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "ribbed_498d6a63_0877",
   "seed": 1234004579,
-  "generator_version": "0.1.0",
+  "generator_version": "0.3.0",
   "family": "ribbed",
   "tier": 2,
   "symmetry": "mirror_x",
   "op_count": 2,
-  "ir_hash": "9487725665e4b99a",
-  "license": "CC0-1.0",
-  "geometry_signature": {
-    "version": 2,
-    "volume": 51300.0,
-    "surface_area": 19500.0,
-    "principal_moments": [
-      28099999.999999996,
-      38700000.0,
-      65499999.99999999
-    ],
-    "n_faces": 16,
-    "n_edges": 36,
-    "n_vertices": 24
-  }
+  "ir_hash": "349866078a364c9a",
+  "license": "CC0-1.0"
 }

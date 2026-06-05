@@ -1,10 +1,10 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "bracket_498d6aae_0952",
   "params": {
     "base_len": {
       "type": "float",
-      "default": 90.0,
+      "default": 49.67,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -13,7 +13,7 @@
     },
     "vert_len": {
       "type": "float",
-      "default": 90.0,
+      "default": 33.9,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -22,7 +22,7 @@
     },
     "bracket_w": {
       "type": "float",
-      "default": 21.14,
+      "default": 55,
       "min": 15.0,
       "max": 60.0,
       "step": 1.0,
@@ -31,18 +31,27 @@
     },
     "bracket_t": {
       "type": "float",
-      "default": 5.0,
+      "default": 4.0,
       "min": 3.0,
       "max": 8.0,
       "step": 0.5,
       "group": "Body",
       "label": "Thickness (mm)"
     },
+    "top_len": {
+      "type": "float",
+      "default": 47.6,
+      "min": 25.0,
+      "max": 90.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Top flange length (mm)"
+    },
     "hole_d": {
       "type": "float",
       "default": 4.3,
       "min": 3.0,
-      "max": 8.5,
+      "max": 10.0,
       "step": 0.1,
       "group": "Holes",
       "label": "Hole diameter (mm)"
@@ -54,13 +63,13 @@
       "max": 3,
       "step": 1,
       "group": "Holes",
-      "label": "Holes per leg"
+      "label": "Holes per flange"
     },
     "gusset_t": {
       "type": "float",
-      "default": 6.5,
-      "min": 2.5,
-      "max": 10.6,
+      "default": 5.9,
+      "min": 2.0,
+      "max": 12.0,
       "step": 0.5,
       "group": "Gusset",
       "label": "Gusset thickness (mm)"

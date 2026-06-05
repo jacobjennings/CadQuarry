@@ -324,26 +324,49 @@ class RevolveOp(BaseModel):
 
 class HolesOp(BaseModel):
     """
-    Drill holes on a face.
-    placement: 'corners' (rect grid at 4 corners), 'grid' (rarray), 'bolt_circle' (polarArray).
+    Drill or cut holes/slots on a face.
+
+    shape:
+      'round'  — circular through-hole via .hole()
+      'square' — square cutout via .rect().cutThruAll(); diameter = side length
+      'slot'   — rounded slot via .slot2D().cutThruAll(); diameter = width, slot_len = length
+
+    placement:
+      'corners'   — 4-corner construction rect → .vertices()
+      'grid'      — rectangular rarray
+      'bolt_circle' — polar array (round only)
+      'staggered' — two alternating rows offset by half pitch (round only)
     """
     type: Literal["holes"] = "holes"
     diameter: Expr
-    placement: Literal["corners", "grid", "bolt_circle"] = "corners"
-    # corners / grid shared — spacing_x/y define the construction rect
+    shape: Literal["round", "square", "slot"] = "round"
+    placement: Literal["corners", "grid", "bolt_circle", "staggered"] = "corners"
+    # corners / grid / staggered — spacing_x/y define the pitch
     spacing_x: Expr | None = None
     spacing_y: Expr | None = None
-    # grid only
+    # grid / staggered only
     nx: Expr | None = None
     ny: Expr | None = None
+    # slot shape only — long-axis length; diameter is the short-axis width
+    slot_len: Expr | None = None
     # bolt_circle only
     bolt_circle_r: Expr | None = None
     n_bolts: Expr | None = None
     face: str = ">Z"
 
-    def to_code(self) -> list[str]:
-        d = self.diameter.to_code()
+    def to_code(self) -> list[str]:  # noqa: C901
         face = self.face
+        d = self.diameter.to_code()
+
+        # Build the shape action string — what comes after the positioning step.
+        if self.shape == "square":
+            action = f".rect({d}, {d}).cutThruAll()"
+        elif self.shape == "slot":
+            sl = self.slot_len.to_code() if self.slot_len else f"({d}) * 2"
+            action = f".slot2D({sl}, {d}).cutThruAll()"
+        else:
+            action = f".hole({d})"
+
         if self.placement == "corners":
             sx = self.spacing_x.to_code() if self.spacing_x else "20"
             sy = self.spacing_y.to_code() if self.spacing_y else "20"
@@ -351,7 +374,7 @@ class HolesOp(BaseModel):
                 f"    result = (",
                 f"        result.faces({face!r}).workplane()",
                 f"        .rect({sx}, {sy}, forConstruction=True)",
-                f"        .vertices().hole({d})",
+                f"        .vertices(){action}",
                 f"    )",
             ]
         elif self.placement == "grid":
@@ -363,10 +386,30 @@ class HolesOp(BaseModel):
                 f"    result = (",
                 f"        result.faces({face!r}).workplane()",
                 f"        .rarray({sx}, {sy}, {nx}, {ny})",
+                f"        {action}",
+                f"    )",
+            ]
+        elif self.placement == "staggered":
+            # Two alternating rows: row 0 has nx holes at y=−sy/2,
+            # row 1 has (nx−1) holes at y=+sy/2, shifted right by sx/2.
+            sx = self.spacing_x.to_code() if self.spacing_x else "10"
+            sy = self.spacing_y.to_code() if self.spacing_y else "10"
+            nx = self.nx.to_code() if self.nx else "3"
+            return [
+                f"    _snx = max(2, int({nx}))",
+                f"    _ssx = {sx}",
+                f"    _ssy = {sy}",
+                f"    _spts = (",
+                f"        [(-_ssx * (_snx - 1) / 2 + _ssx * _i, -_ssy / 2) for _i in range(_snx)]",
+                f"        + [(-_ssx * (_snx - 2) / 2 + _ssx * _i, _ssy / 2) for _i in range(_snx - 1)]",
+                f"    )",
+                f"    result = (",
+                f"        result.faces({face!r}).workplane()",
+                f"        .pushPoints(_spts)",
                 f"        .hole({d})",
                 f"    )",
             ]
-        else:  # bolt_circle
+        else:  # bolt_circle — round only
             r = self.bolt_circle_r.to_code() if self.bolt_circle_r else "15"
             n = self.n_bolts.to_code() if self.n_bolts else "4"
             return [
@@ -600,6 +643,43 @@ class RibsOp(BaseModel):
             f"        .rect({rt}, {span}).extrude({rh})",
             f"    )",
         ]
+
+
+class AttachOp(BaseModel):
+    """
+    Extrude a 2D profile from a named face and union the result with the
+    existing solid.  This is the primary primitive for multi-section compound
+    parts: a circle profile on a side face gives a tube attachment; a rect
+    profile gives a mounting tab; a circle on >Z gives a pedestal column.
+
+    bore_d: if set, a centered through-hole is drilled after the extrusion,
+            entering from the same face (which, after the extrude, is the
+            outer tip of the attachment).
+    """
+    type: Literal["attach"] = "attach"
+    profile: Profile
+    length: Expr
+    bore_d: Expr | None = None
+    face: str = ">X"
+
+    def to_code(self) -> list[str]:
+        l = self.length.to_code()
+        face = self.face
+        lines = [
+            f"    result = (",
+            f"        result.faces({face!r}).workplane()",
+            f"        {self.profile.to_code()}.extrude({l})",
+            f"    )",
+        ]
+        if self.bore_d is not None:
+            bd = self.bore_d.to_code()
+            lines += [
+                f"    result = (",
+                f"        result.faces({face!r}).workplane()",
+                f"        .hole({bd})",
+                f"    )",
+            ]
+        return lines
 
 
 class LBracketOp(BaseModel):
@@ -866,6 +946,7 @@ Operation = Annotated[
         HolesOp, CounterboreHolesOp, CountersinkHolesOp,
         FilletOp, ChamferOp,
         ShellOp, PocketOp, BossOp, RibsOp,
+        AttachOp,
         LBracketOp, CBracketOp, ZBracketOp,
     ],
     Field(discriminator="type"),

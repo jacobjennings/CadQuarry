@@ -15,15 +15,19 @@ from random import Random
 from typing import Any
 
 from .ir import (
+    AttachOp,
     BoxOp,
     CBracketOp,
     ChamferOp,
+    CircleProfile,
     ExtrudeOp,
+    HolesOp,
     LBracketOp,
     ZBracketOp,
     PartIR,
     PartMetadata,
     PolygonProfile,
+    RectProfile,
     RevolveOp,
     Operation,
     ParamSpec,
@@ -47,6 +51,7 @@ from .features import (
     sample_corner_holes,
     sample_grid_holes,
     sample_bolt_circle,
+    sample_staggered_holes,
     sample_fillet,
     sample_chamfer,
     sample_pocket,
@@ -57,18 +62,19 @@ from .features import (
 # Cross-cutting symmetry modes (Stage D regularity).
 SYMMETRY_MODES = ["mirror_x", "mirror_xy", "radial"]
 
-GENERATOR_VERSION = "0.2.0"
+GENERATOR_VERSION = "0.3.0"
 
 # Default family weights; overridden by config.
 DEFAULT_FAMILY_WEIGHTS = {
-    "plate":    0.22,
-    "bracket":  0.18,
-    "revolved": 0.18,
-    "block":    0.15,
-    "flanged":  0.08,
-    "ribbed":   0.07,
-    "enclosure":0.07,
-    "profiled": 0.05,
+    "plate":    0.20,
+    "bracket":  0.17,
+    "revolved": 0.17,
+    "block":    0.13,
+    "compound": 0.10,
+    "flanged":  0.07,
+    "ribbed":   0.06,
+    "enclosure":0.06,
+    "profiled": 0.04,
 }
 
 # Default tier weights (before family clamping).
@@ -80,6 +86,7 @@ FAMILY_TIER_SPANS = {
     "bracket":   (1, 3),
     "revolved":  (0, 2),
     "block":     (1, 3),
+    "compound":  (1, 3),
     "flanged":   (1, 3),
     "ribbed":    (1, 3),
     "enclosure": (1, 3),
@@ -193,28 +200,34 @@ def sample_plate(rng: Random, tier: int, config: dict, seed: int, index: int) ->
     ]
 
     if tier >= 1:
-        # Choose hole type
-        hole_type = "simple"
+        # At tier 1: only round holes. At tier 2+: full variety.
         if tier >= 2:
-            hole_type = rng.choice(["simple", "simple", "counterbore", "countersink"])
+            hole_type = rng.choice([
+                "simple", "simple", "counterbore", "countersink", "square", "slot",
+            ])
+        else:
+            hole_type = "simple"
 
         sym = config.get("_symmetry", "none")
         if sym == "radial":
-            # A radially-symmetric plate gets a centered bolt-circle pattern.
             op, p = sample_bolt_circle(rng, "plate_w", w_def)
         elif sym in ("mirror_x", "mirror_xy"):
-            # Corner holes are mirror-symmetric across both axes.
             op, p = sample_corner_holes(
                 rng, "plate_w", "plate_d", w_def, d_def, hole_type=hole_type
             )
         else:
-            hole_layout = rng.choice(["corners", "corners", "grid"])
+            hole_layout = rng.choice(["corners", "corners", "grid", "staggered"])
             if hole_layout == "corners":
                 op, p = sample_corner_holes(
                     rng, "plate_w", "plate_d", w_def, d_def, hole_type=hole_type
                 )
-            else:
-                op, p = sample_grid_holes(rng, "plate_w", "plate_d", w_def, d_def)
+            elif hole_layout == "grid":
+                grid_shape = rng.choice(["round", "round", "square", "slot"])
+                op, p = sample_grid_holes(
+                    rng, "plate_w", "plate_d", w_def, d_def, hole_shape=grid_shape
+                )
+            else:  # staggered
+                op, p = sample_staggered_holes(rng, "plate_w", "plate_d", w_def, d_def)
         params.update(p)
         ops.append(op)
 
@@ -600,7 +613,14 @@ def sample_block(rng: Random, tier: int, config: dict, seed: int, index: int) ->
         if sym == "radial":
             op, p = sample_bolt_circle(rng, "block_w", w_def)
         else:
-            op, p = sample_corner_holes(rng, "block_w", "block_d", w_def, d_def, hole_type="simple")
+            hole_type = rng.choice(["simple", "simple", "square", "staggered"])
+            if hole_type == "staggered":
+                op, p = sample_staggered_holes(rng, "block_w", "block_d", w_def, d_def)
+            else:
+                op, p = sample_corner_holes(
+                    rng, "block_w", "block_d", w_def, d_def,
+                    hole_type="square" if hole_type == "square" else "simple",
+                )
         params.update(p)
         ops.append(op)
 
@@ -627,6 +647,39 @@ def sample_block(rng: Random, tier: int, config: dict, seed: int, index: int) ->
         if "filleted2" not in params:
             params.update(p)
             ops.append(op)
+
+        # 40% chance: add a side tube attachment for multi-section complexity.
+        if rng.random() < 0.40:
+            face = rng.choice(_SIDE_FACES)
+            fd_a, fd_b = (d_def, h_def) if face in (">X", "<X") else (w_def, h_def)
+            min_fd = min(fd_a, fd_b)
+            st_d_def = max(4.0, round(min_fd * rng.uniform(0.18, 0.42), 1))
+            st_l_def = max(4.0, round(st_d_def * rng.uniform(0.8, 2.0), 1))
+            params["side_tube_d"] = ParamSpec(
+                type="float", default=st_d_def,
+                min=round(st_d_def * 0.4, 1), max=round(min_fd * 0.50, 1),
+                step=1.0, group="Side Tube", label="Side tube diameter (mm)",
+            )
+            params["side_tube_len"] = ParamSpec(
+                type="float", default=st_l_def,
+                min=round(st_l_def * 0.3, 1), max=round(st_d_def * 3.0, 1),
+                step=1.0, group="Side Tube", label="Side tube length (mm)",
+            )
+            bore_expr = None
+            if rng.random() < 0.60:
+                sb_def = max(2.0, round(st_d_def * rng.uniform(0.40, 0.65), 1))
+                params["side_bore_d"] = ParamSpec(
+                    type="float", default=sb_def,
+                    min=2.0, max=round(st_d_def * 0.75, 1), step=0.5,
+                    group="Side Tube", label="Side bore diameter (mm)",
+                )
+                bore_expr = ref("side_bore_d")
+            ops.append(AttachOp(
+                profile=CircleProfile(diameter=ref("side_tube_d")),
+                length=ref("side_tube_len"),
+                bore_d=bore_expr,
+                face=face,
+            ))
 
     return PartIR(
         id=_make_id(seed, "block", index),
@@ -964,6 +1017,281 @@ def sample_profiled(rng: Random, tier: int, config: dict, seed: int, index: int)
 
 
 # ---------------------------------------------------------------------------
+# Family: compound (multi-section parts)
+# ---------------------------------------------------------------------------
+
+# Side faces used for attachment operations.
+_SIDE_FACES = [">X", "<X", ">Y", "<Y"]
+
+
+def _sample_block_tube(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Rectangular block with a hollow cylindrical tube projecting from one side
+    face — like a hydraulic fitting body, sensor housing, or pipe stub.
+    """
+    w_def = _nice(rng, 20.0, 80.0)
+    d_def = round(max(15.0, w_def * rng.uniform(0.5, 1.4)), 1)
+    h_def = round(max(15.0, w_def * rng.uniform(0.5, 1.2)), 1)
+
+    params: dict[str, ParamSpec] = {
+        "block_w": ParamSpec(type="float", default=w_def, min=15.0, max=100.0, step=1.0,
+                             group="Body", label="Block width (mm)"),
+        "block_d": ParamSpec(type="float", default=d_def, min=10.0, max=100.0, step=1.0,
+                             group="Body", label="Block depth (mm)"),
+        "block_h": ParamSpec(type="float", default=h_def, min=10.0, max=100.0, step=1.0,
+                             group="Body", label="Block height (mm)"),
+    }
+    ops: list[Operation] = [
+        BoxOp(width=ref("block_w"), depth=ref("block_d"), height=ref("block_h"))
+    ]
+
+    face = rng.choice(_SIDE_FACES)
+    face_dim_a, face_dim_b = (d_def, h_def) if face in (">X", "<X") else (w_def, h_def)
+    min_face_dim = min(face_dim_a, face_dim_b)
+
+    tube_d_def = round(min_face_dim * rng.uniform(0.20, 0.48), 1)
+    tube_d_def = max(5.0, tube_d_def)
+    tube_l_def = round(tube_d_def * rng.uniform(0.8, 2.5), 1)
+    tube_l_def = max(5.0, tube_l_def)
+
+    params["tube_d"] = ParamSpec(
+        type="float", default=tube_d_def,
+        min=round(tube_d_def * 0.4, 1),
+        max=round(min(min_face_dim * 0.65, tube_d_def * 2.0), 1),
+        step=1.0, group="Tube", label="Tube outer diameter (mm)",
+    )
+    params["tube_len"] = ParamSpec(
+        type="float", default=tube_l_def,
+        min=round(tube_d_def * 0.3, 1), max=round(tube_d_def * 4.0, 1),
+        step=1.0, group="Tube", label="Tube length (mm)",
+    )
+
+    bore_expr = None
+    if rng.random() < 0.70:
+        bore_d_def = max(2.0, round(tube_d_def * rng.uniform(0.40, 0.70), 1))
+        params["tube_bore"] = ParamSpec(
+            type="float", default=bore_d_def,
+            min=2.0, max=round(tube_d_def * 0.80, 1), step=0.5,
+            group="Tube", label="Tube bore diameter (mm)",
+        )
+        bore_expr = ref("tube_bore")
+
+    ops.append(AttachOp(
+        profile=CircleProfile(diameter=ref("tube_d")),
+        length=ref("tube_len"),
+        bore_d=bore_expr,
+        face=face,
+    ))
+
+    if tier >= 2:
+        hole_op, hp = sample_corner_holes(rng, "block_w", "block_d", w_def, d_def)
+        params.update(hp)
+        ops.append(hole_op)
+
+    if tier >= 3:
+        fillet_op, fp = sample_fillet(rng, "block_w", "block_d", edge_selector="|Z")
+        params.update(fp)
+        ops.append(fillet_op)
+
+    return PartIR(
+        id=_make_id(seed, "compound", index),
+        params=params, operations=ops,
+        metadata=PartMetadata(seed=seed, generator_version=GENERATOR_VERSION,
+                              family="compound", tier=tier, op_count=len(ops)),
+    )
+
+
+def _sample_block_tab(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Rectangular block with a flat mounting tab projecting from a side face.
+    The tab has corner holes for bolting to a surface — like a motor mount
+    flange, wall bracket, or junction plate.
+    """
+    w_def = _nice(rng, 25.0, 80.0)
+    d_def = round(max(15.0, w_def * rng.uniform(0.5, 1.3)), 1)
+    h_def = round(max(15.0, w_def * rng.uniform(0.5, 1.3)), 1)
+
+    params: dict[str, ParamSpec] = {
+        "block_w": ParamSpec(type="float", default=w_def, min=15.0, max=100.0, step=1.0,
+                             group="Body", label="Block width (mm)"),
+        "block_d": ParamSpec(type="float", default=d_def, min=10.0, max=100.0, step=1.0,
+                             group="Body", label="Block depth (mm)"),
+        "block_h": ParamSpec(type="float", default=h_def, min=10.0, max=100.0, step=1.0,
+                             group="Body", label="Block height (mm)"),
+    }
+    ops: list[Operation] = [
+        BoxOp(width=ref("block_w"), depth=ref("block_d"), height=ref("block_h"))
+    ]
+
+    face = rng.choice(_SIDE_FACES)
+    if face in (">X", "<X"):
+        tab_a_def = max(10.0, round(d_def * rng.uniform(0.55, 1.0), 1))
+        tab_b_def = max(10.0, round(h_def * rng.uniform(0.55, 0.90), 1))
+    else:
+        tab_a_def = max(10.0, round(w_def * rng.uniform(0.55, 1.0), 1))
+        tab_b_def = max(10.0, round(h_def * rng.uniform(0.55, 0.90), 1))
+    tab_t_def = snap_to_stock_thickness(rng, 3.0, 10.0)
+
+    params["tab_a"] = ParamSpec(
+        type="float", default=tab_a_def,
+        min=round(tab_a_def * 0.4, 1), max=round(tab_a_def * 1.6, 1),
+        step=1.0, group="Tab", label="Tab width (mm)",
+    )
+    params["tab_b"] = ParamSpec(
+        type="float", default=tab_b_def,
+        min=round(tab_b_def * 0.4, 1), max=round(tab_b_def * 1.6, 1),
+        step=1.0, group="Tab", label="Tab height (mm)",
+    )
+    params["tab_t"] = ParamSpec(
+        type="float", default=tab_t_def, min=2.0, max=15.0, step=0.5,
+        group="Tab", label="Tab thickness (mm)",
+    )
+
+    ops.append(AttachOp(
+        profile=RectProfile(width=ref("tab_a"), depth=ref("tab_b")),
+        length=ref("tab_t"),
+        face=face,
+    ))
+
+    # Mounting holes drilled from the outer (tab end) face.
+    if tier >= 1:
+        tab_hole_max = round(min(tab_a_def, tab_b_def) * 0.22, 1)
+        tab_hole_max = max(2.5, tab_hole_max)
+        tab_hole_d_def = snap_fastener_diameter(rng, 2.5, tab_hole_max)
+        params["tab_hole_d"] = ParamSpec(
+            type="float", default=tab_hole_d_def,
+            min=2.0, max=tab_hole_max, step=0.1,
+            group="Tab", label="Tab hole diameter (mm)",
+        )
+        ops.append(HolesOp(
+            diameter=ref("tab_hole_d"),
+            placement="corners",
+            spacing_x=scaled("tab_a", 0.60),
+            spacing_y=scaled("tab_b", 0.60),
+            face=face,
+        ))
+
+    if tier >= 2:
+        if rng.random() < 0.5:
+            op, p = sample_pocket(rng, "block_w", "block_d", "block_h", w_def, d_def, h_def)
+        else:
+            op, p = sample_corner_holes(rng, "block_w", "block_d", w_def, d_def,
+                                        d_param="block_hole_d")
+        params.update(p)
+        ops.append(op)
+
+    if tier >= 3:
+        fillet_op, fp = sample_fillet(rng, "block_w", "block_d", edge_selector="|Z")
+        params.update(fp)
+        ops.append(fillet_op)
+
+    return PartIR(
+        id=_make_id(seed, "compound", index),
+        params=params, operations=ops,
+        metadata=PartMetadata(seed=seed, generator_version=GENERATOR_VERSION,
+                              family="compound", tier=tier, op_count=len(ops)),
+    )
+
+
+def _sample_pedestal(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Wide flat base plate with a narrow cylindrical column rising from the top
+    center — standoff, pedestal, support post, or spindle base.  The column
+    may have a through-bore for a shaft or fastener.
+    """
+    base_w_def = _nice(rng, 40.0, 120.0)
+    base_d_def = round(max(30.0, base_w_def * rng.uniform(0.6, 1.2)), 1)
+    base_h_def = snap_to_stock_thickness(rng, 5.0, 20.0)
+
+    min_base = min(base_w_def, base_d_def)
+    col_d_def = max(8.0, round(min_base * rng.uniform(0.15, 0.35), 1))
+    col_h_def = max(15.0, round(min_base * rng.uniform(0.5, 1.5), 1))
+
+    params: dict[str, ParamSpec] = {
+        "base_w": ParamSpec(type="float", default=base_w_def, min=30.0, max=160.0, step=1.0,
+                            group="Base", label="Base width (mm)"),
+        "base_d": ParamSpec(type="float", default=base_d_def, min=25.0, max=160.0, step=1.0,
+                            group="Base", label="Base depth (mm)"),
+        "base_h": ParamSpec(type="float", default=base_h_def, min=3.0, max=30.0, step=0.5,
+                            group="Base", label="Base thickness (mm)"),
+        "col_d": ParamSpec(
+            type="float", default=col_d_def,
+            min=round(col_d_def * 0.4, 1), max=round(min_base * 0.5, 1),
+            step=1.0, group="Column", label="Column diameter (mm)",
+        ),
+        "col_h": ParamSpec(
+            type="float", default=col_h_def,
+            min=round(col_h_def * 0.3, 1), max=round(col_h_def * 3.0, 1),
+            step=1.0, group="Column", label="Column height (mm)",
+        ),
+    }
+    ops: list[Operation] = [
+        BoxOp(width=ref("base_w"), depth=ref("base_d"), height=ref("base_h")),
+    ]
+
+    bore_expr = None
+    if rng.random() < 0.55:
+        bore_d_def = max(2.0, round(col_d_def * rng.uniform(0.30, 0.60), 1))
+        params["col_bore"] = ParamSpec(
+            type="float", default=bore_d_def,
+            min=2.0, max=round(col_d_def * 0.75, 1), step=0.5,
+            group="Column", label="Column bore diameter (mm)",
+        )
+        bore_expr = ref("col_bore")
+
+    ops.append(AttachOp(
+        profile=CircleProfile(diameter=ref("col_d")),
+        length=ref("col_h"),
+        bore_d=bore_expr,
+        face=">Z",
+    ))
+
+    if tier >= 1:
+        hole_op, hp = sample_corner_holes(rng, "base_w", "base_d", base_w_def, base_d_def)
+        params.update(hp)
+        ops.append(hole_op)
+
+    if tier >= 2 and rng.random() < 0.5:
+        fillet_op, fp = sample_fillet(rng, "base_w", "base_d", edge_selector="|Z")
+        params.update(fp)
+        ops.append(fillet_op)
+
+    if tier >= 3:
+        op, p = sample_chamfer(rng, edge_selector=">Z or <Z")
+        params.update(p)
+        ops.append(op)
+
+    return PartIR(
+        id=_make_id(seed, "compound", index),
+        params=params, operations=ops,
+        metadata=PartMetadata(seed=seed, generator_version=GENERATOR_VERSION,
+                              family="compound", tier=tier, op_count=len(ops)),
+    )
+
+
+_COMPOUND_ARCHETYPES = ["block_tube", "block_tab", "pedestal"]
+
+
+def sample_compound(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Multi-section compound parts — a primary body with one or more distinctly-
+    styled secondary sections attached to it.
+
+    Archetypes:
+      block_tube  — rectangular block + hollow cylindrical tube off a side face
+      block_tab   — rectangular block + flat mounting tab with bolt holes
+      pedestal    — wide flat base plate + narrow cylindrical column on top
+    """
+    archetype = rng.choice(_COMPOUND_ARCHETYPES)
+    if archetype == "block_tube":
+        return _sample_block_tube(rng, tier, config, seed, index)
+    elif archetype == "block_tab":
+        return _sample_block_tab(rng, tier, config, seed, index)
+    else:
+        return _sample_pedestal(rng, tier, config, seed, index)
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -972,6 +1300,7 @@ _FAMILY_SAMPLERS = {
     "bracket": sample_bracket,
     "revolved": sample_revolved,
     "block": sample_block,
+    "compound": sample_compound,
     "enclosure": sample_enclosure,
     "flanged": sample_flanged,
     "ribbed": sample_ribbed,

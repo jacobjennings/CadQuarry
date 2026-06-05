@@ -1,25 +1,12 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "flanged_498d691a_0548",
   "seed": 1234004250,
-  "generator_version": "0.1.0",
+  "generator_version": "0.3.0",
   "family": "flanged",
   "tier": 3,
   "symmetry": "none",
   "op_count": 3,
-  "ir_hash": "1ee14a9b38b3f65a",
-  "license": "CC0-1.0",
-  "geometry_signature": {
-    "version": 2,
-    "volume": 137000.0,
-    "surface_area": 28600.0,
-    "principal_moments": [
-      89800000.0,
-      89800000.0,
-      130000000.0
-    ],
-    "n_faces": 32,
-    "n_edges": 80,
-    "n_vertices": 47
-  }
+  "ir_hash": "4172e177194b21bb",
+  "license": "CC0-1.0"
 }

@@ -1,10 +1,10 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "bracket_498d672d_0055",
   "params": {
     "base_len": {
       "type": "float",
-      "default": 41.11,
+      "default": 65,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -13,7 +13,7 @@
     },
     "vert_len": {
       "type": "float",
-      "default": 31.1,
+      "default": 52.5,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -22,7 +22,7 @@
     },
     "bracket_w": {
       "type": "float",
-      "default": 30.56,
+      "default": 39.21,
       "min": 15.0,
       "max": 60.0,
       "step": 1.0,
@@ -31,7 +31,7 @@
     },
     "bracket_t": {
       "type": "float",
-      "default": 8.0,
+      "default": 6.0,
       "min": 3.0,
       "max": 8.0,
       "step": 0.5,
@@ -58,9 +58,9 @@
     },
     "gusset_t": {
       "type": "float",
-      "default": 11.7,
-      "min": 4.0,
-      "max": 15.3,
+      "default": 5.8,
+      "min": 3.0,
+      "max": 18.0,
       "step": 0.5,
       "group": "Gusset",
       "label": "Gusset thickness (mm)"

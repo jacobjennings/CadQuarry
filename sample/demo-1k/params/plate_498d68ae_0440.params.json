@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "plate_498d68ae_0440",
   "params": {
     "plate_w": {
@@ -31,30 +31,21 @@
     },
     "hole_d": {
       "type": "float",
-      "default": 4.3,
+      "default": 5.3,
       "min": 2.0,
       "max": 12.4,
-      "step": 0.1,
-      "group": "Holes",
-      "label": "Hole diameter (mm)"
-    },
-    "cb_d": {
-      "type": "float",
-      "default": 8.6,
-      "min": 6.4,
-      "max": 12.9,
       "step": 0.5,
       "group": "Holes",
-      "label": "Counterbore diameter (mm)"
+      "label": "Slot width (mm)"
     },
-    "cb_depth": {
+    "hole_slot_len": {
       "type": "float",
-      "default": 3.4,
-      "min": 1.7,
-      "max": 6.8,
+      "default": 11.0,
+      "min": 7.9,
+      "max": 16.5,
       "step": 0.5,
       "group": "Holes",
-      "label": "Counterbore depth (mm)"
+      "label": "Slot length (mm)"
     },
     "filleted": {
       "type": "bool",

@@ -1,25 +1,12 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "enclosure_498d67d7_0225",
   "seed": 1234003927,
-  "generator_version": "0.1.0",
+  "generator_version": "0.3.0",
   "family": "enclosure",
   "tier": 2,
   "symmetry": "mirror_x",
   "op_count": 4,
-  "ir_hash": "928fb6317bea3314",
-  "license": "CC0-1.0",
-  "geometry_signature": {
-    "version": 2,
-    "volume": 112000.0,
-    "surface_area": 60200.0,
-    "principal_moments": [
-      138000000.0,
-      167000000.0,
-      233000000.0
-    ],
-    "n_faces": 35,
-    "n_edges": 108,
-    "n_vertices": 72
-  }
+  "ir_hash": "81506d098d8a37b1",
+  "license": "CC0-1.0"
 }

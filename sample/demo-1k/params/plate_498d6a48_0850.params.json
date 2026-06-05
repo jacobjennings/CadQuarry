@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "plate_498d6a48_0850",
   "params": {
     "plate_w": {
@@ -33,28 +33,10 @@
       "type": "float",
       "default": 3.2,
       "min": 2.0,
-      "max": 4.1,
+      "max": 7.7,
       "step": 0.1,
       "group": "Holes",
       "label": "Hole diameter (mm)"
-    },
-    "hole_nx": {
-      "type": "int",
-      "default": 2,
-      "min": 1,
-      "max": 4,
-      "step": 1,
-      "group": "Holes",
-      "label": "Holes across"
-    },
-    "hole_ny": {
-      "type": "int",
-      "default": 2,
-      "min": 1,
-      "max": 4,
-      "step": 1,
-      "group": "Holes",
-      "label": "Holes deep"
     },
     "filleted": {
       "type": "bool",
@@ -62,32 +44,32 @@
       "group": "Body",
       "label": "Fillet corners"
     },
-    "pocket_w": {
+    "boss_d": {
       "type": "float",
-      "default": 24.0,
-      "min": 12.0,
-      "max": 36.0,
+      "default": 18.7,
+      "min": 9.3,
+      "max": 37.4,
       "step": 1.0,
-      "group": "Pocket",
-      "label": "Pocket width (mm)"
+      "group": "Boss",
+      "label": "Boss diameter (mm)"
     },
-    "pocket_d": {
-      "type": "float",
-      "default": 17.7,
-      "min": 8.8,
-      "max": 27.3,
-      "step": 1.0,
-      "group": "Pocket",
-      "label": "Pocket depth (mm)"
-    },
-    "pocket_h": {
+    "boss_h": {
       "type": "float",
       "default": 4.7,
       "min": 1.9,
-      "max": 8.5,
-      "step": 0.5,
-      "group": "Pocket",
-      "label": "Pocket height (mm)"
+      "max": 11.8,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss height (mm)"
+    },
+    "boss_bore_d": {
+      "type": "float",
+      "default": 8.4,
+      "min": 2.0,
+      "max": 13.1,
+      "step": 0.1,
+      "group": "Boss",
+      "label": "Bore diameter (mm)"
     }
   }
 }

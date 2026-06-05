@@ -1,10 +1,10 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "bracket_498d68fe_0520",
   "params": {
     "base_len": {
       "type": "float",
-      "default": 55,
+      "default": 39.74,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -13,7 +13,7 @@
     },
     "vert_len": {
       "type": "float",
-      "default": 50.9,
+      "default": 27.5,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -22,7 +22,7 @@
     },
     "bracket_w": {
       "type": "float",
-      "default": 20,
+      "default": 21.98,
       "min": 15.0,
       "max": 60.0,
       "step": 1.0,
@@ -31,7 +31,7 @@
     },
     "bracket_t": {
       "type": "float",
-      "default": 8.0,
+      "default": 5.0,
       "min": 3.0,
       "max": 8.0,
       "step": 0.5,
@@ -40,9 +40,9 @@
     },
     "hole_d": {
       "type": "float",
-      "default": 5.3,
+      "default": 3.2,
       "min": 3.0,
-      "max": 8.0,
+      "max": 8.8,
       "step": 0.1,
       "group": "Holes",
       "label": "Hole diameter (mm)"
@@ -58,9 +58,9 @@
     },
     "gusset_t": {
       "type": "float",
-      "default": 6.7,
-      "min": 4.0,
-      "max": 10.0,
+      "default": 5.5,
+      "min": 2.5,
+      "max": 11.0,
       "step": 0.5,
       "group": "Gusset",
       "label": "Gusset thickness (mm)"

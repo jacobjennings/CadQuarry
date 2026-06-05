@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "block_498d687a_0388",
   "params": {
     "block_w": {
@@ -31,12 +31,12 @@
     },
     "hole_d": {
       "type": "float",
-      "default": 4.3,
+      "default": 6.4,
       "min": 2.0,
-      "max": 6.1,
-      "step": 0.1,
+      "max": 8.0,
+      "step": 0.5,
       "group": "Holes",
-      "label": "Hole diameter (mm)"
+      "label": "Square hole size (mm)"
     }
   }
 }

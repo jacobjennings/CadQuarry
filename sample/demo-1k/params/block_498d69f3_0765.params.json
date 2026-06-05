@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "block_498d69f3_0765",
   "params": {
     "block_w": {
@@ -38,32 +38,11 @@
       "group": "Holes",
       "label": "Hole diameter (mm)"
     },
-    "pocket_w": {
-      "type": "float",
-      "default": 25.2,
-      "min": 12.6,
-      "max": 40.0,
-      "step": 1.0,
-      "group": "Pocket",
-      "label": "Pocket width (mm)"
-    },
-    "pocket_d": {
-      "type": "float",
-      "default": 8.5,
-      "min": 4.2,
-      "max": 16.2,
-      "step": 1.0,
-      "group": "Pocket",
-      "label": "Pocket depth (mm)"
-    },
-    "pocket_h": {
-      "type": "float",
-      "default": 40.4,
-      "min": 16.2,
-      "max": 73.5,
-      "step": 0.5,
-      "group": "Pocket",
-      "label": "Pocket height (mm)"
+    "filleted": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Fillet corners"
     }
   }
 }
