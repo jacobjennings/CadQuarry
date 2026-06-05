@@ -52,7 +52,7 @@ description = "Large corpus for downstream dataset use."
 # ---------------------------------------------------------------------------
 # Published HuggingFace size ladder
 # ---------------------------------------------------------------------------
-# These are the corpora `scripts/publish_to_hf.py` builds and uploads as
+# These are the corpora `cadquarry publish` packs and uploads as
 # configs of the HuggingFace dataset.  Each `tag` becomes a load_dataset
 # config name; `seed` + `count` + the generator version pin it bit-for-bit.
 # The `1k` entry is the same corpus committed under `sample/demo-1k/`.

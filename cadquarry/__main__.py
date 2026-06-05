@@ -1,14 +1,21 @@
 """
 CadQuarry CLI
 
-  cadquarry generate  — generate a corpus
-  cadquarry build     — generate + export every corpus in the seed ladder
-  cadquarry publish   — pack + upload the built corpora to Hugging Face
-  cadquarry run       — execute a single part with optional param overrides
-  cadquarry serve     — launch live customizer for a part (or gallery for corpus)
-  cadquarry export    — export geometry artifacts for an existing corpus
-  cadquarry verify    — re-execute corpus and check validity + signatures
-  cadquarry info      — print part metadata / parameter schema
+  cadquarry generate     — generate a corpus
+  cadquarry build        — generate + export every corpus in the seed ladder
+  cadquarry build_sample — rebuild the committed GitHub Pages sample corpus
+  cadquarry publish      — pack + upload the built corpora to Hugging Face
+  cadquarry run          — execute a single part with optional param overrides
+  cadquarry serve        — launch live customizer for a part (or gallery for corpus)
+  cadquarry export       — export geometry artifacts for an existing corpus
+  cadquarry verify       — re-execute corpus and check validity + signatures
+  cadquarry info         — print part metadata / parameter schema
+
+Commands can be chained to run in sequence, e.g. a full Pages + dataset refresh:
+
+  cadquarry build_sample build publish
+
+Chained commands run with their defaults (don't interleave per-command flags).
 """
 from __future__ import annotations
 
@@ -42,33 +49,12 @@ def _load_config(config_path: str | None) -> dict:
 
 def _default_seeds_path() -> Path:
     """
-    The published seed list matching the current generator.
-
-    Selects the ``seeds/v*.toml`` whose ``[meta].generator_version`` equals
-    ``cadquarry.__version__`` (so a generator bump automatically tracks its
-    matching list); falls back to the highest-numbered list, then ``v1.toml``.
+    The published seed list matching the current generator version (the
+    ``seeds/v*.toml`` whose ``[meta].generator_version`` equals
+    ``cadquarry.__version__``). Shared with the publisher.
     """
-    seeds_dir = Path(__file__).parent.parent / "seeds"
-
-    def _vnum(p: Path) -> int:
-        digits = "".join(ch for ch in p.stem if ch.isdigit())
-        return int(digits) if digits else 0
-
-    candidates = sorted(seeds_dir.glob("v*.toml"), key=_vnum)
-    match = None
-    for p in candidates:
-        try:
-            with open(p, "rb") as f:
-                meta = tomllib.load(f).get("meta", {})
-        except Exception:
-            continue
-        if str(meta.get("generator_version")) == __version__:
-            match = p
-    if match is not None:
-        return match
-    if candidates:
-        return candidates[-1]
-    return seeds_dir / "v1.toml"
+    from .publish import default_seeds_path
+    return default_seeds_path()
 
 
 def _load_publish_ladder(seeds_path: Path) -> dict[str, dict]:
@@ -82,6 +68,21 @@ def _load_publish_ladder(seeds_path: Path) -> dict[str, dict]:
             "seed": int(entry["seed"]),
         }
     return ladder
+
+
+def _load_corpus_list(seeds_path: Path) -> dict[str, dict]:
+    """Return {name: {"seed", "count", "config"}} from the [[corpus]] entries."""
+    with open(seeds_path, "rb") as f:
+        data = tomllib.load(f)
+    default_config = data.get("meta", {}).get("config")
+    corpora: dict[str, dict] = {}
+    for entry in data.get("corpus", []):
+        corpora[str(entry["name"])] = {
+            "seed": int(entry["seed"]),
+            "count": int(entry["count"]),
+            "config": entry.get("config", default_config),
+        }
+    return corpora
 
 
 def _tag_to_int(tag: str) -> int:
@@ -368,54 +369,107 @@ def cmd_build(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
-# publish — pack the built corpora and upload them to Hugging Face
+# build_sample — regenerate the committed GitHub Pages sample corpus
 # ---------------------------------------------------------------------------
 
-def cmd_publish(args: argparse.Namespace) -> int:
-    """Thin wrapper over scripts/publish_to_hf.py; defaults to publishing all sizes."""
-    import importlib.util
+def cmd_build_sample(args: argparse.Namespace) -> int:
+    """
+    Rebuild the committed sample corpus that backs the GitHub Pages preview.
 
-    script = Path(__file__).parent.parent / "scripts" / "publish_to_hf.py"
-    if not script.exists():
+    GitHub Pages serves the repo as-is: ``index.html`` redirects to
+    ``sample/<name>/preview.html``, a self-contained gallery that fetches the
+    sibling ``manifest.jsonl`` + ``geometry/*.stl`` + ``renders/`` at runtime.
+    So "updating the page" means regenerating that committed corpus and its
+    geometry/renders. This command does exactly that, deterministically, from
+    the ``[[corpus]]`` entry in the active seed list.
+    """
+    from .export import export_corpus_geometry
+
+    seeds_path = Path(args.seeds) if args.seeds else _default_seeds_path()
+    if not seeds_path.exists():
+        print(f"error: seed list {seeds_path} not found", file=sys.stderr)
+        return 1
+
+    corpora = _load_corpus_list(seeds_path)
+    spec = corpora.get(args.name)
+    if spec is None:
+        avail = ", ".join(corpora) or "(none)"
         print(
-            f"error: publisher not found at {script}. "
-            "Publishing runs from a repo checkout (the scripts/ dir).",
+            f"error: no [[corpus]] named {args.name!r} in {seeds_path}. "
+            f"Available: {avail}",
             file=sys.stderr,
         )
         return 1
 
-    spec = importlib.util.spec_from_file_location("_cadquarry_publish_hf", script)
-    module = importlib.util.module_from_spec(spec)
+    repo_root = Path(__file__).resolve().parent.parent
+    out_dir = Path(args.out) if args.out else repo_root / "sample" / args.name
+    config = args.config or spec["config"]
+    formats = [f.strip() for f in args.formats.split(",") if f.strip()]
+
+    print(
+        f"CadQuarry v{__version__} — rebuilding sample {args.name!r} "
+        f"({spec['count']:,} parts, seed {spec['seed']}) -> {out_dir}"
+    )
+    if config:
+        print(f"  config: {config}")
+    print(f"  export formats: {formats}")
+
+    gen_args = argparse.Namespace(
+        count=spec["count"], seed=spec["seed"], out=str(out_dir),
+        config=config, timeout=args.timeout, no_exec=False,
+        workers=args.workers, family=None, tier=None, verbose=args.verbose,
+    )
+    rc = cmd_generate(gen_args)
+    if rc != 0:
+        print("error: sample generation failed", file=sys.stderr)
+        return rc
+
+    if formats:
+        print(f"\n  · exporting {formats} …")
+        try:
+            counts = export_corpus_geometry(
+                out_dir, formats=formats, n_workers=args.workers,
+                timeout=args.timeout, verbose=args.verbose,
+            )
+            for fmt, cnt in counts.items():
+                print(f"    {fmt}: {cnt} files written")
+        except Exception as exc:
+            print(f"error: sample export failed: {exc}", file=sys.stderr)
+            return 1
+
+    print(
+        f"\nDone. Sample {args.name!r} rebuilt at {out_dir}.\n"
+        f"  GitHub Pages serves sample/{args.name}/preview.html — commit the "
+        f"changes to publish."
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# publish — pack the built corpora and upload them to Hugging Face
+# ---------------------------------------------------------------------------
+
+def cmd_publish(args: argparse.Namespace) -> int:
+    """Pack the built corpora and upload them to HuggingFace (defaults to all sizes)."""
+    from .publish import publish, PublishError
+
     try:
-        spec.loader.exec_module(module)  # type: ignore[union-attr]
-    except Exception as exc:
-        print(f"error: could not load publisher: {exc}", file=sys.stderr)
+        return publish(
+            sizes=args.sizes,
+            all_sizes=not args.sizes,  # bare `publish` -> every built size
+            repo_id=args.repo_id,
+            corpus_root=args.corpus_root,
+            code_only=args.code_only,
+            no_renders=args.no_renders,
+            no_stl=args.no_stl,
+            no_step=args.no_step,
+            private=args.private,
+            dry_run=args.dry_run,
+            verbose=args.verbose,
+        )
+    except PublishError as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 1
-
-    # Translate our args into the publisher's argv. Default (no --sizes) is the
-    # whole ladder, so a bare `cadquarry publish` uploads everything that was
-    # built — the natural pairing with a bare `cadquarry build`.
-    argv: list[str] = ["--all"] if not args.sizes else ["--sizes", *args.sizes]
-    if args.repo_id:
-        argv += ["--repo-id", args.repo_id]
-    if args.corpus_root:
-        argv += ["--corpus-root", args.corpus_root]
-    if args.code_only:
-        argv.append("--code-only")
-    if args.no_renders:
-        argv.append("--no-renders")
-    if args.no_stl:
-        argv.append("--no-stl")
-    if args.no_step:
-        argv.append("--no-step")
-    if args.private:
-        argv.append("--private")
-    if args.dry_run:
-        argv.append("--dry-run")
-    if args.verbose:
-        argv.append("--verbose")
-
-    return int(module.main(argv))
 
 
 # ---------------------------------------------------------------------------
@@ -671,6 +725,20 @@ def build_parser() -> argparse.ArgumentParser:
     bld.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
     bld.add_argument("--verbose", "-v", action="store_true")
 
+    # build_sample
+    smp = sub.add_parser(
+        "build_sample",
+        help="Rebuild the committed sample corpus behind the GitHub Pages preview",
+    )
+    smp.add_argument("--name", default="demo-1k", metavar="NAME", help="[[corpus]] entry to rebuild (default: demo-1k)")
+    smp.add_argument("--out", default=None, metavar="DIR", help="Output dir (default: sample/<name>/ in the repo)")
+    smp.add_argument("--formats", default="step,stl,render", help="Export formats (default: step,stl,render)")
+    smp.add_argument("--config", default=None, metavar="TOML", help="Config file (default: the corpus entry's config)")
+    smp.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: the seeds/v*.toml matching this generator version)")
+    smp.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export")
+    smp.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
+    smp.add_argument("--verbose", "-v", action="store_true")
+
     # publish
     pub = sub.add_parser(
         "publish",
@@ -722,31 +790,65 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+HANDLERS = {
+    "generate": cmd_generate,
+    "build": cmd_build,
+    "build_sample": cmd_build_sample,
+    "publish": cmd_publish,
+    "run": cmd_run,
+    "serve": cmd_serve,
+    "export": cmd_export,
+    "verify": cmd_verify,
+    "info": cmd_info,
+}
+
+
+def _subparsers(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            return action.choices
+    return {}
+
+
 def main() -> None:
     parser = build_parser()
-    args = parser.parse_args()
+    subparsers = _subparsers(parser)
+    argv = sys.argv[1:]
 
-    handlers = {
-        "generate": cmd_generate,
-        "build": cmd_build,
-        "publish": cmd_publish,
-        "run": cmd_run,
-        "serve": cmd_serve,
-        "export": cmd_export,
-        "verify": cmd_verify,
-        "info": cmd_info,
-    }
+    # Single-command / global path: no args, a global flag (e.g. --version), or
+    # a lone command. Let argparse own help, --version, and error reporting.
+    if not argv or argv[0] not in subparsers:
+        args = parser.parse_args(argv)
+        if args.command is None:
+            parser.print_help()
+            sys.exit(0)
+        sys.exit(HANDLERS[args.command](args))
 
-    if args.command is None:
-        parser.print_help()
-        sys.exit(0)
+    # Command-chaining path: `cadquarry build_sample build publish` runs each in
+    # order. We peel one command at a time; whatever a subparser doesn't consume
+    # is treated as the start of the next command. Chained commands run with
+    # their defaults — don't interleave per-command flags in a chain.
+    chain: list[argparse.Namespace] = []
+    rest = argv
+    while rest:
+        cmd = rest[0]
+        if cmd not in subparsers:
+            # Leftover that isn't a command (typo / stray flag). Re-parse the
+            # whole thing so argparse emits its standard, helpful error.
+            parser.parse_args(argv)
+            sys.exit(2)  # unreachable: parse_args exits non-zero first
+        ns, rest = subparsers[cmd].parse_known_args(rest[1:])
+        ns.command = cmd
+        chain.append(ns)
 
-    handler = handlers.get(args.command)
-    if handler is None:
-        parser.print_help()
-        sys.exit(1)
-
-    sys.exit(handler(args))
+    multi = len(chain) > 1
+    for ns in chain:
+        if multi:
+            print(f"\n==> cadquarry {ns.command}\n")
+        rc = HANDLERS[ns.command](ns) or 0
+        if rc != 0:
+            sys.exit(rc)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
