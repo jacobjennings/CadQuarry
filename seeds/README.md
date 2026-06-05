@@ -5,6 +5,14 @@ A corpus is fully determined by the generator version plus a seed, count, and
 config — so this list (with the generator) *is* the deliverable; any published
 dataset is just a convenience artifact you can regenerate at will.
 
+- [`v1.toml`](v1.toml) — generator `0.4.0`; the original nine primitive
+  families. Still valid for reproducing the originally published corpora.
+- [`v2.toml`](v2.toml) — generator `0.5.0`; adds the build123d-backed `gear`
+  and `threaded` families and bumps the CadQuery floor (OCP alignment). The
+  pinned `mech` library versions are recorded under `[meta.mech]`. Because the
+  new families (and the kernel bump) change the RNG-driven corpus for a given
+  seed, this is a fresh generation rather than an edit of `v1`.
+
 ## Reproduce a corpus
 
 Pick an entry from `v1.toml` and run its seed/count/config:

@@ -22,8 +22,10 @@ from .ir import (
     ChamferOp,
     CircleProfile,
     ExtrudeOp,
+    GearOp,
     HolesOp,
     LBracketOp,
+    ThreadedOp,
     ZBracketOp,
     PartIR,
     PartMetadata,
@@ -42,10 +44,14 @@ from .ir import (
 from .profiles import (
     snap_to_stock_thickness,
     snap_fastener_diameter,
+    snap_to_module,
     sample_rect_profile,
     sample_circle_profile,
     sample_polygon_profile,
     sample_slot_profile,
+    ACME_THREAD_SIZES,
+    METRIC_THREAD_PITCHES,
+    METRIC_TRAP_THREAD_SIZES,
     _nice,
 )
 from .features import (
@@ -63,19 +69,21 @@ from .features import (
 # Cross-cutting symmetry modes (Stage D regularity).
 SYMMETRY_MODES = ["mirror_x", "mirror_xy", "radial"]
 
-GENERATOR_VERSION = "0.4.0"
+GENERATOR_VERSION = "0.5.0"
 
 # Default family weights; overridden by config.
 DEFAULT_FAMILY_WEIGHTS = {
-    "plate":    0.20,
-    "bracket":  0.16,
-    "revolved": 0.16,
-    "block":    0.12,
-    "compound": 0.12,
-    "flanged":  0.07,
-    "ribbed":   0.06,
-    "enclosure":0.06,
-    "profiled": 0.05,
+    "plate":    0.18,
+    "bracket":  0.14,
+    "revolved": 0.14,
+    "block":    0.11,
+    "compound": 0.11,
+    "flanged":  0.06,
+    "ribbed":   0.05,
+    "enclosure":0.05,
+    "profiled": 0.04,
+    "gear":     0.06,
+    "threaded": 0.06,
 }
 
 # Default tier weights (before family clamping).
@@ -92,6 +100,8 @@ FAMILY_TIER_SPANS = {
     "ribbed":    (1, 3),
     "enclosure": (1, 3),
     "profiled":  (0, 2),
+    "gear":      (0, 3),
+    "threaded":  (0, 3),
 }
 
 
@@ -1654,6 +1664,268 @@ def sample_compound(rng: Random, tier: int, config: dict, seed: int, index: int)
 
 
 # ---------------------------------------------------------------------------
+# Family: gear (py_gearworks, via the build123d -> CadQuery .wrapped bridge)
+# ---------------------------------------------------------------------------
+
+def sample_gear(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Native-quality involute / cycloid gear built with py_gearworks and bridged
+    into CadQuery (see ir.GearOp).  Requires the `mech` extra.
+
+    Tier 0 → plain spur; Tier 1 → + axial bore; Tier 2 → helical / profile-shift
+    / root fillets; Tier 3 → + hub, plus bevel / cycloid / ring variety.
+    """
+    fcfg = config.get("families", {}).get("gear", {})
+    mod_lo = fcfg.get("module_min", 1.0)
+    mod_hi = fcfg.get("module_max", 6.0)
+    teeth_lo = int(fcfg.get("teeth_min", 10))
+    teeth_hi = int(fcfg.get("teeth_max", 40))
+
+    # Gear kind broadens with tier.
+    if tier < 2:
+        kind = "spur"
+    elif tier == 2:
+        kind = rng.choice(["spur", "helical", "helical"])
+    else:
+        kind = rng.choice(["spur", "helical", "bevel", "cycloid", "ring"])
+
+    module_def = snap_to_module(rng, mod_lo, mod_hi)
+    teeth_def = rng.randint(teeth_lo, teeth_hi)
+    pitch_d = module_def * teeth_def
+    # Face width: a few modules wide, with a floor tied to the pitch diameter so
+    # the part never becomes an extreme-aspect disk (filter max_bbox_ratio).
+    width_def = round(max(module_def * rng.uniform(3.0, 7.0), pitch_d / 12.0), 1)
+    width_def = max(2.0, width_def)
+
+    params: dict[str, ParamSpec] = {
+        "module": ParamSpec(
+            type="float", default=module_def,
+            min=round(mod_lo, 2), max=round(mod_hi, 2), step=0.25,
+            group="Gear", label="Module (mm)",
+        ),
+        "teeth": ParamSpec(
+            type="int", default=teeth_def,
+            min=max(6, teeth_lo), max=teeth_hi, step=1,
+            group="Gear", label="Number of teeth",
+        ),
+        "gear_w": ParamSpec(
+            type="float", default=width_def,
+            min=round(max(1.0, width_def * 0.4), 1), max=round(width_def * 2.5, 1),
+            step=1.0, group="Gear", label="Face width (mm)",
+        ),
+    }
+
+    helix_expr = None
+    cone_expr = None
+    herringbone = False
+    if kind == "helical":
+        helix_def = round(rng.uniform(10.0, 30.0), 1)
+        params["helix_angle"] = ParamSpec(
+            type="float", default=helix_def, min=5.0, max=40.0, step=1.0,
+            group="Gear", label="Helix angle (deg)",
+        )
+        helix_expr = ref("helix_angle")
+        herringbone = rng.random() < 0.35
+    elif kind == "bevel":
+        cone_def = round(rng.uniform(30.0, 60.0), 1)
+        params["cone_angle"] = ParamSpec(
+            type="float", default=cone_def, min=20.0, max=70.0, step=1.0,
+            group="Gear", label="Pitch cone angle (deg)",
+        )
+        cone_expr = ref("cone_angle")
+
+    # Profile shift (tier 2+, every kind except cycloid which has no such param).
+    pshift_expr = None
+    if tier >= 2 and kind != "cycloid":
+        ps_def = round(rng.uniform(-0.3, 0.5), 2)
+        params["profile_shift"] = ParamSpec(
+            type="float", default=ps_def, min=-0.5, max=0.7, step=0.05,
+            group="Gear", label="Profile shift",
+        )
+        pshift_expr = ref("profile_shift")
+
+    # Root fillet (tier 2+), scaled off the module.  Skipped for cycloid gears,
+    # whose tooth geometry frequently fails to build with a root fillet applied.
+    rfillet_expr = None
+    if tier >= 2 and kind != "cycloid":
+        rf_def = round(module_def * rng.uniform(0.1, 0.3), 2)
+        params["root_fillet"] = ParamSpec(
+            type="float", default=rf_def, min=0.0, max=round(module_def * 0.5, 2),
+            step=0.05, group="Gear", label="Root fillet (mm)",
+        )
+        rfillet_expr = ref("root_fillet")
+
+    # Axial bore (tier 1+) — skipped for ring gears (already an internal annulus).
+    bore_expr = None
+    if tier >= 1 and kind != "ring":
+        root_d = max(2.0, pitch_d - 2.5 * module_def)
+        bore_def = round(max(3.0, pitch_d * rng.uniform(0.12, 0.22)), 1)
+        bore_max = round(max(bore_def, root_d * 0.6), 1)
+        params["bore_d"] = ParamSpec(
+            type="float", default=bore_def, min=2.0, max=bore_max, step=0.5,
+            group="Bore", label="Bore diameter (mm)",
+        )
+        bore_expr = ref("bore_d")
+
+    # Hub (tier 3) — a raised collar around the bore; only when a bore exists.
+    hub_d_expr = None
+    hub_h_expr = None
+    if tier >= 3 and bore_expr is not None and rng.random() < 0.6:
+        hub_d_def = round(max(pitch_d * 0.25, bore_def * 1.8), 1)
+        hub_h_def = round(width_def * rng.uniform(0.4, 1.0), 1)
+        params["hub_d"] = ParamSpec(
+            type="float", default=hub_d_def,
+            min=round(bore_def * 1.4, 1), max=round(pitch_d * 0.5, 1), step=1.0,
+            group="Hub", label="Hub diameter (mm)",
+        )
+        params["hub_h"] = ParamSpec(
+            type="float", default=hub_h_def,
+            min=round(hub_h_def * 0.3, 1), max=round(hub_h_def * 2.0, 1), step=0.5,
+            group="Hub", label="Hub height (mm)",
+        )
+        hub_d_expr = ref("hub_d")
+        hub_h_expr = ref("hub_h")
+
+    ops: list[Operation] = [
+        GearOp(
+            kind=kind,
+            module=ref("module"),
+            teeth=ref("teeth"),
+            width=ref("gear_w"),
+            helix_angle=helix_expr,
+            cone_angle=cone_expr,
+            profile_shift=pshift_expr,
+            root_fillet=rfillet_expr,
+            herringbone=herringbone,
+            bore_d=bore_expr,
+            hub_d=hub_d_expr,
+            hub_h=hub_h_expr,
+        )
+    ]
+
+    return PartIR(
+        id=_make_id(seed, "gear", index),
+        params=params,
+        operations=ops,
+        metadata=PartMetadata(
+            seed=seed,
+            generator_version=GENERATOR_VERSION,
+            family="gear",
+            tier=tier,
+            op_count=len(ops),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Family: threaded (bd_warehouse, via the build123d -> CadQuery .wrapped bridge)
+# ---------------------------------------------------------------------------
+
+def sample_threaded(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Real threaded part built with bd_warehouse and bridged into CadQuery (see
+    ir.ThreadedOp).  Requires the `mech` extra.
+
+    Tier 0 → external ISO metric rod; Tier 1 → + internal ISO (threaded bore);
+    Tier 2 → ACME / metric-trapezoidal lead screws; Tier 3 → full variety
+    including fine pitches.
+    """
+    fcfg = config.get("families", {}).get("threaded", {})
+    len_lo = fcfg.get("length_min", 12.0)
+    len_hi = fcfg.get("length_max", 60.0)
+    d_lo = fcfg.get("iso_d_min", 4.0)
+    d_hi = fcfg.get("iso_d_max", 24.0)
+
+    # Pick a standard + internal/external by tier.
+    if tier == 0:
+        std, external = "iso", True
+    elif tier == 1:
+        std, external = "iso", (rng.random() < 0.5)
+    else:
+        pick = rng.choice(["iso_ext", "iso_int", "acme", "trapezoidal"])
+        if pick == "iso_ext":
+            std, external = "iso", True
+        elif pick == "iso_int":
+            std, external = "iso", False
+        else:
+            std, external = pick, True
+
+    params: dict[str, ParamSpec] = {}
+    major_expr = pitch_expr = size_expr = None
+
+    if std == "iso":
+        iso_diams = [d for d in sorted(METRIC_THREAD_PITCHES) if d_lo <= d <= d_hi]
+        if not iso_diams:
+            iso_diams = [d for d in sorted(METRIC_THREAD_PITCHES)]
+        major_def = rng.choice(iso_diams)
+        coarse, fines = METRIC_THREAD_PITCHES[major_def]
+        # Fine pitch only at higher tiers, when available.
+        if tier >= 3 and fines and rng.random() < 0.4:
+            pitch_def = rng.choice(fines)
+        else:
+            pitch_def = coarse
+        # Length: a few diameters long, bounded and aspect-limited.
+        raw_len = major_def * rng.uniform(2.0, 6.0)
+        len_def = round(min(len_hi, max(len_lo, min(raw_len, major_def * 12.0))), 1)
+
+        params["major_d"] = ParamSpec(
+            type="float", default=major_def,
+            min=round(max(2.0, d_lo), 1), max=round(d_hi, 1), step=0.5,
+            group="Thread", label="Major diameter (mm)",
+        )
+        params["pitch"] = ParamSpec(
+            type="float", default=pitch_def,
+            min=round(pitch_def * 0.5, 2), max=round(pitch_def * 2.0, 2), step=0.05,
+            group="Thread", label="Pitch (mm)",
+        )
+        major_expr = ref("major_d")
+        pitch_expr = ref("pitch")
+    else:
+        # ACME / metric-trapezoidal lead screw — designation is an enum param.
+        if std == "acme":
+            sizes = ACME_THREAD_SIZES
+        else:
+            sizes = METRIC_TRAP_THREAD_SIZES
+        size_def = rng.choice(sizes)
+        params["thread_size"] = ParamSpec(
+            type="enum", default=size_def, choices=list(sizes),
+            group="Thread", label="Size designation",
+        )
+        size_expr = ref("thread_size")
+        len_def = round(rng.uniform(max(len_lo, 25.0), len_hi), 1)
+
+    params["thread_len"] = ParamSpec(
+        type="float", default=len_def,
+        min=round(max(5.0, len_def * 0.4), 1), max=round(len_def * 2.0, 1), step=1.0,
+        group="Thread", label="Thread length (mm)",
+    )
+
+    ops: list[Operation] = [
+        ThreadedOp(
+            standard=std,
+            external=external,
+            length=ref("thread_len"),
+            major_d=major_expr,
+            pitch=pitch_expr,
+            size=size_expr,
+        )
+    ]
+
+    return PartIR(
+        id=_make_id(seed, "threaded", index),
+        params=params,
+        operations=ops,
+        metadata=PartMetadata(
+            seed=seed,
+            generator_version=GENERATOR_VERSION,
+            family="threaded",
+            tier=tier,
+            op_count=len(ops),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -1667,6 +1939,8 @@ _FAMILY_SAMPLERS = {
     "flanged": sample_flanged,
     "ribbed": sample_ribbed,
     "profiled": sample_profiled,
+    "gear": sample_gear,
+    "threaded": sample_threaded,
 }
 
 

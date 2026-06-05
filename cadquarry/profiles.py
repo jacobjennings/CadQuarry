@@ -31,6 +31,57 @@ FASTENER_CLEARANCE_MM = [3.2, 4.3, 5.3, 6.4, 8.4, 10.5, 13.0]
 # Stock plate thicknesses (mm) — common in sheet-metal and machined stock.
 STOCK_THICKNESSES_MM = [2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0]
 
+# ---------------------------------------------------------------------------
+# Gear + thread standards (used by the `mech` families: gear / threaded)
+# ---------------------------------------------------------------------------
+
+# ISO 54 preferred module series (Series I), mm — the standard tooth-size
+# increments for metric involute gears.  Restricted to the range that suits
+# CadQuarry's part dimensions.
+ISO_GEAR_MODULES = [1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0]
+
+# ISO 261/262 metric screw threads: major diameter (mm) -> (coarse pitch,
+# [fine pitches]).  Used to emit valid IsoThread(major_diameter, pitch) pairs.
+METRIC_THREAD_PITCHES: dict[float, tuple[float, list[float]]] = {
+    3.0:  (0.5,  [0.35]),
+    4.0:  (0.7,  [0.5]),
+    5.0:  (0.8,  [0.5]),
+    6.0:  (1.0,  [0.75]),
+    8.0:  (1.25, [1.0, 0.75]),
+    10.0: (1.5,  [1.25, 1.0]),
+    12.0: (1.75, [1.5, 1.25]),
+    16.0: (2.0,  [1.5]),
+    20.0: (2.5,  [1.5]),
+    24.0: (3.0,  [2.0]),
+    30.0: (3.5,  [2.0]),
+    36.0: (4.0,  [3.0]),
+}
+
+# bd_warehouse ACME lead-screw size designations (curated to the small/medium
+# end of AcmeThread.sizes() so parts stay in CadQuarry's dimension range).
+ACME_THREAD_SIZES = [
+    "1/4", "5/16", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1 1/4", "1 1/2",
+]
+
+# bd_warehouse metric-trapezoidal lead-screw designations ("DxP"), curated
+# subset of MetricTrapezoidalThread.sizes().
+METRIC_TRAP_THREAD_SIZES = [
+    "8x1.5", "10x2", "12x3", "14x3", "16x4", "18x4",
+    "20x4", "24x5", "28x5", "30x6", "36x6", "40x7",
+]
+
+
+def snap_to_module(rng: Random, lo: float, hi: float) -> float:
+    """
+    Pick an ISO 54 preferred gear module within [lo, hi], falling back to a
+    plain uniform sample if none of the standard modules fit.  Mirrors
+    ``snap_to_stock_thickness``.
+    """
+    choices = [m for m in ISO_GEAR_MODULES if lo <= m <= hi]
+    if choices:
+        return rng.choice(choices)
+    return round(rng.uniform(lo, hi), 2)
+
 
 def _nice(rng: Random, lo: float, hi: float, snap_prob: float = 0.5) -> float:
     """Sample a dimension, snapping to a round number with probability snap_prob."""
