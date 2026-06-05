@@ -225,13 +225,17 @@ def export_renders(
     out_dir: Path,
     views: dict[str, tuple[float, float]] | None = None,
     size: int = 512,
+    ssaa: int = 2,
+    base_color: tuple[float, float, float] | None = None,
 ) -> dict[str, Path]:
     """
     Render shaded thumbnail PNGs of a mesh from multiple viewpoints, headless.
 
     One PNG is written per named view into out_dir (e.g. ``out_dir/iso.png``).
     ``views`` maps a view name to (elevation_deg, azimuth_deg); defaults to
-    ``STANDARD_VIEWS``.  Returns {view_name: png_path}.
+    ``STANDARD_VIEWS``.  ``base_color`` overrides the surface color; when None a
+    deterministic per-part color is derived from the file stem.  Returns
+    {view_name: png_path}.
 
     Rendering is done on the GPU via a headless EGL OpenGL context (moderngl):
     a deferred pipeline with a real depth buffer, screen-space ambient
@@ -252,14 +256,18 @@ def export_renders(
 
     if views is None:
         views = STANDARD_VIEWS
+    if base_color is None:
+        base_color = _render.color_for(Path(stl_path).stem)
 
     mesh = trimesh.load_mesh(str(stl_path))
     # An STL is a flat triangle soup, but be defensive about scene-style loads.
     if hasattr(mesh, "dump"):
         mesh = mesh.dump(concatenate=True)
 
-    renderer = _render.get_renderer(size=size)
-    images = renderer.render_mesh(mesh.vertices, mesh.faces, views=views)
+    renderer = _render.get_renderer(size=size, ssaa=ssaa)
+    images = renderer.render_mesh(
+        mesh.vertices, mesh.faces, views=views, base_color=base_color
+    )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, Path] = {}
@@ -346,6 +354,8 @@ def export_corpus_geometry(
 
     geo_dir.mkdir(parents=True, exist_ok=True)
 
+    from .progress import progress_bar
+
     n = default_worker_count(n_workers)
     pool = WorkerPool(n, timeout=timeout)
     try:
@@ -365,20 +375,23 @@ def export_corpus_geometry(
                 )
                 for py_path in py_files
             ]
-            results = pool.map(jobs)
+            bar = progress_bar(total=len(jobs), desc="  step/stl", unit="part")
+            results = pool.map(jobs, progress=bar.update)
+            bar.close()
     finally:
         pool.close()
 
-    # Phase 2: tally B-rep outputs and derive mesh-based artifacts (trimesh /
-    # matplotlib run in this process; they never import cadquery).
+    # Phase 2a: tally B-rep outputs and collect the STLs that mesh-derived
+    # formats (render / pointcloud) will consume.
+    stl_for: dict[str, Path] = {}
     for py_path in py_files:
         pid = py_path.stem
-        exported: dict[str, Path] = {}
         data = results.get(pid)
         if data is None and run_formats:
             if verbose:
                 print(f"  FAILED {pid}: no export result")
             continue
+        exported: dict[str, Path] = {}
         if data is not None:
             if not data.get("success"):
                 if verbose:
@@ -387,32 +400,59 @@ def export_corpus_geometry(
             for p in data.get("files", []):
                 exported[Path(p).suffix.lstrip(".")] = Path(p)
 
-        try:
-            if mesh:
-                stl_path = exported.get("stl")
-                if stl_path is None or not stl_path.exists():
-                    raise RuntimeError("STL needed for mesh export was not produced")
-                if "pointcloud" in mesh:
-                    pc_out = geo_dir.parent / "pointclouds" / f"{pid}.ply"
-                    exported["pointcloud"] = export_pointcloud(stl_path, pc_out, n_points=n_points)
-                if "render" in mesh:
-                    rn_out = geo_dir.parent / "renders" / pid
-                    export_renders(stl_path, rn_out)
-                    exported["render"] = rn_out
-                if not stl_requested and stl_path.exists():
-                    try:
-                        stl_path.unlink()
-                    except OSError:
-                        pass
-                    exported.pop("stl", None)
-        except Exception as exc:
-            if verbose:
-                print(f"  FAILED {pid} (mesh): {exc}")
-
         for fmt, path in exported.items():
-            if fmt in counts and path.exists():
-                counts[fmt] = counts.get(fmt, 0) + 1
+            if fmt in counts and fmt in _BREP_FORMATS and path.exists():
+                counts[fmt] += 1
                 if verbose:
                     print(f"  exported {pid}.{fmt}")
+
+        stl_path = exported.get("stl")
+        if mesh and stl_path is not None and stl_path.exists():
+            stl_for[pid] = stl_path
+
+    # Phase 2b: point clouds (trimesh, CPU) — uncommon, kept sequential.
+    if "pointcloud" in mesh and stl_for:
+        pc_bar = progress_bar(total=len(stl_for), desc="  pointcloud", unit="part")
+        for pid, stl_path in stl_for.items():
+            try:
+                pc_out = geo_dir.parent / "pointclouds" / f"{pid}.ply"
+                export_pointcloud(stl_path, pc_out, n_points=n_points)
+                if pc_out.exists():
+                    counts["pointcloud"] += 1
+            except Exception as exc:
+                if verbose:
+                    print(f"  FAILED {pid} (pointcloud): {exc}")
+            pc_bar.update()
+        pc_bar.close()
+
+    # Phase 2c: renders, parallelised across GPU worker processes.  This is the
+    # heavy step; throughput is CPU-bound (downsample + PNG encode), so it scales
+    # with processes while they share the one GPU.
+    if "render" in mesh and stl_for:
+        from . import render as _render
+
+        rn_workers = _render.default_render_workers(n_workers)
+        tasks = [
+            (str(stl_path), str(geo_dir.parent / "renders" / pid), None)
+            for pid, stl_path in stl_for.items()
+        ]
+        rn_bar = progress_bar(total=len(tasks), desc="  render", unit="part")
+        rn_results = _render.render_stls(
+            tasks, n_workers=rn_workers, progress_cb=rn_bar.update
+        )
+        rn_bar.close()
+        for pid, (ok, err) in rn_results.items():
+            if ok:
+                counts["render"] += 1
+            elif verbose:
+                print(f"  FAILED {pid} (render): {err}")
+
+    # Phase 2d: drop intermediate STLs that were only produced to feed meshing.
+    if mesh and not stl_requested:
+        for stl_path in stl_for.values():
+            try:
+                stl_path.unlink()
+            except OSError:
+                pass
 
     return counts

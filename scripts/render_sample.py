@@ -5,12 +5,12 @@ every part and removes the STL afterwards unless ``stl`` is also requested),
 this renders directly off the STL files already on disk and never touches
 them. Used to populate the committed sample's ``renders/`` dir.
 
-Rendering runs on the GPU through a single reused headless EGL context (see
-``cadquarry.render``), so this is a single-process loop — one GPU context is
-far faster and lighter than spawning one per CPU core.
+Rendering runs on the GPU across a pool of worker processes that each own a
+headless EGL context and share the one GPU (see ``cadquarry.render``); the
+throughput-limiting step is CPU-side PNG encoding, so this scales with cores.
 
 Usage:
-    python scripts/render_sample.py <dataset_dir>
+    python scripts/render_sample.py <dataset_dir> [--workers N]
 """
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ if _REPO_ROOT not in sys.path:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("dataset", help="Corpus directory (contains geometry/*.stl)")
+    ap.add_argument("--workers", type=int, default=0, help="Render processes (0 = auto)")
     args = ap.parse_args()
 
     dataset = Path(args.dataset)
@@ -39,22 +40,21 @@ def main() -> int:
         print(f"error: no STL files in {geo_dir}", file=sys.stderr)
         return 1
 
-    from cadquarry.export import export_renders
+    from cadquarry import render as _render
+    from cadquarry.progress import progress_bar
 
     renders_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Rendering {len(stls)} parts × 8 views into {renders_dir}/ (GPU)…")
+    workers = _render.default_render_workers(args.workers)
+    print(f"Rendering {len(stls)} parts × 8 views into {renders_dir}/ "
+          f"({workers} GPU workers)…")
 
+    tasks = [(str(p), str(renders_dir / p.stem), None) for p in stls]
     t0 = time.time()
-    failed: list[tuple[str, str]] = []
-    for done, stl in enumerate(stls, 1):
-        pid = stl.stem
-        try:
-            export_renders(stl, renders_dir / pid)
-        except Exception as exc:  # pragma: no cover - reported to caller
-            failed.append((pid, str(exc)))
-        if done % 100 == 0 or done == len(stls):
-            print(f"  {done}/{len(stls)}  ({time.time() - t0:.0f}s)")
+    bar = progress_bar(total=len(tasks), desc="render", unit="part")
+    results = _render.render_stls(tasks, n_workers=workers, progress_cb=bar.update)
+    bar.close()
 
+    failed = [(pid, err) for pid, (ok, err) in results.items() if not ok]
     dt = time.time() - t0
     print(f"\nDone. {len(stls) - len(failed)}/{len(stls)} parts rendered "
           f"in {dt:.1f}s ({len(stls) * 8} PNGs).")

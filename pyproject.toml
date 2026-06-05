@@ -22,6 +22,7 @@ dependencies = [
     "cadquery>=2.4.0",
     "pydantic>=2.0",
     "numpy>=1.24",
+    "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]

@@ -28,6 +28,8 @@ upload and a handful of draw calls).
 """
 from __future__ import annotations
 
+import colorsys
+import hashlib
 import math
 from pathlib import Path
 
@@ -47,7 +49,7 @@ STANDARD_VIEWS: dict[str, tuple[float, float]] = {
 }
 
 # Default matte CAD look (display-space colors).  The lit faces are kept below
-# clamp so the blue stays saturated rather than washing out toward white, and
+# clamp so the color stays saturated rather than washing out toward white, and
 # there is a clear range between the brightest (top) and shaded faces.
 BASE_COLOR = (0.42, 0.56, 0.86)
 SKY_COLOR = (0.72, 0.74, 0.82)
@@ -55,7 +57,32 @@ GROUND_COLOR = (0.26, 0.28, 0.36)
 KEY_STRENGTH = 0.60
 KEY_WRAP = 0.50  # 0 = hard terminator, 1 = very soft
 
+# Subtle procedural surface texture (world-space fbm) so flat faces aren't dead
+# flat.  Amplitude is a small brightness modulation; frequency is in cycles per
+# bounding radius so the grain looks the same on parts of any size.
+TEX_AMP = 0.10
+TEX_CYCLES = 11.0
+
 _KERNEL_SIZE = 24
+
+
+# ---------------------------------------------------------------------------
+# Deterministic per-part color
+# ---------------------------------------------------------------------------
+
+def color_for(name: str) -> tuple[float, float, float]:
+    """
+    Deterministic, well-spread, mostly-saturated base color for a part.
+
+    Hashing the part id gives a stable color regardless of render order or
+    parallelism.  Saturation stays high and value stays high so colors read as
+    vivid and never so dark that shading crushes them out of dynamic range.
+    """
+    h = hashlib.md5(name.encode("utf-8")).digest()
+    hue = int.from_bytes(h[0:4], "big") / 2**32
+    sat = 0.62 + (h[4] / 255.0) * 0.23   # 0.62 .. 0.85
+    val = 0.82 + (h[5] / 255.0) * 0.13   # 0.82 .. 0.95
+    return colorsys.hsv_to_rgb(hue, sat, val)
 
 
 # ---------------------------------------------------------------------------
@@ -203,6 +230,31 @@ void main() {
 }
 """
 
+# Supersample downsample done on the GPU: each output pixel box-averages its
+# s*s source texels with premultiplied alpha (so the transparent background
+# doesn't darken edges).  Doing this on-GPU and reading back only the final
+# (small) image avoids a very expensive CPU/numpy reduction of the big buffer.
+_DOWN_FRAG = """
+#version 330
+out vec4 o_col;
+uniform sampler2D u_src;
+uniform int u_ssaa;
+void main() {
+    ivec2 base = ivec2(gl_FragCoord.xy) * u_ssaa;
+    vec3 acc = vec3(0.0);
+    float aacc = 0.0;
+    for (int j = 0; j < u_ssaa; j++)
+        for (int i = 0; i < u_ssaa; i++) {
+            vec4 c = texelFetch(u_src, base + ivec2(i, j), 0);
+            acc += c.rgb * c.a;
+            aacc += c.a;
+        }
+    float n = float(u_ssaa * u_ssaa);
+    vec3 rgb = aacc > 1e-4 ? acc / aacc : vec3(0.0);
+    o_col = vec4(rgb, aacc / n);
+}
+"""
+
 _LIGHT_FRAG = """
 #version 330
 in vec2 v_uv;
@@ -210,13 +262,35 @@ out vec4 o_col;
 uniform sampler2D u_pos;
 uniform sampler2D u_nrm;
 uniform sampler2D u_ao;
-uniform mat3 u_view_rot_t;   // view-space normal -> world-space normal
+uniform mat3 u_view_rot_t;   // view-space normal/dir -> world-space
+uniform vec3 u_cam_t;        // view-space translation (for world reconstruct)
 uniform vec3 u_light_pos;    // key light, view space
 uniform vec3 u_base;
 uniform vec3 u_sky;
 uniform vec3 u_ground;
 uniform float u_key;
 uniform float u_wrap;
+uniform float u_tex_freq;    // cycles per world unit
+uniform float u_tex_amp;
+
+float hash13(vec3 p) {
+    p = fract(p * 0.1031);
+    p += dot(p, p.yzx + 33.33);
+    return fract((p.x + p.y) * p.z);
+}
+
+float vnoise(vec3 x) {
+    vec3 i = floor(x);
+    vec3 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+        mix(mix(hash13(i + vec3(0,0,0)), hash13(i + vec3(1,0,0)), f.x),
+            mix(hash13(i + vec3(0,1,0)), hash13(i + vec3(1,1,0)), f.x), f.y),
+        mix(mix(hash13(i + vec3(0,0,1)), hash13(i + vec3(1,0,1)), f.x),
+            mix(hash13(i + vec3(0,1,1)), hash13(i + vec3(1,1,1)), f.x), f.y),
+        f.z);
+}
+
 void main() {
     vec4 P = texture(u_pos, v_uv);
     if (P.w < 0.5) { o_col = vec4(0.0); return; }
@@ -224,8 +298,11 @@ void main() {
     vec3 N = normalize(texture(u_nrm, v_uv).xyz);
     float ao = texture(u_ao, v_uv).r;
 
-    // Hemispherical ambient about world up (+Z): soft, no hard shadows.
+    // World-space normal & position (view is rigid: world = R^T (view - t)).
     vec3 Nw = normalize(u_view_rot_t * N);
+    vec3 wpos = u_view_rot_t * (pos - u_cam_t);
+
+    // Hemispherical ambient about world up (+Z): soft, no hard shadows.
     float hemi = Nw.z * 0.5 + 0.5;
     vec3 ambient = mix(u_ground, u_sky, hemi);
 
@@ -235,6 +312,12 @@ void main() {
     float diff = max(0.0, (ndl + u_wrap) / (1.0 + u_wrap));
 
     vec3 color = u_base * (ambient * ao + u_key * diff * (0.5 + 0.5 * ao));
+
+    // Subtle two-octave matte texture so flat faces have a little life.
+    vec3 wp = wpos * u_tex_freq;
+    float t = 0.62 * vnoise(wp) + 0.38 * vnoise(wp * 2.9);
+    color *= 1.0 + u_tex_amp * (t - 0.5);
+
     o_col = vec4(clamp(color, 0.0, 1.0), 1.0);
 }
 """
@@ -261,6 +344,7 @@ class GLRenderer:
         self.ssao_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_SSAO_FRAG)
         self.blur_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_BLUR_FRAG)
         self.light_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_LIGHT_FRAG)
+        self.down_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_DOWN_FRAG)
 
         rs = self.rs
         # G-buffer: position + normal (float) + depth.
@@ -277,7 +361,11 @@ class GLRenderer:
         self.col_tex = self.ctx.texture((rs, rs), 4, dtype="f1")
         self.col_fbo = self.ctx.framebuffer([self.col_tex])
 
-        for t in (self.g_pos, self.g_nrm, self.ao_tex, self.aob_tex):
+        # Final, downsampled output (read back instead of the big SSAA buffer).
+        self.out_tex = self.ctx.texture((size, size), 4, dtype="f1")
+        self.out_fbo = self.ctx.framebuffer([self.out_tex])
+
+        for t in (self.g_pos, self.g_nrm, self.ao_tex, self.aob_tex, self.col_tex):
             t.repeat_x = t.repeat_y = False
 
         # Fullscreen triangle.
@@ -286,6 +374,8 @@ class GLRenderer:
         self._ssao_vao = self.ctx.simple_vertex_array(self.ssao_prog, self._quad_vbo, "in_pos")
         self._blur_vao = self.ctx.simple_vertex_array(self.blur_prog, self._quad_vbo, "in_pos")
         self._light_vao = self.ctx.simple_vertex_array(self.light_prog, self._quad_vbo, "in_pos")
+        self._down_vao = self.ctx.simple_vertex_array(self.down_prog, self._quad_vbo, "in_pos")
+        self.down_prog["u_ssaa"].value = ssaa
 
         self._init_ssao_inputs()
 
@@ -347,6 +437,8 @@ class GLRenderer:
         self.light_prog["u_ground"].value = GROUND_COLOR
         self.light_prog["u_key"].value = KEY_STRENGTH
         self.light_prog["u_wrap"].value = KEY_WRAP
+        self.light_prog["u_tex_amp"].value = TEX_AMP
+        self.light_prog["u_tex_freq"].value = TEX_CYCLES / radius
         # Key light rigged to the camera (view space): upper-front-left, finite
         # distance so its direction sweeps across the part for a soft gradient.
         light_dir = _normalize(np.array([-0.45, 0.65, 0.75]))
@@ -358,10 +450,13 @@ class GLRenderer:
             for name, (elev, azim) in views.items():
                 view = _view_for(elev, azim, center, dist)
                 self.geom_prog["u_view"].write(_gl_bytes(view))
-                # view-space normal -> world normal = R^T n  (R = view rotation)
+                # view-space normal -> world normal = R^T n  (R = view rotation).
+                # numpy is row-major so view[:3,:3] sent as-is is already R^T in
+                # GL's column-major reading.
                 self.light_prog["u_view_rot_t"].write(
                     np.ascontiguousarray(view[:3, :3], dtype="f4").tobytes()
                 )
+                self.light_prog["u_cam_t"].value = tuple(view[:3, 3].astype(float))
 
                 # 1. Geometry pass.
                 self.g_fbo.use()
@@ -381,40 +476,29 @@ class GLRenderer:
                 self.blur_prog["u_texel"].value = texel
                 self._blur_vao.render(moderngl.TRIANGLES)
 
-                # 3. Lighting / composite.
+                # 3. Lighting / composite (at supersampled resolution).
                 self.col_fbo.use()
                 self.ctx.clear(0.0, 0.0, 0.0, 0.0)
                 self.g_pos.use(0); self.light_prog["u_pos"].value = 0
                 self.g_nrm.use(1); self.light_prog["u_nrm"].value = 1
                 self.aob_tex.use(2); self.light_prog["u_ao"].value = 2
                 self._light_vao.render(moderngl.TRIANGLES)
+
+                # 4. GPU box-downsample to output resolution, then read back the
+                # small image (premultiplied alpha, done on-GPU — far cheaper
+                # than reducing the big SSAA buffer in numpy).
+                self.out_fbo.use()
+                self.col_tex.use(0); self.down_prog["u_src"].value = 0
+                self._down_vao.render(moderngl.TRIANGLES)
                 self.ctx.enable(moderngl.DEPTH_TEST)
 
-                # 4. Read back + supersample downsample (premultiplied alpha).
-                raw = self.col_fbo.read(components=4, dtype="f1")
-                img = np.frombuffer(raw, dtype=np.uint8).reshape(self.rs, self.rs, 4)
-                img = np.flipud(img)  # GL origin is bottom-left
-                out[name] = self._downsample(img)
+                raw = self.out_fbo.read(components=4, dtype="f1")
+                img = np.frombuffer(raw, dtype=np.uint8).reshape(self.size, self.size, 4)
+                out[name] = np.ascontiguousarray(np.flipud(img))  # GL origin bottom-left
         finally:
             geom_vao.release()
             vbo.release()
         return out
-
-    def _downsample(self, img: np.ndarray) -> np.ndarray:
-        s = self.ssaa
-        if s == 1:
-            return img.copy()
-        h = w = self.size
-        f = img.astype(np.float32) / 255.0
-        f = f.reshape(h, s, w, s, 4)
-        rgb = f[..., :3]
-        a = f[..., 3:4]
-        # Premultiply so transparent background doesn't darken edges.
-        prem = (rgb * a).mean(axis=(1, 3))
-        am = a.mean(axis=(1, 3))
-        rgb_out = np.divide(prem, am, out=np.zeros_like(prem), where=am > 1e-5)
-        out = np.concatenate([rgb_out, am], axis=-1)
-        return np.clip(out * 255.0 + 0.5, 0, 255).astype(np.uint8)
 
 
 _RENDERER: GLRenderer | None = None
@@ -429,14 +513,113 @@ def get_renderer(size: int = 512, ssaa: int = 2) -> GLRenderer:
 
 
 def render_available() -> bool:
-    """True if the GPU render stack (moderngl + EGL + trimesh) is usable."""
+    """True if the GPU render stack (moderngl + EGL + trimesh) is usable.
+
+    Uses a throwaway context (released immediately) rather than the cached
+    process singleton, so callers can probe availability and then safely spawn
+    render workers without a live GL context lingering in the parent.
+    """
     try:
-        import moderngl  # noqa: F401
+        import moderngl
         import trimesh  # noqa: F401
+        from PIL import Image  # noqa: F401
     except ImportError:
         return False
     try:
-        get_renderer()
+        ctx = moderngl.create_standalone_context(backend="egl")
+        ctx.release()
         return True
     except Exception:
         return False
+
+
+# ---------------------------------------------------------------------------
+# Parallel corpus rendering
+# ---------------------------------------------------------------------------
+#
+# The per-view cost is dominated by CPU work (STL load, supersample downsample,
+# PNG zlib encode), not the GPU, so throughput scales with processes.  Each
+# worker owns one EGL context (created lazily via the module singleton and kept
+# warm for the worker's lifetime), and they share the one physical GPU.  We use
+# the "spawn" start method so no GL state is inherited across the fork.
+
+def _render_task(args: tuple[str, str, tuple | None, int, int]) -> tuple[str, bool, str]:
+    stl_path, out_dir, base_color, size, ssaa = args
+    from .export import export_renders
+
+    stem = Path(stl_path).stem
+    try:
+        export_renders(Path(stl_path), Path(out_dir), size=size, ssaa=ssaa, base_color=base_color)
+        return stem, True, ""
+    except Exception as exc:  # pragma: no cover - reported to caller
+        return stem, False, str(exc)
+
+
+def _render_worker_init(size: int, ssaa: int) -> None:
+    # Warm the EGL context once per worker so the first task isn't penalised.
+    try:
+        get_renderer(size=size, ssaa=ssaa)
+    except Exception:
+        pass
+
+
+def render_stls(
+    tasks: list[tuple[str, str, tuple | None]],
+    n_workers: int = 1,
+    size: int = 512,
+    ssaa: int = 2,
+    progress_cb=None,
+) -> dict[str, tuple[bool, str]]:
+    """
+    Render many STLs to per-part render dirs, optionally across processes.
+
+    ``tasks`` is a list of ``(stl_path, out_dir, base_color_or_None)``.  Returns
+    ``{stem: (ok, error)}``.  ``progress_cb`` (if given) is called once per
+    completed part.
+    """
+    results: dict[str, tuple[bool, str]] = {}
+    full = [(s, o, c, size, ssaa) for (s, o, c) in tasks]
+
+    if n_workers <= 1 or len(full) <= 1:
+        for t in full:
+            stem, ok, err = _render_task(t)
+            results[stem] = (ok, err)
+            if progress_cb:
+                progress_cb()
+        return results
+
+    import multiprocessing as mp
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+
+    ctx = mp.get_context("spawn")
+    with ProcessPoolExecutor(
+        max_workers=n_workers,
+        mp_context=ctx,
+        initializer=_render_worker_init,
+        initargs=(size, ssaa),
+    ) as ex:
+        futs = [ex.submit(_render_task, t) for t in full]
+        for fut in as_completed(futs):
+            stem, ok, err = fut.result()
+            results[stem] = (ok, err)
+            if progress_cb:
+                progress_cb()
+    return results
+
+
+def default_render_workers(requested: int | None = None) -> int:
+    """
+    Worker count for rendering.
+
+    The heavy per-part cost is now CPU-side PNG encoding (the supersample
+    downsample moved onto the GPU), so throughput scales with processes only up
+    to a point: benchmarking the full demo-1k corpus shows it peaks around
+    2x a 16-core base and *regresses* past it (process-startup + CPU/GPU-context
+    contention outweigh the gain — e.g. 128 workers is ~5x slower than 32).  So
+    we mildly oversubscribe to ~32 by default rather than chasing huge counts.
+    """
+    import os
+    if requested and requested > 0:
+        return requested
+    cpu = os.cpu_count() or 4
+    return max(1, min(cpu, 16) * 2)

@@ -80,6 +80,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
     from .execute import ExecuteResult, WorkerPool, default_worker_count
     from .filter import is_valid, compute_signature, DedupStore, QualityConfig
     from .dataset import DatasetWriter
+    from .progress import progress_bar
 
     config = _load_config(args.config)
     out_dir = Path(args.out)
@@ -122,14 +123,17 @@ def cmd_generate(args: argparse.Namespace) -> int:
     # in attempt order, but feed it execution results that were computed ahead
     # of time, in parallel.  Execution results are pure functions of the source,
     # so this is bit-for-bit identical to the old sequential path — only faster.
+    pbar = progress_bar(total=count, desc="  generate", unit="part")
+
     def accept_one(part, geo_sig) -> None:
         nonlocal accepted
         paths = write_part(part, out_dir, geometry_signature=geo_sig)
         meta = emit_meta_json(part, geo_sig)
         writer.add_record(meta, paths, geo_sig)
         accepted += 1
-        if verbose or accepted % max(1, count // 20) == 0:
-            print(
+        pbar.update(1)
+        if verbose:
+            pbar.write(
                 f"  [{accepted:>{len(str(count))}}/{count}] "
                 f"{part.id}  family={part.metadata.family}  tier={part.metadata.tier}"
             )
@@ -222,6 +226,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
         finally:
             pool.close()
 
+    pbar.close()
     manifest = writer.finalize()
     print(
         f"\nDone. {accepted} parts written to {out_dir}\n"
