@@ -14,7 +14,7 @@ onto the platforms instead of needing prose:
 | | Home | License | Contents |
 |---|---|---|---|
 | **Generator** | this GitHub repo | Apache-2.0 | code, seed lists, docs, a committed **1,000-part sample** in [`sample/demo-1k/`](sample/demo-1k/) |
-| **Full corpus** | [Hugging Face dataset](https://huggingface.co/datasets/jacobjennings/cadquarry) | CC0-1.0 | the size ladder (1k → 500k), browsable in the dataset viewer, `load_dataset`-able |
+| **Full corpus** | [Hugging Face dataset](https://huggingface.co/datasets/jacobjennings/cadquarry) | CC0-1.0 | the size ladder (1k → 200k), browsable in the dataset viewer, `load_dataset`-able |
 
 The published corpus is a **convenience artifact** — the generator plus the
 seed list ([`seeds/v1.toml`](seeds/v1.toml)) is the canonical source. Everything
@@ -220,10 +220,13 @@ are **STEP + STL + renders**:
 
 Each part is rendered from **eight standard viewpoints** — `front`, `top`,
 `right`, a canonical `iso`, and the four isometric corners (`iso_fr`, `iso_fl`,
-`iso_br`, `iso_bl`) — written to `renders/{id}/{view}.png`. Renders need the
-optional `trimesh` + `matplotlib` deps (already covered by the `export` extra,
-i.e. `uv pip install -e ".[export]"`); if they're missing, `export` prints one
-warning and skips renders while still writing STEP/STL.
+`iso_br`, `iso_bl`) — written to `renders/{id}/{view}.png`. Rendering is done on
+the GPU through a headless EGL OpenGL context (a small deferred pipeline with a
+real depth buffer, screen-space ambient occlusion and soft hemispherical +
+key lighting), and needs the optional `trimesh` + `moderngl` + `pillow` deps
+(covered by the `export` extra, i.e. `uv pip install -e ".[export]"`) plus an
+EGL-capable GL driver; if they're missing, `export` prints one warning and
+skips renders while still writing STEP/STL.
 
 ---
 
@@ -251,7 +254,7 @@ plus exported geometry. Builds are **resumable**: a corpus whose
 a fresh run anyway); pass `--force` to regenerate. `--workers` is shared by both
 the generation and export phases.
 
-> Heads up: the ladder goes up to **500k parts**. Run `--sizes` with the
+> Heads up: the ladder goes up to **200k parts**. Run `--sizes` with the
 > specific tags you want unless you really intend to build the whole ladder.
 
 ---
@@ -357,7 +360,7 @@ need. Swap the `1k` prefix for any size in the ladder:
 | `<tag>-full` | + renders + STL + STEP | Parquet |
 
 Available `<tag>` sizes (from [`seeds/v1.toml`](seeds/v1.toml)): `1k`, `2k`,
-`5k`, `10k`, `20k`, `50k`, `100k`, `200k`, `500k`. For example,
+`5k`, `10k`, `20k`, `50k`, `100k`, `200k`. For example,
 `load_dataset("jacobjennings/cadquarry", "50k-stl")`.
 
 Every part is reproducible bit-for-bit from its seed, so the published data is a
@@ -369,7 +372,7 @@ source.
 ## Publishing the full corpus to Hugging Face
 
 [`scripts/publish_to_hf.py`](scripts/publish_to_hf.py) builds the reproducible
-size ladder (1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k, 500k) and uploads each as a
+size ladder (1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k) and uploads each as a
 set of `load_dataset` configs of one HF dataset. The code-only variant is packed
 into a single `corpus.jsonl` with the parametric `source` and `params` inlined;
 the geometry variants (renders/STL/STEP) are packed into Snappy-compressed
@@ -381,7 +384,7 @@ uv pip install -e ".[publish]"          # adds huggingface_hub + pyarrow
 # Build + upload the small configs to your own repo
 .venv/bin/python scripts/publish_to_hf.py --sizes 1k 2k 5k --repo-id <user>/cadquarry
 
-# Build everything (large; 500k generation takes a while)
+# Build everything (large; 200k generation takes a while)
 .venv/bin/python scripts/publish_to_hf.py --all
 
 # Generate + pack locally without uploading (inspect .hf_build/)
