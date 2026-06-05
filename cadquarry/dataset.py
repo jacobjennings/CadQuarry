@@ -208,3 +208,145 @@ def corpus_stats(dataset_dir: Path) -> dict[str, Any]:
         "families": dict(families),
         "tiers": dict(tiers),
     }
+
+
+# View names produced by export.export_renders / STANDARD_VIEWS (must stay in sync).
+RENDER_VIEWS: list[str] = [
+    "front", "top", "right", "iso",
+    "iso_fr", "iso_fl", "iso_br", "iso_bl",
+]
+
+
+def pack_corpus_parquet(
+    dataset_dir: Path,
+    out_path: Path,
+    include_source: bool = True,
+    include_renders: bool = False,
+    include_stl: bool = False,
+    include_step: bool = False,
+) -> int:
+    """
+    Pack a corpus into a single Parquet file.
+
+    Binary geometry columns (render_*, stl_bytes, step_bytes) are stored as raw
+    bytes so that HuggingFace ``datasets`` can decode them with the correct
+    feature types declared in the dataset card (``dtype: image`` for renders,
+    ``dtype: binary`` for mesh bytes).
+
+    Renders are read from ``renders/{part_id}/{view}.png``.
+    STL / STEP are read from ``geometry/{part_id}.stl`` / ``.step``.
+    Missing files produce null values for that column.
+
+    Returns the number of rows written.
+    Raises ImportError if pyarrow is not installed.
+    """
+    try:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+    except ImportError as exc:
+        raise ImportError(
+            "pyarrow is required for Parquet export. "
+            "Install it with: pip install pyarrow  "
+            "(or: pip install -e '.[publish]')"
+        ) from exc
+
+    records = load_manifest(dataset_dir)
+    renders_base = dataset_dir / "renders"
+    geo_base = dataset_dir / "geometry"
+
+    base_cols: list[tuple[str, Any]] = [
+        ("part_id", pa.string()),
+        ("family", pa.string()),
+        ("tier", pa.int32()),
+        ("seed", pa.int64()),
+        ("symmetry", pa.string()),
+        ("op_count", pa.int32()),
+        ("ir_hash", pa.string()),
+        ("generator_version", pa.string()),
+        ("license", pa.string()),
+        ("geometry_signature", pa.string()),
+    ]
+    if include_source:
+        base_cols += [
+            ("source", pa.string()),
+            ("params", pa.string()),
+        ]
+    if include_renders:
+        for v in RENDER_VIEWS:
+            base_cols.append((f"render_{v}", pa.binary()))
+    if include_stl:
+        base_cols.append(("stl_bytes", pa.large_binary()))
+    if include_step:
+        base_cols.append(("step_bytes", pa.large_binary()))
+
+    col_names = [c[0] for c in base_cols]
+    col_types = {c[0]: c[1] for c in base_cols}
+    buffers: dict[str, list] = {n: [] for n in col_names}
+
+    n = 0
+    for rec in records:
+        pid = rec.get("part_id")
+        if not pid:
+            continue
+
+        row: dict[str, Any] = {
+            "part_id": pid,
+            "family": rec.get("family"),
+            "tier": rec.get("tier"),
+            "seed": rec.get("seed"),
+            "symmetry": rec.get("symmetry"),
+            "op_count": rec.get("op_count"),
+            "ir_hash": rec.get("ir_hash"),
+            "generator_version": rec.get("generator_version") or rec.get("cadquarry_version"),
+            "license": rec.get("license", "CC0-1.0"),
+            "geometry_signature": json.dumps(rec.get("geometry_signature")),
+        }
+
+        if include_source:
+            py_rel = rec.get("paths", {}).get("py")
+            row["source"] = None
+            if py_rel:
+                py_p = dataset_dir / py_rel
+                if py_p.exists():
+                    row["source"] = py_p.read_text(encoding="utf-8")
+            params_rel = rec.get("paths", {}).get("params")
+            row["params"] = None
+            if params_rel:
+                p_path = dataset_dir / params_rel
+                if p_path.exists():
+                    try:
+                        raw = json.loads(p_path.read_text(encoding="utf-8"))
+                        row["params"] = json.dumps(raw.get("params"))
+                    except (OSError, json.JSONDecodeError):
+                        pass
+
+        if include_renders:
+            rdir = renders_base / pid
+            for v in RENDER_VIEWS:
+                png = rdir / f"{v}.png"
+                row[f"render_{v}"] = png.read_bytes() if png.exists() else None
+
+        if include_stl:
+            stl_p = geo_base / f"{pid}.stl"
+            row["stl_bytes"] = stl_p.read_bytes() if stl_p.exists() else None
+
+        if include_step:
+            step_p = geo_base / f"{pid}.step"
+            row["step_bytes"] = step_p.read_bytes() if step_p.exists() else None
+
+        for cn in col_names:
+            buffers[cn].append(row.get(cn))
+        n += 1
+
+    if n == 0:
+        return 0
+
+    arrays = [
+        pa.array(buffers[cn], type=col_types[cn])
+        for cn in col_names
+    ]
+    schema = pa.schema([(cn, col_types[cn]) for cn in col_names])
+    table = pa.table(dict(zip(col_names, arrays)), schema=schema)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    pq.write_table(table, str(out_path), compression="snappy")
+    return n

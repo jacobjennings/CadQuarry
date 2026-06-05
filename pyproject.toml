@@ -26,7 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 export = ["trimesh>=4.0", "matplotlib>=3.7"]
-publish = ["huggingface_hub>=0.24"]
+publish = ["huggingface_hub>=0.24", "pyarrow>=14.0"]
 dev = [
     "pytest>=8.0",
     "pytest-timeout>=2.0",

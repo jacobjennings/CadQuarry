@@ -11,21 +11,22 @@ Design goals
 * **Reproducible.** Every size is pinned to a ``(count, seed)`` in
   ``seeds/v1.toml`` under ``[[publish.corpus]]``. The generator version + seed
   regenerate each corpus bit-for-bit, so the upload is a convenience artifact.
-* **Reusable by anyone.** Point it at your own repo with ``--repo-id`` (or the
-  ``CADQUARRY_HF_REPO`` env var). With no namespace it defaults to
-  ``<your-username>/cadquarry`` resolved from your token.
+* **Six content variants per corpus.** Each HuggingFace config gives consumers
+  exactly the columns they need without fetching data they don't.
 
-What it uploads
----------------
-One dataset repo with a folder per size, each containing a single
-``corpus.jsonl`` whose rows carry the parametric ``source`` and ``params``
-inline (browsable in the HF dataset viewer, loadable via ``load_dataset``).
-A generated ``README.md`` declares one ``load_dataset`` config per size.
+Variants published per corpus size
+-----------------------------------
+  {tag}              — CadQuery source + metadata only (JSONL; fastest to load)
+  {tag}-renders      — + 8-view render images (Parquet, ``dtype: image`` columns)
+  {tag}-stl          — + binary STL mesh (Parquet, ``dtype: binary`` column)
+  {tag}-step         — + binary STEP B-rep (Parquet, ``dtype: binary`` column)
+  {tag}-geo          — + renders + STL (no STEP)
+  {tag}-full         — + renders + STL + STEP (everything)
 
 Examples
 --------
-    # Build + upload just the small configs (fast)
-    python scripts/publish_to_hf.py --sizes 1k 2k 5k
+    # Build + upload just the small configs (fast, code-only)
+    python scripts/publish_to_hf.py --sizes 1k 2k 5k --code-only
 
     # Everything, to your own repo
     python scripts/publish_to_hf.py --all --repo-id me/cadquarry
@@ -33,31 +34,46 @@ Examples
     # Generate + pack locally but do not upload (inspect .hf_build/)
     python scripts/publish_to_hf.py --sizes 1k --dry-run
 
-    # Also export + upload compact STL meshes alongside each corpus
-    python scripts/publish_to_hf.py --sizes 1k --with-geometry
+    # Full pipeline with all geometry variants
+    python scripts/publish_to_hf.py --sizes 1k 10k
 """
 from __future__ import annotations
 
 import argparse
 import os
-import subprocess
 import sys
+import textwrap
 import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from cadquarry import __version__ as GEN_VERSION  # noqa: E402
-from cadquarry.dataset import pack_corpus_jsonl  # noqa: E402
+from cadquarry import __version__ as GEN_VERSION          # noqa: E402
+from cadquarry.dataset import (                            # noqa: E402
+    pack_corpus_jsonl,
+    pack_corpus_parquet,
+    RENDER_VIEWS,
+)
+from cadquarry.export import export_corpus_geometry        # noqa: E402
 
 SEEDS_FILE = REPO_ROOT / "seeds" / "v1.toml"
 DEFAULT_CONFIG = REPO_ROOT / "configs" / "default.toml"
 
+# ── variant definitions ────────────────────────────────────────────────────────
+# Each entry: (suffix, include_renders, include_stl, include_step)
+# "" suffix = the primary code-only JSONL config.
+VARIANTS: list[tuple[str, bool, bool, bool]] = [
+    ("",         False, False, False),  # code + metadata only  (JSONL)
+    ("-renders", True,  False, False),  # + renders             (Parquet)
+    ("-stl",     False, True,  False),  # + STL                 (Parquet)
+    ("-step",    False, False, True),   # + STEP                (Parquet)
+    ("-geo",     True,  True,  False),  # + renders + STL       (Parquet)
+    ("-full",    True,  True,  True),   # + renders + STL + STEP (Parquet)
+]
 
-# ---------------------------------------------------------------------------
-# Seed ladder
-# ---------------------------------------------------------------------------
+
+# ── seed ladder ────────────────────────────────────────────────────────────────
 
 def load_publish_ladder() -> tuple[str, dict[str, dict]]:
     """Return (default_repo_id, {tag: {count, seed}}) from seeds/v1.toml."""
@@ -86,19 +102,18 @@ def tag_to_int(tag: str) -> int:
         return 0
 
 
-# ---------------------------------------------------------------------------
-# Token (never printed)
-# ---------------------------------------------------------------------------
+# ── auth ───────────────────────────────────────────────────────────────────────
 
 def resolve_token() -> str | None:
     return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN") or None
 
 
-# ---------------------------------------------------------------------------
-# Build steps
-# ---------------------------------------------------------------------------
+# ── build steps ───────────────────────────────────────────────────────────────
 
-def generate_corpus(out_dir: Path, count: int, seed: int, workers: int, force: bool) -> None:
+def generate_corpus(
+    out_dir: Path, count: int, seed: int, workers: int, force: bool, timeout: float,
+) -> None:
+    import subprocess
     manifest = out_dir / "manifest.jsonl"
     if manifest.exists() and not force:
         n = sum(1 for _ in manifest.open())
@@ -109,6 +124,7 @@ def generate_corpus(out_dir: Path, count: int, seed: int, workers: int, force: b
         sys.executable, "-m", "cadquarry", "generate",
         "--seed", str(seed), "--count", str(count),
         "--out", str(out_dir), "--config", str(DEFAULT_CONFIG),
+        "--timeout", str(timeout),
     ]
     if workers:
         cmd += ["--workers", str(workers)]
@@ -116,59 +132,164 @@ def generate_corpus(out_dir: Path, count: int, seed: int, workers: int, force: b
     subprocess.run(cmd, cwd=REPO_ROOT, check=True)
 
 
-def export_geometry(corpus_dir: Path, out_dir: Path, workers: int) -> None:
-    script = REPO_ROOT / "scripts" / "export_stl.py"
-    cmd = [sys.executable, str(script), str(corpus_dir), "--out", str(out_dir)]
-    if workers:
-        cmd += ["--workers", str(workers)]
-    print("  · exporting compact STL meshes …")
-    subprocess.run(cmd, cwd=REPO_ROOT, check=True)
-
-
-def write_size_card(folder: Path, tag: str, count: int, seed: int, n_rows: int, repo_id: str) -> None:
-    card = f"""\
-# CadQuarry — `{tag}` ({count:,} parts)
-
-Generator: **CadQuarry v{GEN_VERSION}** · Seed: **{seed}** · Rows: **{n_rows:,}**
-License: **CC0-1.0** (data) · Generator code: **Apache-2.0**
-
-Regenerate this exact corpus from the [generator]\
-(https://github.com/jacobjennings/CadQuarry):
-
-```bash
-cadquarry generate --seed {seed} --count {count} \\
-    --config configs/default.toml --out {tag}/
-python scripts/publish_to_hf.py --sizes {tag}   # pack + upload
-```
-
-`corpus.jsonl` has one row per part with the parametric `source` and `params`
-inlined. Load it with:
-
-```python
-from datasets import load_dataset
-ds = load_dataset("{repo_id}", "{tag}", split="train")
-```
-"""
-    (folder / "README.md").write_text(card, encoding="utf-8")
-
-
-def build_dataset_readme(repo_id: str, tags: list[str], ladder: dict[str, dict]) -> str:
-    tags = sorted(tags, key=tag_to_int)
-    config_lines = []
-    for i, tag in enumerate(tags):
-        config_lines.append(f"  - config_name: \"{tag}\"")
-        config_lines.append(f"    data_files: \"{tag}/corpus.jsonl\"")
-        if i == 0:
-            config_lines.append("    default: true")
-    configs_yaml = "\n".join(config_lines)
-
-    table = "\n".join(
-        f"| `{t}` | {ladder.get(t, {}).get('count', tag_to_int(t)):,} | "
-        f"{ladder.get(t, {}).get('seed', '—')} |"
-        for t in tags
+def export_geometry(
+    corpus_dir: Path,
+    workers: int,
+    formats: list[str],
+    timeout: float,
+    verbose: bool,
+) -> None:
+    """Export geometry artifacts for a corpus using the cadquarry export pipeline."""
+    n = default_worker_count(workers)
+    print(f"  · exporting geometry ({', '.join(formats)}, {n} workers) …")
+    counts = export_corpus_geometry(
+        corpus_dir, formats=formats, n_workers=n, timeout=timeout, verbose=verbose,
     )
+    for fmt, cnt in counts.items():
+        print(f"    {fmt}: {cnt} files")
 
-    largest = max((tag_to_int(t) for t in tags), default=0)
+
+def default_worker_count(n: int) -> int:
+    import os as _os
+    return n or min(_os.cpu_count() or 4, 16)
+
+
+# ── packing ───────────────────────────────────────────────────────────────────
+
+def pack_variant(
+    corpus_dir: Path,
+    dest: Path,
+    suffix: str,
+    include_renders: bool,
+    include_stl: bool,
+    include_step: bool,
+) -> tuple[str, str] | None:
+    """
+    Pack one variant into dest/.  Returns (config_name, relative_data_file)
+    on success, or None if the required geometry files are missing.
+    """
+    # Detect whether the needed geometry is actually present.
+    if include_renders:
+        render_base = corpus_dir / "renders"
+        if not render_base.is_dir() or not any(render_base.iterdir()):
+            print(f"    · skipping {suffix!r} variant — no renders found")
+            return None
+    if include_stl:
+        geo_dir = corpus_dir / "geometry"
+        if not any(geo_dir.glob("*.stl")):
+            print(f"    · skipping {suffix!r} variant — no STL files found")
+            return None
+    if include_step:
+        geo_dir = corpus_dir / "geometry"
+        if not any(geo_dir.glob("*.step")):
+            print(f"    · skipping {suffix!r} variant — no STEP files found")
+            return None
+
+    tag = dest.name  # upload_root/{tag}/
+    dest.mkdir(parents=True, exist_ok=True)
+
+    if not suffix:
+        # Code-only variant: JSONL (HF dataset viewer can browse it inline).
+        out = dest / "corpus.jsonl"
+        n = pack_corpus_jsonl(corpus_dir, out, include_source=True)
+        config_name = tag
+        data_file = f"{tag}/corpus.jsonl"
+    else:
+        # Geometry variant: Parquet with binary columns.
+        fname = f"corpus{suffix}.parquet"
+        out = dest / fname
+        n = pack_corpus_parquet(
+            corpus_dir, out,
+            include_source=True,
+            include_renders=include_renders,
+            include_stl=include_stl,
+            include_step=include_step,
+        )
+        config_name = f"{tag}{suffix}"
+        data_file = f"{tag}/{fname}"
+
+    mb = out.stat().st_size / 1e6 if out.exists() else 0
+    print(f"    · {config_name}: {n:,} rows → {data_file} ({mb:.1f} MB)")
+    return config_name, data_file
+
+
+# ── README / dataset card ─────────────────────────────────────────────────────
+
+def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool) -> str:
+    """
+    Return the `  features:` YAML block for a Parquet config entry.
+    Items are at 2-space indent from the config `- ` bullet.
+    """
+    base = [
+        "  features:",
+        "  - name: part_id",
+        "    dtype: string",
+        "  - name: family",
+        "    dtype: string",
+        "  - name: tier",
+        "    dtype: int32",
+        "  - name: seed",
+        "    dtype: int64",
+        "  - name: symmetry",
+        "    dtype: string",
+        "  - name: op_count",
+        "    dtype: int32",
+        "  - name: ir_hash",
+        "    dtype: string",
+        "  - name: generator_version",
+        "    dtype: string",
+        "  - name: license",
+        "    dtype: string",
+        "  - name: geometry_signature",
+        "    dtype: string",
+        "  - name: source",
+        "    dtype: string",
+        "  - name: params",
+        "    dtype: string",
+    ]
+    if include_renders:
+        for v in RENDER_VIEWS:
+            base += [f"  - name: render_{v}", "    dtype: image"]
+    if include_stl:
+        base += ["  - name: stl_bytes", "    dtype: binary"]
+    if include_step:
+        base += ["  - name: step_bytes", "    dtype: binary"]
+    return "\n".join(base)
+
+
+def _configs_yaml(
+    built: dict[str, list[tuple[str, str]]],
+    all_tags: list[str],
+) -> str:
+    """
+    Build the `configs:` YAML block.  Each entry starts with `- ` (no extra
+    indent) so it nests correctly under `configs:` in the front-matter.
+    """
+    lines: list[str] = []
+    first_code = True
+    for tag in all_tags:
+        for config_name, data_file in built[tag]:
+            suffix = config_name[len(tag):]   # "" / "-renders" / …
+            is_code_only = suffix == ""
+            lines.append(f'- config_name: "{config_name}"')
+            lines.append(f'  data_files: "{data_file}"')
+            if first_code and is_code_only:
+                lines.append("  default: true")
+                first_code = False
+            if not is_code_only:
+                _, inc_r, inc_s, inc_sp = next(v for v in VARIANTS if v[0] == suffix)
+                lines.append(_features_yaml(inc_r, inc_s, inc_sp))
+    return "\n".join(lines)
+
+
+def build_dataset_readme(
+    repo_id: str,
+    built: dict[str, list[tuple[str, str]]],   # {tag: [(config_name, data_file), …]}
+    ladder: dict[str, dict],
+) -> str:
+    all_tags = sorted(built.keys(), key=tag_to_int)
+
+    largest = max((tag_to_int(t) for t in all_tags), default=0)
     if largest >= 1_000_000:
         size_cat = "1M<n<10M"
     elif largest >= 100_000:
@@ -180,90 +301,270 @@ def build_dataset_readme(repo_id: str, tags: list[str], ladder: dict[str, dict])
     else:
         size_cat = "n<1K"
 
-    return f"""\
----
-license: cc0-1.0
-pretty_name: CadQuarry
-tags:
-  - cad
-  - cadquery
-  - procedural-generation
-  - parametric
-  - 3d
-size_categories:
-  - {size_cat}
-configs:
-{configs_yaml}
----
+    table_rows = []
+    for tag in all_tags:
+        n = ladder.get(tag, {}).get("count", tag_to_int(tag))
+        seed = ladder.get(tag, {}).get("seed", "—")
+        cfgs = ", ".join(f"`{cn}`" for cn, _ in built[tag])
+        table_rows.append(f"| `{tag}` | {n:,} | {seed} | {cfgs} |")
+    table = "\n".join(table_rows)
 
+    ex_tag = all_tags[0] if all_tags else "1k"
+    has_renders = any(cn.endswith("-renders") for t in all_tags for cn, _ in built[t])
+    has_stl     = any(cn.endswith("-stl")     for t in all_tags for cn, _ in built[t])
+    has_full    = any(cn.endswith("-full")    for t in all_tags for cn, _ in built[t])
+
+    # ── YAML front-matter (built as a plain string — no textwrap.dedent) ─────
+    fm_lines = [
+        "---",
+        "license: cc0-1.0",
+        "pretty_name: CadQuarry",
+        "language:",
+        "  - code",
+        "tags:",
+        "  - cad",
+        "  - cadquery",
+        "  - procedural-generation",
+        "  - parametric",
+        "  - 3d",
+        "  - synthetic",
+        "size_categories:",
+        f"  - {size_cat}",
+        "configs:",
+        _configs_yaml(built, all_tags),
+        "---",
+        "",
+    ]
+    front_matter = "\n".join(fm_lines)
+
+    # ── quickstart snippets ──────────────────────────────────────────────────
+    render_snip = (
+        f'\n# With 8-view renders (PIL Images):\n'
+        f'ds = load_dataset("{repo_id}", "{ex_tag}-renders", split="train")\n'
+        f'ds[0]["render_iso"].show()         # isometric view\n'
+        f'ds[0]["render_front"].show()       # front orthographic\n'
+    ) if has_renders else ""
+
+    stl_snip = (
+        f'\n# With STL mesh:\n'
+        f'import trimesh, io\n'
+        f'ds = load_dataset("{repo_id}", "{ex_tag}-stl", split="train")\n'
+        f'mesh = trimesh.load(io.BytesIO(ds[0]["stl_bytes"]), file_type="stl")\n'
+        f'mesh.show()\n'
+    ) if has_stl else ""
+
+    full_snip = (
+        f'\n# Full corpus (renders + STL + STEP):\n'
+        f'ds = load_dataset("{repo_id}", "{ex_tag}-full", split="train")\n'
+        f'with open("part.step", "wb") as f:\n'
+        f'    f.write(ds[0]["step_bytes"])\n'
+    ) if has_full else ""
+
+    # ── body ─────────────────────────────────────────────────────────────────
+    body = f"""\
 # CadQuarry
 
 Procedurally generated, **execution-validated**, fully **parametric** CadQuery
-programs and the geometry signatures they produce. Every part is a pure Python
-function of typed, range-bounded parameters and is reproducible **bit-for-bit**
-from a single seed.
+programs and the geometry they produce. Every part is a pure Python function of
+typed, range-bounded parameters and is reproducible **bit-for-bit** from a seed.
 
 - **Generator (canonical source):** https://github.com/jacobjennings/CadQuarry
-  — generator version **v{GEN_VERSION}**, config `configs/default.toml`.
-- **Code license:** Apache-2.0 · **Data license:** CC0-1.0 (this dataset).
-- **Live preview of a 1k sample:** see the repo `sample/demo-1k/preview.html`.
+  generator version **v{GEN_VERSION}**, config `configs/default.toml`
+- **Code license:** Apache-2.0 · **Data license:** CC0-1.0
 
-This dataset is a **convenience artifact**: the generator plus the seed ladder
-below is the actual deliverable. Anything here can be regenerated or extended.
+Each corpus in this dataset is a **convenience artifact**: the generator plus
+the seed ladder is the actual deliverable. Any corpus can be regenerated locally.
 
-## Configs (size ladder)
+---
 
-| Config | Parts | Seed |
-|--------|-------|------|
-{table}
+## Quick start
+
+### Python (`datasets` library)
+
+```bash
+pip install datasets
+```
 
 ```python
 from datasets import load_dataset
-ds = load_dataset("{repo_id}", "{tags[0] if tags else '1k'}", split="train")
-print(ds[0]["source"])   # the parametric CadQuery program
+
+# Code + metadata only (fastest):
+ds = load_dataset("{repo_id}", "{ex_tag}", split="train")
+print(ds[0]["source"])   # full parametric CadQuery program
+print(ds[0]["family"])   # e.g. "plate", "revolved", "block"
+{render_snip}{stl_snip}{full_snip}
 ```
+
+### HuggingFace CLI
+
+```bash
+pip install huggingface_hub
+
+# Code-only corpus:
+huggingface-cli download {repo_id} \\
+    --repo-type dataset \\
+    --include "{ex_tag}/corpus.jsonl" \\
+    --local-dir ./cadquarry-{ex_tag}
+
+# All variants for one size:
+huggingface-cli download {repo_id} \\
+    --repo-type dataset \\
+    --include "{ex_tag}/*" \\
+    --local-dir ./cadquarry-{ex_tag}
+```
+
+### Python Hub API (selective download)
+
+```python
+from huggingface_hub import snapshot_download
+
+local = snapshot_download(
+    "{repo_id}",
+    repo_type="dataset",
+    allow_patterns=["{ex_tag}/corpus.jsonl", "{ex_tag}/corpus-stl.parquet"],
+)
+```
+
+---
+
+## Content variants
+
+Each corpus size ships as six HuggingFace configs so you only fetch what you need:
+
+| Config suffix | Content | File format |
+|---------------|---------|-------------|
+| *(none)* | CadQuery source + metadata | JSONL |
+| `-renders` | + 8 shaded render images | Parquet (`render_*` = `image`) |
+| `-stl` | + binary STL mesh | Parquet (`stl_bytes` = `binary`) |
+| `-step` | + binary STEP B-rep | Parquet (`step_bytes` = `binary`) |
+| `-geo` | + renders + STL | Parquet |
+| `-full` | + renders + STL + STEP | Parquet |
+
+---
+
+## Corpus sizes
+
+| Tag | Parts | Seed | Available configs |
+|-----|-------|------|-------------------|
+{table}
+
+---
 
 ## Schema
 
-Each row: `part_id`, `family`, `tier`, `seed`, `symmetry`, `op_count`,
-`ir_hash`, `generator_version`, `license`, `geometry_signature`
-(volume, surface area, principal moments, face/edge/vertex counts),
-`params` (the typed PARAMS schema), and `source` (the full `.py` program).
+**All configs** include:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `part_id` | string | Unique deterministic identifier |
+| `family` | string | `plate`, `revolved`, `block`, `enclosure`, `flanged`, `ribbed`, `profiled` |
+| `tier` | int32 | Complexity tier 0–3 |
+| `seed` | int64 | Per-part seed |
+| `symmetry` | string | Detected symmetry class |
+| `op_count` | int32 | Number of CadQuery operations |
+| `ir_hash` | string | SHA-256 of the canonical IR (dedup key) |
+| `generator_version` | string | CadQuarry version |
+| `license` | string | Always `CC0-1.0` |
+| `geometry_signature` | string (JSON) | Volume, surface area, face/edge/vertex counts |
+| `source` | string | Full `.py` CadQuery program |
+| `params` | string (JSON) | Typed parameter schema with ranges and defaults |
+
+**Geometry columns** (geometry variants only):
+
+| Column | Type | Present in |
+|--------|------|-----------|
+| `render_front` … `render_iso_bl` | image | `-renders`, `-geo`, `-full` |
+| `stl_bytes` | binary | `-stl`, `-geo`, `-full` |
+| `step_bytes` | binary | `-step`, `-full` |
+
+Render views: `front`, `top`, `right`, `iso`, `iso_fr`, `iso_fl`, `iso_br`, `iso_bl`.
+
+---
 
 ## Reproducibility
 
+Same generator version + seed ⇒ identical corpus bit-for-bit:
+
 ```bash
 pip install -e ".[dev]"   # from the generator repo
-cadquarry generate --seed <seed> --count <count> \\
-    --config configs/default.toml --out <tag>/
+cadquarry generate \\
+    --seed <seed> --count <count> \\
+    --config configs/default.toml \\
+    --out <output_dir>
 ```
 
-Same generator version + seed ⇒ identical corpus and identical geometry
-signatures.
+To regenerate with all geometry:
+
+```bash
+cadquarry build --sizes <tag> --formats step,stl,render --out datasets/
+```
+
+---
+
+## Working with the parametric source
+
+Each `source` is a standalone Python module with two exports:
+
+```python
+PARAMS: dict[str, dict]          # typed parameter schema
+def build(p: dict) -> cq.Workplane: ...
+```
+
+Run a part with CadQuery installed:
+
+```python
+import cadquery as cq, json
+
+source = ds[0]["source"]
+params = json.loads(ds[0]["params"])
+defaults = {{k: v["default"] for k, v in params.items()}}
+
+ns = {{}}
+exec(compile(source, "<part>", "exec"), ns)
+result = ns["build"](defaults)
+cq.exporters.export(result, "part.step")
+```
 """
+    return front_matter + "\n" + body
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+# ── main ──────────────────────────────────────────────────────────────────────
 
 def main(argv: list[str] | None = None) -> int:
     default_repo, ladder = load_publish_ladder()
 
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--sizes", nargs="+", metavar="TAG",
-                    help=f"Sizes to build/upload (default: 1k). Available: {', '.join(ladder)}")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    ap.add_argument(
+        "--sizes", nargs="+", metavar="TAG",
+        help=f"Sizes to build/upload (default: 1k). Available: {', '.join(ladder)}",
+    )
     ap.add_argument("--all", action="store_true", help="Build/upload every size in the ladder")
-    ap.add_argument("--repo-id", default=os.environ.get("CADQUARRY_HF_REPO") or default_repo,
-                    help="HF dataset repo id (default: from seeds/v1.toml or CADQUARRY_HF_REPO)")
-    ap.add_argument("--workdir", default=str(REPO_ROOT / ".hf_build"),
-                    help="Staging dir for generated corpora (default: .hf_build)")
+    ap.add_argument(
+        "--repo-id", default=os.environ.get("CADQUARRY_HF_REPO") or default_repo,
+        help="HF dataset repo id (default: from seeds/v1.toml or CADQUARRY_HF_REPO)",
+    )
+    ap.add_argument(
+        "--workdir", default=str(REPO_ROOT / ".hf_build"),
+        help="Staging dir for generated corpora (default: .hf_build)",
+    )
     ap.add_argument("--workers", type=int, default=0, help="Generation/export workers (0 = auto)")
-    ap.add_argument("--with-geometry", action="store_true",
-                    help="Also export + upload compact STL meshes per part (large)")
+    ap.add_argument("--timeout", type=float, default=60.0, help="Per-part timeout (default: 60s)")
+    ap.add_argument(
+        "--code-only", action="store_true",
+        help="Skip geometry export; publish only the code+metadata (JSONL) variant",
+    )
+    ap.add_argument("--no-renders", action="store_true", help="Skip render generation and render variants")
+    ap.add_argument("--no-stl",     action="store_true", help="Skip STL export and STL variants")
+    ap.add_argument("--no-step",    action="store_true", help="Skip STEP export and STEP variants")
     ap.add_argument("--private", action="store_true", help="Create the dataset repo as private")
     ap.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
-    ap.add_argument("--dry-run", action="store_true", help="Generate + pack locally, do not upload")
+    ap.add_argument(
+        "--dry-run", action="store_true",
+        help="Generate + pack locally, do not upload",
+    )
+    ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args(argv)
 
     if args.all:
@@ -277,6 +578,28 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         raise SystemExit(f"Unknown size(s): {unknown}. Available: {', '.join(ladder)}")
 
+    # Resolve which content types to export based on flags.
+    want_renders = not args.code_only and not args.no_renders
+    want_stl     = not args.code_only and not args.no_stl
+    want_step    = not args.code_only and not args.no_step
+
+    # Geometry formats we actually need to export.
+    geo_formats: list[str] = []
+    if want_renders:
+        geo_formats.append("render")
+    if want_stl:
+        geo_formats.append("stl")
+    if want_step:
+        geo_formats.append("step")
+
+    # Active variant set: code always, geometry variants only when wanted.
+    active_variants = [
+        (sfx, r, s, sp) for sfx, r, s, sp in VARIANTS
+        if not (r and not want_renders)
+        and not (s and not want_stl)
+        and not (sp and not want_step)
+    ]
+
     # Resolve repo namespace + token unless this is a pure local dry run.
     token = resolve_token()
     repo_id = args.repo_id
@@ -287,13 +610,13 @@ def main(argv: list[str] | None = None) -> int:
         except ImportError:
             raise SystemExit(
                 "huggingface_hub is required to upload. Install it:\n"
-                "    pip install -e \".[publish]\"   (or: pip install huggingface_hub)\n"
+                "    pip install -e \".[publish]\"\n"
                 "Or run with --dry-run to only build locally."
             )
         if not token:
             raise SystemExit(
                 "No HuggingFace token found. Set HF_TOKEN in your environment "
-                "(or run `huggingface-cli login`). The token is never printed or stored by this script."
+                "(or run `huggingface-cli login`)."
             )
         api = HfApi(token=token)
         whoami = api.whoami()
@@ -306,54 +629,67 @@ def main(argv: list[str] | None = None) -> int:
     upload_root = staging / "upload"
     upload_root.mkdir(parents=True, exist_ok=True)
 
-    built: list[str] = []
+    # {tag: [(config_name, data_file), …]} — accumulate across all built tags.
+    built: dict[str, list[tuple[str, str]]] = {}
+
     for tag in sorted(tags, key=tag_to_int):
         spec = ladder[tag]
         print(f"\n=== {tag}: {spec['count']:,} parts (seed {spec['seed']}) ===")
         corpus_dir = staging / "corpora" / tag
-        generate_corpus(corpus_dir, spec["count"], spec["seed"], args.workers, args.force)
+
+        generate_corpus(
+            corpus_dir, spec["count"], spec["seed"],
+            args.workers, args.force, args.timeout,
+        )
+
+        if geo_formats:
+            export_geometry(
+                corpus_dir, args.workers, geo_formats, args.timeout, args.verbose,
+            )
 
         dest = upload_root / tag
-        dest.mkdir(parents=True, exist_ok=True)
-        print("  · packing corpus.jsonl …")
-        n_rows = pack_corpus_jsonl(corpus_dir, dest / "corpus.jsonl", include_source=True)
-        write_size_card(dest, tag, spec["count"], spec["seed"], n_rows, repo_id)
-        if args.with_geometry:
-            export_geometry(corpus_dir, dest / "stl", args.workers)
-        built.append(tag)
-        print(f"  · packed {n_rows:,} rows -> {dest / 'corpus.jsonl'}")
+        built[tag] = []
+        print("  · packing variants …")
+        for sfx, inc_r, inc_s, inc_sp in active_variants:
+            result = pack_variant(corpus_dir, dest, sfx, inc_r, inc_s, inc_sp)
+            if result is not None:
+                built[tag].append(result)
 
-    # Card lists every config present in the repo (existing + newly built).
+    # Merge any existing configs in the remote repo so the README stays complete.
     existing: set[str] = set()
     if api is not None:
         try:
             for f in api.list_repo_files(repo_id, repo_type="dataset"):
-                if f.endswith("/corpus.jsonl"):
-                    existing.add(f.split("/", 1)[0])
+                if f.endswith("corpus.jsonl") or f.endswith(".parquet"):
+                    tag_part = f.split("/", 1)[0]
+                    if tag_part not in built:
+                        existing.add(tag_part)
         except Exception:
             pass
-    all_tags = sorted(set(built) | existing, key=tag_to_int)
-    readme = build_dataset_readme(repo_id, all_tags, ladder)
+    for ext_tag in existing:
+        if ext_tag not in built:
+            built[ext_tag] = []  # placeholder; no data_file known
+
+    readme = build_dataset_readme(repo_id, {t: v for t, v in built.items() if v}, ladder)
     (upload_root / "README.md").write_text(readme, encoding="utf-8")
 
     if args.dry_run:
-        print(f"\n[dry-run] Built {built} under {upload_root}. Skipping upload.")
+        print(f"\n[dry-run] Built {sorted(built)} under {upload_root}. Skipping upload.")
         return 0
 
     assert api is not None
     print(f"\nEnsuring dataset repo {repo_id} exists …")
     api.create_repo(repo_id, repo_type="dataset", exist_ok=True, private=args.private)
+
     print("Uploading … (this can take a while for large sizes)")
-    # Only push the sizes built in THIS run (plus the regenerated card). The
-    # staging dir may hold leftovers from earlier/aborted runs; uploading the
-    # whole folder would sweep those in, so we restrict to the built tags.
-    allow = ["README.md"] + [f"{t}/**" for t in built]
+    built_tags = [t for t, vs in built.items() if vs]
+    allow = ["README.md"] + [f"{t}/**" for t in built_tags]
     api.upload_folder(
         folder_path=str(upload_root),
         repo_id=repo_id,
         repo_type="dataset",
         allow_patterns=allow,
-        commit_message=f"Publish CadQuarry v{GEN_VERSION} corpora: {', '.join(built)}",
+        commit_message=f"Publish CadQuarry v{GEN_VERSION} corpora: {', '.join(built_tags)}",
     )
     print(f"\nDone. https://huggingface.co/datasets/{repo_id}")
     return 0
