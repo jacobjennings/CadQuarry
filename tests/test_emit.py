@@ -217,6 +217,54 @@ class TestThreadedEmit(unittest.TestCase):
         self.assertIn("_bdt.MetricTrapezoidalThread(size=", code)
 
 
+class TestMetaDescriptor(unittest.TestCase):
+    """The .meta.json descriptor captures categorical design intent."""
+
+    def test_plain_family_has_no_descriptor(self):
+        meta = emit_meta_json(_make_plate_part())
+        self.assertNotIn("descriptor", meta)
+
+    def test_gear_descriptor(self):
+        meta = emit_meta_json(_make_gear_part())
+        d = meta["descriptor"]
+        self.assertEqual(d["family"], "gear")
+        self.assertEqual(d["kind"], "helical")
+        self.assertEqual(d["module"], 2.0)
+        self.assertEqual(d["teeth"], 24)
+        self.assertEqual(d["pitch_diameter"], 48.0)
+        self.assertEqual(d["pressure_angle_deg"], 20.0)
+        self.assertEqual(d["helix_angle_deg"], 18.0)
+        self.assertTrue(d["herringbone"])
+        self.assertEqual(d["bore_d"], 8.0)
+        self.assertEqual(d["hub_d"], 14.0)
+        self.assertEqual(d["hub_h"], 5.0)
+
+    def test_iso_thread_descriptor(self):
+        meta = emit_meta_json(_make_threaded_part("iso", external=True))
+        d = meta["descriptor"]
+        self.assertEqual(d["family"], "threaded")
+        self.assertEqual(d["standard"], "iso")
+        self.assertTrue(d["external"])
+        self.assertEqual(d["major_diameter"], 8.0)
+        self.assertEqual(d["pitch"], 1.25)
+        self.assertEqual(d["designation"], "M8x1.25")
+
+    def test_internal_thread_descriptor(self):
+        meta = emit_meta_json(_make_threaded_part("iso", external=False))
+        self.assertFalse(meta["descriptor"]["external"])
+
+    def test_lead_screw_descriptor(self):
+        meta = emit_meta_json(_make_threaded_part("acme"))
+        d = meta["descriptor"]
+        self.assertEqual(d["standard"], "acme")
+        self.assertEqual(d["size"], "1/2")
+        self.assertEqual(d["designation"], "ACME 1/2")
+
+    def test_descriptor_is_json_serialisable(self):
+        json.dumps(emit_meta_json(_make_gear_part()))
+        json.dumps(emit_meta_json(_make_threaded_part("trapezoidal")))
+
+
 class TestEmitParamsJson(unittest.TestCase):
     def test_structure(self):
         data = emit_params_json(_make_plate_part())
