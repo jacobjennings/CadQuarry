@@ -13,6 +13,10 @@ Design goals
   regenerate each corpus bit-for-bit, so the upload is a convenience artifact.
 * **Six content variants per corpus.** Each HuggingFace config gives consumers
   exactly the columns they need without fetching data they don't.
+* **Two complexity-tier slices per corpus.** Each content variant is published
+  for *all tiers* (canonical names) and again limited to *tiers 0–2 inclusive*
+  (a ``-t0-2`` config suffix), so consumers can opt out of the highest-complexity
+  parts without post-filtering.
 
 Variants published per corpus size
 -----------------------------------
@@ -22,6 +26,9 @@ Variants published per corpus size
   {tag}-step         — + binary STEP B-rep (Parquet, ``dtype: binary`` column)
   {tag}-geo          — + renders + STL (no STEP)
   {tag}-full         — + renders + STL + STEP (everything)
+
+Each of the above is also published as ``{tag}-t0-2[…]`` (tiers 0–2 only),
+with data nested under ``{tag}/tier0-2/``.
 
 Examples
 --------
@@ -70,6 +77,19 @@ VARIANTS: list[tuple[str, bool, bool, bool]] = [
     ("-step",    False, False, True),   # + STEP                (Parquet)
     ("-geo",     True,  True,  False),  # + renders + STL       (Parquet)
     ("-full",    True,  True,  True),   # + renders + STL + STEP (Parquet)
+]
+
+# ── tier slices ─────────────────────────────────────────────────────────────────
+# A second, orthogonal axis: every content variant is published once for all
+# tiers and once limited to tiers 0–2 (inclusive).
+# Each entry: (subdir, config_part, tier_max)
+#   subdir      — files nested under "{tag}/{subdir}/" ("" = directly in "{tag}/")
+#   config_part — inserted between {tag} and the content suffix in the config name
+#   tier_max    — inclusive complexity-tier cap (None = keep every tier)
+# The all-tiers slice keeps the canonical unlabeled config names (and the default).
+TIER_SLICES: list[tuple[str, str, int | None]] = [
+    ("",        "",      None),
+    ("tier0-2", "-t0-2", 2),
 ]
 
 
@@ -158,42 +178,53 @@ def default_worker_count(n: int) -> int:
 
 def pack_variant(
     corpus_dir: Path,
-    dest: Path,
+    tag: str,
+    tag_dir: Path,
+    tier_subdir: str,
+    tier_part: str,
+    tier_max: int | None,
     suffix: str,
     include_renders: bool,
     include_stl: bool,
     include_step: bool,
 ) -> tuple[str, str] | None:
     """
-    Pack one variant into dest/.  Returns (config_name, relative_data_file)
-    on success, or None if the required geometry files are missing.
+    Pack one (tier slice × content variant) into the upload tree.  Returns
+    (config_name, relative_data_file) on success, or None if the required
+    geometry files are missing.
+
+    ``tag_dir`` is ``upload_root/{tag}``; ``tier_subdir`` ("" or e.g. "tier0-2")
+    nests the data file, ``tier_part`` ("" or "-t0-2") labels the config name, and
+    ``tier_max`` caps the included complexity tier (None = all tiers).
     """
+    config_name = f"{tag}{tier_part}{suffix}"
+
     # Detect whether the needed geometry is actually present.
     if include_renders:
         render_base = corpus_dir / "renders"
         if not render_base.is_dir() or not any(render_base.iterdir()):
-            print(f"    · skipping {suffix!r} variant — no renders found")
+            print(f"    · skipping {config_name!r} — no renders found")
             return None
     if include_stl:
         geo_dir = corpus_dir / "geometry"
         if not any(geo_dir.glob("*.stl")):
-            print(f"    · skipping {suffix!r} variant — no STL files found")
+            print(f"    · skipping {config_name!r} — no STL files found")
             return None
     if include_step:
         geo_dir = corpus_dir / "geometry"
         if not any(geo_dir.glob("*.step")):
-            print(f"    · skipping {suffix!r} variant — no STEP files found")
+            print(f"    · skipping {config_name!r} — no STEP files found")
             return None
 
-    tag = dest.name  # upload_root/{tag}/
+    dest = tag_dir / tier_subdir if tier_subdir else tag_dir
     dest.mkdir(parents=True, exist_ok=True)
+    rel_prefix = f"{tag}/{tier_subdir}/" if tier_subdir else f"{tag}/"
 
     if not suffix:
         # Code-only variant: JSONL (HF dataset viewer can browse it inline).
         out = dest / "corpus.jsonl"
-        n = pack_corpus_jsonl(corpus_dir, out, include_source=True)
-        config_name = tag
-        data_file = f"{tag}/corpus.jsonl"
+        n = pack_corpus_jsonl(corpus_dir, out, include_source=True, tier_max=tier_max)
+        data_file = f"{rel_prefix}corpus.jsonl"
     else:
         # Geometry variant: Parquet with binary columns.
         fname = f"corpus{suffix}.parquet"
@@ -204,9 +235,9 @@ def pack_variant(
             include_renders=include_renders,
             include_stl=include_stl,
             include_step=include_step,
+            tier_max=tier_max,
         )
-        config_name = f"{tag}{suffix}"
-        data_file = f"{tag}/{fname}"
+        data_file = f"{rel_prefix}{fname}"
 
     mb = out.stat().st_size / 1e6 if out.exists() else 0
     print(f"    · {config_name}: {n:,} rows → {data_file} ({mb:.1f} MB)")
@@ -258,7 +289,7 @@ def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool)
 
 
 def _configs_yaml(
-    built: dict[str, list[tuple[str, str]]],
+    built: dict[str, list[tuple[str, str, bool, bool, bool]]],
     all_tags: list[str],
 ) -> str:
     """
@@ -268,23 +299,21 @@ def _configs_yaml(
     lines: list[str] = []
     first_code = True
     for tag in all_tags:
-        for config_name, data_file in built[tag]:
-            suffix = config_name[len(tag):]   # "" / "-renders" / …
-            is_code_only = suffix == ""
+        for config_name, data_file, inc_r, inc_s, inc_sp in built[tag]:
+            is_code_only = not (inc_r or inc_s or inc_sp)
             lines.append(f'- config_name: "{config_name}"')
             lines.append(f'  data_files: "{data_file}"')
             if first_code and is_code_only:
                 lines.append("  default: true")
                 first_code = False
             if not is_code_only:
-                _, inc_r, inc_s, inc_sp = next(v for v in VARIANTS if v[0] == suffix)
                 lines.append(_features_yaml(inc_r, inc_s, inc_sp))
     return "\n".join(lines)
 
 
 def build_dataset_readme(
     repo_id: str,
-    built: dict[str, list[tuple[str, str]]],   # {tag: [(config_name, data_file), …]}
+    built: dict[str, list[tuple[str, str, bool, bool, bool]]],  # {tag: [(config, file, r, s, sp), …]}
     ladder: dict[str, dict],
 ) -> str:
     all_tags = sorted(built.keys(), key=tag_to_int)
@@ -305,14 +334,14 @@ def build_dataset_readme(
     for tag in all_tags:
         n = ladder.get(tag, {}).get("count", tag_to_int(tag))
         seed = ladder.get(tag, {}).get("seed", "—")
-        cfgs = ", ".join(f"`{cn}`" for cn, _ in built[tag])
+        cfgs = ", ".join(f"`{cn}`" for cn, *_ in built[tag])
         table_rows.append(f"| `{tag}` | {n:,} | {seed} | {cfgs} |")
     table = "\n".join(table_rows)
 
     ex_tag = all_tags[0] if all_tags else "1k"
-    has_renders = any(cn.endswith("-renders") for t in all_tags for cn, _ in built[t])
-    has_stl     = any(cn.endswith("-stl")     for t in all_tags for cn, _ in built[t])
-    has_full    = any(cn.endswith("-full")    for t in all_tags for cn, _ in built[t])
+    has_renders = any(r          for t in all_tags for _, _, r, s, sp in built[t])
+    has_stl     = any(s          for t in all_tags for _, _, r, s, sp in built[t])
+    has_full    = any(r and s and sp for t in all_tags for _, _, r, s, sp in built[t])
 
     # ── YAML front-matter (built as a plain string — no textwrap.dedent) ─────
     fm_lines = [
@@ -439,6 +468,30 @@ Each corpus size ships as six HuggingFace configs so you only fetch what you nee
 | `-step` | + binary STEP B-rep | Parquet (`step_bytes` = `binary`) |
 | `-geo` | + renders + STL | Parquet |
 | `-full` | + renders + STL + STEP | Parquet |
+
+---
+
+## Complexity-tier slices
+
+Every content variant above is published along a second axis so you can exclude
+the highest-complexity parts without filtering yourself:
+
+| Tier slice | Config form | Tiers included |
+|------------|-------------|----------------|
+| All tiers | `{{tag}}{{suffix}}` (e.g. `1k`, `1k-renders`) | 0–3 |
+| Tiers 0–2 | `{{tag}}-t0-2{{suffix}}` (e.g. `1k-t0-2`, `1k-t0-2-renders`) | 0, 1, 2 |
+
+```python
+# All tiers (default naming):
+ds = load_dataset("{repo_id}", "{ex_tag}", split="train")
+
+# Tiers 0–2 only:
+ds = load_dataset("{repo_id}", "{ex_tag}-t0-2", split="train")
+```
+
+The two slices share the same schema; the `-t0-2` slice simply omits every row
+with `tier == 3`. Data files live under `{{tag}}/` (all tiers) and
+`{{tag}}/tier0-2/` (tiers 0–2).
 
 ---
 
@@ -629,8 +682,8 @@ def main(argv: list[str] | None = None) -> int:
     upload_root = staging / "upload"
     upload_root.mkdir(parents=True, exist_ok=True)
 
-    # {tag: [(config_name, data_file), …]} — accumulate across all built tags.
-    built: dict[str, list[tuple[str, str]]] = {}
+    # {tag: [(config_name, data_file, inc_r, inc_s, inc_sp), …]} — across all tags.
+    built: dict[str, list[tuple[str, str, bool, bool, bool]]] = {}
 
     for tag in sorted(tags, key=tag_to_int):
         spec = ladder[tag]
@@ -647,13 +700,19 @@ def main(argv: list[str] | None = None) -> int:
                 corpus_dir, args.workers, geo_formats, args.timeout, args.verbose,
             )
 
-        dest = upload_root / tag
+        tag_dir = upload_root / tag
         built[tag] = []
         print("  · packing variants …")
-        for sfx, inc_r, inc_s, inc_sp in active_variants:
-            result = pack_variant(corpus_dir, dest, sfx, inc_r, inc_s, inc_sp)
-            if result is not None:
-                built[tag].append(result)
+        for tier_subdir, tier_part, tier_max in TIER_SLICES:
+            for sfx, inc_r, inc_s, inc_sp in active_variants:
+                result = pack_variant(
+                    corpus_dir, tag, tag_dir,
+                    tier_subdir, tier_part, tier_max,
+                    sfx, inc_r, inc_s, inc_sp,
+                )
+                if result is not None:
+                    cfg, data_file = result
+                    built[tag].append((cfg, data_file, inc_r, inc_s, inc_sp))
 
     # Merge any existing configs in the remote repo so the README stays complete.
     existing: set[str] = set()
