@@ -403,7 +403,13 @@ class WorkerPool:
             finally:
                 self._job_q.task_done()
 
-    def map(self, jobs: list[tuple[Any, dict[str, Any]]]) -> dict[Any, dict[str, Any]]:
+    def map(
+        self,
+        jobs: list[tuple[Any, dict[str, Any]]],
+        progress=None,
+    ) -> dict[Any, dict[str, Any]]:
+        """Run jobs across workers. ``progress`` (if given) is called once per
+        completed job, on the completing worker thread (serialised under a lock)."""
         results: dict[Any, dict[str, Any]] = {}
         jobs = list(jobs)
         if not jobs:
@@ -414,6 +420,8 @@ class WorkerPool:
 
         def on_done() -> None:
             with lock:
+                if progress is not None:
+                    progress()
                 remaining["n"] -= 1
                 if remaining["n"] == 0:
                     done_ev.set()
