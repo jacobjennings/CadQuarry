@@ -75,7 +75,36 @@ from cadquarry.dataset import (                            # noqa: E402
     RENDER_VIEWS,
 )
 
-SEEDS_FILE = REPO_ROOT / "seeds" / "v1.toml"
+def _default_seeds_file() -> Path:
+    """
+    The published seed list matching the current generator version: the
+    seeds/v*.toml whose [meta].generator_version == cadquarry.__version__,
+    else the highest-numbered list (falling back to v1.toml).
+    """
+    seeds_dir = REPO_ROOT / "seeds"
+
+    def _vnum(p: Path) -> int:
+        digits = "".join(ch for ch in p.stem if ch.isdigit())
+        return int(digits) if digits else 0
+
+    candidates = sorted(seeds_dir.glob("v*.toml"), key=_vnum)
+    match = None
+    for p in candidates:
+        try:
+            with open(p, "rb") as f:
+                meta = tomllib.load(f).get("meta", {})
+        except Exception:
+            continue
+        if str(meta.get("generator_version")) == GEN_VERSION:
+            match = p
+    if match is not None:
+        return match
+    if candidates:
+        return candidates[-1]
+    return seeds_dir / "v1.toml"
+
+
+SEEDS_FILE = _default_seeds_file()
 DEFAULT_CORPUS_ROOT = REPO_ROOT / "datasets"
 
 # ── variant definitions ────────────────────────────────────────────────────────
@@ -107,7 +136,7 @@ TIER_SLICES: list[tuple[str, str, int | None]] = [
 # ── seed ladder ────────────────────────────────────────────────────────────────
 
 def load_publish_ladder() -> tuple[str, dict[str, dict]]:
-    """Return (default_repo_id, {tag: {count, seed}}) from seeds/v1.toml."""
+    """Return (default_repo_id, {tag: {count, seed}}) from the active seed list."""
     with open(SEEDS_FILE, "rb") as f:
         data = tomllib.load(f)
     pub = data.get("publish", {})
@@ -116,7 +145,7 @@ def load_publish_ladder() -> tuple[str, dict[str, dict]]:
     for entry in pub.get("corpus", []):
         ladder[str(entry["tag"])] = {"count": int(entry["count"]), "seed": int(entry["seed"])}
     if not ladder:
-        raise SystemExit("No [[publish.corpus]] entries found in seeds/v1.toml")
+        raise SystemExit(f"No [[publish.corpus]] entries found in {SEEDS_FILE}")
     return repo_id, ladder
 
 
@@ -590,7 +619,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--all", action="store_true", help="Pack/upload every size in the ladder")
     ap.add_argument(
         "--repo-id", default=os.environ.get("CADQUARRY_HF_REPO") or default_repo,
-        help="HF dataset repo id (default: from seeds/v1.toml or CADQUARRY_HF_REPO)",
+        help="HF dataset repo id (default: from the active seed list or CADQUARRY_HF_REPO)",
     )
     ap.add_argument(
         "--corpus-root", default=str(DEFAULT_CORPUS_ROOT),
