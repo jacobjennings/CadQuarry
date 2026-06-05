@@ -284,7 +284,18 @@ def export_renders(
         fig = plt.figure(figsize=(size / 100, size / 100), dpi=100)
         ax = fig.add_subplot(111, projection="3d")
         # Poly3DCollection consumes its colors, so build a fresh one per view.
-        coll = Poly3DCollection(tris, facecolors=facecolors.copy(), edgecolors="none")
+        # Draw each triangle's outline in its own face color (not "none") so the
+        # seams between coplanar triangles on a flat face are filled instead of
+        # showing as faint anti-aliased gaps; disable edge anti-aliasing so those
+        # outlines don't leave a halo of their own.
+        fc = facecolors.copy()
+        coll = Poly3DCollection(
+            tris,
+            facecolors=fc,
+            edgecolors=fc,
+            linewidths=0.3,
+            antialiased=False,
+        )
         ax.add_collection3d(coll)
         ax.set_xlim(center[0] - span, center[0] + span)
         ax.set_ylim(center[1] - span, center[1] + span)
