@@ -92,6 +92,9 @@ environment — if you prefer, run `source .venv/bin/activate` once and drop the
 .venv/bin/cadquarry build --sizes 1k 2k 5k      # just a subset
 .venv/bin/cadquarry build --no-export           # generate only, skip geometry
 
+# Build everything, then pack + upload it all to Hugging Face (needs HF_TOKEN)
+.venv/bin/cadquarry build && .venv/bin/cadquarry publish
+
 # Open the live customizer for a single part
 .venv/bin/cadquarry serve --part examples/plate_with_holes.py
 
@@ -463,48 +466,49 @@ source.
 
 ## Publishing the full corpus to Hugging Face
 
-Publishing is **two separate steps**: first build the corpora (generate +
-render/export), then pack + upload them.
-
-**Step 1 — build the corpora** with `cadquarry build` (this is the slow part;
-200k generation + rendering takes a while). Each size lands in `datasets/<tag>/`:
+The whole thing is two commands — **build** the corpora (generate + export), then
+**publish** (pack + upload). With `HF_TOKEN` set, the defaults are right:
 
 ```bash
-.venv/bin/cadquarry build --sizes 1k 2k 5k --formats step,stl,render --out datasets/
-# …or the whole ladder:
-.venv/bin/cadquarry build --all --formats step,stl,render --out datasets/
+uv pip install -e ".[mech,export,publish]"   # mech families, renders, uploader
+cadquarry build && cadquarry publish
 ```
 
-**Step 2 — pack + upload** with [`scripts/publish_to_hf.py`](scripts/publish_to_hf.py).
-It does **not** generate or render anything — it only reads the pre-built
-`datasets/<tag>/` corpora and uploads each as a set of `load_dataset` configs of
-one HF dataset. The code-only variant is packed into a single `corpus.jsonl`
-with the parametric `source` and `params` inlined; the geometry variants
-(renders/STL/STEP) are packed into Snappy-compressed Parquet with typed binary
-columns. If a size hasn't been built yet, the script stops and tells you which
-`cadquarry build` command to run.
+- `cadquarry build` — generates **and** exports every size in the ladder into
+  `datasets/<tag>/` with STEP + STL + renders. It uses the seed list matching
+  the current generator version (`seeds/v2.toml`) and automatically regenerates
+  any corpus that was built by an older generator, so a bare `build` always
+  produces an up-to-date dataset (this is the slow part; 200k + rendering takes
+  a while). Use `--sizes 1k 2k 5k` for a subset or `--force` to rebuild
+  unconditionally.
+- `cadquarry publish` — reads the pre-built `datasets/<tag>/` corpora and uploads
+  each as a set of `load_dataset` configs of one HF dataset. It generates and
+  renders **nothing**. Defaults to **all** built sizes; the repo id comes from
+  the seed list (resolving to `<your-hf-user>/cadquarry`) or `CADQUARRY_HF_REPO`.
+  The code-only variant is packed into a single `corpus.jsonl` with the
+  parametric `source` and `params` inlined; the geometry variants
+  (renders/STL/STEP) are packed into Snappy-compressed Parquet with typed binary
+  columns. If a size hasn't been built yet it stops and tells you what to build.
 
 ```bash
-uv pip install -e ".[publish]"          # adds huggingface_hub + pyarrow
+# subset to your own repo
+cadquarry build --sizes 1k 2k 5k && cadquarry publish --sizes 1k 2k 5k --repo-id <user>/cadquarry
 
-# Pack + upload the small configs to your own repo
-.venv/bin/python scripts/publish_to_hf.py --sizes 1k 2k 5k --repo-id <user>/cadquarry
+# pack locally without uploading (inspect .hf_build/)
+cadquarry publish --sizes 1k --dry-run
 
-# Pack + upload the whole ladder
-.venv/bin/python scripts/publish_to_hf.py --all
-
-# Pack locally without uploading (inspect .hf_build/)
-.venv/bin/python scripts/publish_to_hf.py --sizes 1k --dry-run
-
-# Read pre-built corpora from a custom location
-.venv/bin/python scripts/publish_to_hf.py --sizes 1k --corpus-root /data/cadquarry
+# read pre-built corpora from a custom location
+cadquarry publish --sizes 1k --out /data/cadquarry
 ```
 
-**Secrets.** The script reads your token from the `HF_TOKEN` environment
+(Both still work as the underlying script too:
+`python scripts/publish_to_hf.py --all`.)
+
+**Secrets.** Publishing reads your token from the `HF_TOKEN` environment
 variable (or a prior `huggingface-cli login`) and **never prints, logs, or
-commits it**. Nothing secret is stored in the repo, so the script works as-is
-for anyone with their own HF account who wants to regenerate or fork the data.
-The size ladder's seeds live in `seeds/v1.toml` under `[[publish.corpus]]`.
+commits it**. Nothing secret is stored in the repo, so it works as-is for anyone
+with their own HF account. The size ladder's seeds live in the active
+`seeds/v*.toml` under `[[publish.corpus]]`.
 
 ---
 

@@ -3,6 +3,7 @@ CadQuarry CLI
 
   cadquarry generate  — generate a corpus
   cadquarry build     — generate + export every corpus in the seed ladder
+  cadquarry publish   — pack + upload the built corpora to Hugging Face
   cadquarry run       — execute a single part with optional param overrides
   cadquarry serve     — launch live customizer for a part (or gallery for corpus)
   cadquarry export    — export geometry artifacts for an existing corpus
@@ -40,7 +41,34 @@ def _load_config(config_path: str | None) -> dict:
 
 
 def _default_seeds_path() -> Path:
-    return Path(__file__).parent.parent / "seeds" / "v1.toml"
+    """
+    The published seed list matching the current generator.
+
+    Selects the ``seeds/v*.toml`` whose ``[meta].generator_version`` equals
+    ``cadquarry.__version__`` (so a generator bump automatically tracks its
+    matching list); falls back to the highest-numbered list, then ``v1.toml``.
+    """
+    seeds_dir = Path(__file__).parent.parent / "seeds"
+
+    def _vnum(p: Path) -> int:
+        digits = "".join(ch for ch in p.stem if ch.isdigit())
+        return int(digits) if digits else 0
+
+    candidates = sorted(seeds_dir.glob("v*.toml"), key=_vnum)
+    match = None
+    for p in candidates:
+        try:
+            with open(p, "rb") as f:
+                meta = tomllib.load(f).get("meta", {})
+        except Exception:
+            continue
+        if str(meta.get("generator_version")) == __version__:
+            match = p
+    if match is not None:
+        return match
+    if candidates:
+        return candidates[-1]
+    return seeds_dir / "v1.toml"
 
 
 def _load_publish_ladder(seeds_path: Path) -> dict[str, dict]:
@@ -283,12 +311,28 @@ def cmd_build(args: argparse.Namespace) -> int:
         print(f"\n=== {tag}: {spec['count']:,} parts (seed {spec['seed']}) -> {out_dir} ===")
 
         # Reuse an already-complete corpus unless --force; generation is fully
-        # seeded, so an existing manifest of the right size is bit-identical.
+        # seeded, so an existing manifest of the right size is bit-identical —
+        # but only if it was produced by THIS generator version, otherwise a
+        # stale corpus from an older generator would be silently kept.
         manifest = out_dir / "manifest.jsonl"
         skip_gen = False
         if manifest.exists() and not args.force:
-            n = sum(1 for _ in manifest.open(encoding="utf-8"))
-            if n >= spec["count"]:
+            lines = manifest.open(encoding="utf-8").read().splitlines()
+            n = len(lines)
+            stale_version = None
+            if lines:
+                try:
+                    gv = json.loads(lines[0]).get("generator_version")
+                    if gv != __version__:
+                        stale_version = gv
+                except Exception:
+                    pass
+            if stale_version is not None:
+                print(
+                    f"  · regenerating (existing corpus is generator "
+                    f"{stale_version}, current is {__version__})"
+                )
+            elif n >= spec["count"]:
                 print(f"  · reusing existing corpus ({n} parts)")
                 skip_gen = True
 
@@ -321,6 +365,57 @@ def cmd_build(args: argparse.Namespace) -> int:
         return 1
     print(f"\nDone. Built {len(tags)} corpora under {base_out}/")
     return 0
+
+
+# ---------------------------------------------------------------------------
+# publish — pack the built corpora and upload them to Hugging Face
+# ---------------------------------------------------------------------------
+
+def cmd_publish(args: argparse.Namespace) -> int:
+    """Thin wrapper over scripts/publish_to_hf.py; defaults to publishing all sizes."""
+    import importlib.util
+
+    script = Path(__file__).parent.parent / "scripts" / "publish_to_hf.py"
+    if not script.exists():
+        print(
+            f"error: publisher not found at {script}. "
+            "Publishing runs from a repo checkout (the scripts/ dir).",
+            file=sys.stderr,
+        )
+        return 1
+
+    spec = importlib.util.spec_from_file_location("_cadquarry_publish_hf", script)
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)  # type: ignore[union-attr]
+    except Exception as exc:
+        print(f"error: could not load publisher: {exc}", file=sys.stderr)
+        return 1
+
+    # Translate our args into the publisher's argv. Default (no --sizes) is the
+    # whole ladder, so a bare `cadquarry publish` uploads everything that was
+    # built — the natural pairing with a bare `cadquarry build`.
+    argv: list[str] = ["--all"] if not args.sizes else ["--sizes", *args.sizes]
+    if args.repo_id:
+        argv += ["--repo-id", args.repo_id]
+    if args.corpus_root:
+        argv += ["--corpus-root", args.corpus_root]
+    if args.code_only:
+        argv.append("--code-only")
+    if args.no_renders:
+        argv.append("--no-renders")
+    if args.no_stl:
+        argv.append("--no-stl")
+    if args.no_step:
+        argv.append("--no-step")
+    if args.private:
+        argv.append("--private")
+    if args.dry_run:
+        argv.append("--dry-run")
+    if args.verbose:
+        argv.append("--verbose")
+
+    return int(module.main(argv))
 
 
 # ---------------------------------------------------------------------------
@@ -570,11 +665,27 @@ def build_parser() -> argparse.ArgumentParser:
     bld.add_argument("--formats", default="step,stl,render", help="Export formats per corpus (default: step,stl,render)")
     bld.add_argument("--no-export", action="store_true", help="Generate only; skip geometry export")
     bld.add_argument("--config", default=None, metavar="TOML", help="Config file (default: configs/default.toml)")
-    bld.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: seeds/v1.toml)")
+    bld.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: the seeds/v*.toml matching this generator version)")
     bld.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export (hang detection; generous for slow gear/threaded parts)")
     bld.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
     bld.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
     bld.add_argument("--verbose", "-v", action="store_true")
+
+    # publish
+    pub = sub.add_parser(
+        "publish",
+        help="Pack and upload the built corpora to Hugging Face (defaults to all sizes)",
+    )
+    pub.add_argument("--sizes", nargs="+", metavar="TAG", help="Subset of ladder tags to publish (default: all built sizes)")
+    pub.add_argument("--repo-id", default=None, metavar="REPO", help="HF dataset repo id (default: from the seed list / CADQUARRY_HF_REPO env)")
+    pub.add_argument("--out", dest="corpus_root", default="datasets", metavar="DIR", help="Dir holding built corpora as <DIR>/<tag>/ (default: datasets)")
+    pub.add_argument("--code-only", action="store_true", help="Publish only code+metadata (skip geometry variants)")
+    pub.add_argument("--no-renders", action="store_true", help="Skip render variants")
+    pub.add_argument("--no-stl", action="store_true", help="Skip STL variants")
+    pub.add_argument("--no-step", action="store_true", help="Skip STEP variants")
+    pub.add_argument("--private", action="store_true", help="Create the dataset repo as private")
+    pub.add_argument("--dry-run", action="store_true", help="Pack locally without uploading")
+    pub.add_argument("--verbose", "-v", action="store_true")
 
     # run
     run = sub.add_parser("run", help="Execute a part with optional parameter overrides")
@@ -618,6 +729,7 @@ def main() -> None:
     handlers = {
         "generate": cmd_generate,
         "build": cmd_build,
+        "publish": cmd_publish,
         "run": cmd_run,
         "serve": cmd_serve,
         "export": cmd_export,
