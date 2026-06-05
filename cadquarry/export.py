@@ -88,13 +88,9 @@ STANDARD_VIEWS: dict[str, tuple[float, float]] = {
 
 
 def render_deps_available() -> bool:
-    """True if the optional render dependencies (trimesh + matplotlib) import."""
-    try:
-        import trimesh  # noqa: F401
-        import matplotlib  # noqa: F401
-        return True
-    except ImportError:
-        return False
+    """True if the optional GPU render stack (moderngl + EGL + trimesh) works."""
+    from . import render as _render
+    return _render.render_available()
 
 
 def export_part(
@@ -234,82 +230,42 @@ def export_renders(
     Render shaded thumbnail PNGs of a mesh from multiple viewpoints, headless.
 
     One PNG is written per named view into out_dir (e.g. ``out_dir/iso.png``).
-    The mesh is loaded and Lambert-shaded once; only the camera moves between
-    views, so eight angles cost little more than one.  ``views`` maps a view
-    name to (elevation_deg, azimuth_deg); defaults to ``STANDARD_VIEWS``.
-    Returns {view_name: png_path}.
+    ``views`` maps a view name to (elevation_deg, azimuth_deg); defaults to
+    ``STANDARD_VIEWS``.  Returns {view_name: png_path}.
 
-    Uses trimesh to load the STL and matplotlib (Agg backend) to draw a shaded
-    triangle surface.  Both are optional dependencies kept out of the core data
-    path; a tool's license never reaches generated output regardless.
+    Rendering is done on the GPU via a headless EGL OpenGL context (moderngl):
+    a deferred pipeline with a real depth buffer, screen-space ambient
+    occlusion and soft hemispherical + positional-key lighting, supersampled
+    for clean edges.  The mesh is uploaded once and only the camera moves
+    between views, so eight angles cost little more than one.  See
+    :mod:`cadquarry.render`.
     """
     try:
-        import numpy as np
         import trimesh
-        import matplotlib
-        matplotlib.use("Agg")  # headless, no display required
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+        from PIL import Image
+        from . import render as _render
     except ImportError as exc:
         raise ImportError(
-            "Render export requires trimesh and matplotlib: "
-            "pip install 'cadquarry[export]' matplotlib"
+            "Render export requires moderngl, trimesh and Pillow: "
+            "pip install 'cadquarry[export]'"
         ) from exc
 
     if views is None:
         views = STANDARD_VIEWS
 
     mesh = trimesh.load_mesh(str(stl_path))
-    verts = np.asarray(mesh.vertices)
-    faces = np.asarray(mesh.faces)
-    tris = verts[faces]
+    # An STL is a flat triangle soup, but be defensive about scene-style loads.
+    if hasattr(mesh, "dump"):
+        mesh = mesh.dump(concatenate=True)
 
-    # Simple Lambert shading from a fixed light direction (computed once).
-    normals = np.asarray(mesh.face_normals)
-    light = np.array([0.3, -0.5, 0.8])
-    light = light / np.linalg.norm(light)
-    intensity = np.clip(normals @ light, 0.0, 1.0) * 0.7 + 0.3
-    base = np.array([0.40, 0.55, 0.85])
-    facecolors = np.clip(intensity[:, None] * base[None, :], 0, 1)
-
-    # Equal aspect cube around the part (shared by every view).
-    mins = verts.min(axis=0)
-    maxs = verts.max(axis=0)
-    center = (mins + maxs) / 2
-    span = float((maxs - mins).max()) * 0.6 or 1.0
+    renderer = _render.get_renderer(size=size)
+    images = renderer.render_mesh(mesh.vertices, mesh.faces, views=views)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, Path] = {}
-    for name, (elev, azim) in views.items():
-        fig = plt.figure(figsize=(size / 100, size / 100), dpi=100)
-        ax = fig.add_subplot(111, projection="3d")
-        # Poly3DCollection consumes its colors, so build a fresh one per view.
-        # Draw each triangle's outline in its own face color (not "none") so the
-        # seams between coplanar triangles on a flat face are filled instead of
-        # showing as faint anti-aliased gaps; disable edge anti-aliasing so those
-        # outlines don't leave a halo of their own.
-        fc = facecolors.copy()
-        coll = Poly3DCollection(
-            tris,
-            facecolors=fc,
-            edgecolors=fc,
-            linewidths=0.3,
-            antialiased=False,
-        )
-        ax.add_collection3d(coll)
-        ax.set_xlim(center[0] - span, center[0] + span)
-        ax.set_ylim(center[1] - span, center[1] + span)
-        ax.set_zlim(center[2] - span, center[2] + span)
-        try:
-            ax.set_box_aspect((1, 1, 1))
-        except Exception:
-            pass
-        ax.view_init(elev=elev, azim=azim)
-        ax.set_axis_off()
-
+    for name, arr in images.items():
         out_path = out_dir / f"{name}.png"
-        fig.savefig(str(out_path), transparent=True, bbox_inches="tight", pad_inches=0)
-        plt.close(fig)
+        Image.fromarray(arr, "RGBA").save(str(out_path))
         written[name] = out_path
     return written
 
@@ -367,8 +323,9 @@ def export_corpus_geometry(
     # a single clear warning instead of failing every part silently.
     if "render" in mesh and not render_deps_available():
         print(
-            "[cadquarry] warning: skipping renders — install render deps with "
-            "pip install 'cadquarry[export]' matplotlib"
+            "[cadquarry] warning: skipping renders — GPU render stack "
+            "unavailable (needs moderngl + an EGL-capable GL driver). Install "
+            "with pip install 'cadquarry[export]'"
         )
         mesh = [f for f in mesh if f != "render"]
         formats = [f for f in formats if f != "render"]
