@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "plate_498d6862_0364",
   "params": {
     "plate_w": {
@@ -49,7 +49,7 @@
     },
     "n_bolts": {
       "type": "int",
-      "default": 4,
+      "default": 12,
       "min": 3,
       "max": 12,
       "step": 1,

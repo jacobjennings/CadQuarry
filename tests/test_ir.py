@@ -150,6 +150,85 @@ class TestOperationCode(unittest.TestCase):
         code = "\n".join(op.to_code())
         self.assertIn(".polarArray(", code)
 
+    def test_square_holes_corners(self):
+        op = HolesOp(
+            diameter=ref("sq_size"), shape="square", placement="corners",
+            spacing_x=scaled("plate_w", 0.7), spacing_y=scaled("plate_d", 0.7),
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn("forConstruction=True", code)
+        self.assertIn(".vertices().rect(", code)
+        self.assertIn(".cutThruAll()", code)
+        self.assertNotIn(".hole(", code)
+
+    def test_square_holes_grid(self):
+        from cadquarry.ir import lit
+        op = HolesOp(
+            diameter=ref("sq_size"), shape="square", placement="grid",
+            spacing_x=lit(15.0), spacing_y=lit(15.0),
+            nx=ref("hole_nx"), ny=ref("hole_ny"),
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn(".rarray(", code)
+        self.assertIn(".rect(", code)
+        self.assertIn(".cutThruAll()", code)
+
+    def test_slot_holes_corners(self):
+        op = HolesOp(
+            diameter=ref("slot_w"), shape="slot", placement="corners",
+            slot_len=ref("slot_len"),
+            spacing_x=scaled("plate_w", 0.7), spacing_y=scaled("plate_d", 0.7),
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn("forConstruction=True", code)
+        self.assertIn(".vertices().slot2D(", code)
+        self.assertIn(".cutThruAll()", code)
+        self.assertIn('p["slot_len"]', code)
+        self.assertIn('p["slot_w"]', code)
+
+    def test_slot_holes_grid(self):
+        from cadquarry.ir import lit
+        op = HolesOp(
+            diameter=ref("slot_w"), shape="slot", placement="grid",
+            slot_len=ref("slot_len"),
+            spacing_x=lit(20.0), spacing_y=lit(15.0),
+            nx=ref("hole_nx"), ny=ref("hole_ny"),
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn(".rarray(", code)
+        self.assertIn(".slot2D(", code)
+        self.assertIn(".cutThruAll()", code)
+
+    def test_slot_holes_default_length(self):
+        """slot_len=None falls back to diameter * 2 in emitted code."""
+        op = HolesOp(diameter=ref("slot_w"), shape="slot", placement="corners",
+                     spacing_x=scaled("w", 0.7), spacing_y=scaled("d", 0.7))
+        code = "\n".join(op.to_code())
+        self.assertIn(".slot2D(", code)
+        self.assertIn("* 2", code)
+
+    def test_staggered_holes(self):
+        from cadquarry.ir import lit
+        op = HolesOp(
+            diameter=ref("hole_d"), shape="round", placement="staggered",
+            spacing_x=lit(12.0), spacing_y=lit(10.0),
+            nx=ref("hole_nx"),
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn(".pushPoints(", code)
+        self.assertIn(".hole(", code)
+        self.assertNotIn(".rarray(", code)
+        # Should emit temporary variable assignments for the stagger computation
+        self.assertIn("_spts", code)
+
+    def test_holes_default_shape_is_round(self):
+        op = HolesOp(diameter=ref("d"), placement="corners",
+                     spacing_x=scaled("w", 0.7), spacing_y=scaled("d", 0.7))
+        self.assertEqual(op.shape, "round")
+        code = "\n".join(op.to_code())
+        self.assertIn(".hole(", code)
+        self.assertNotIn("cutThruAll", code)
+
     def test_fillet_conditional(self):
         op = FilletOp(radius=scaled("w", 0.08), edge_selector="|Z", enabled=ref("filleted"))
         lines = op.to_code()
@@ -222,6 +301,92 @@ class TestPartIR(unittest.TestCase):
         )
         h2 = part2.ir_hash()
         self.assertNotEqual(h1, h2)
+
+
+class TestAttachOp(unittest.TestCase):
+    def test_circle_attach_no_bore(self):
+        from cadquarry.ir import AttachOp, CircleProfile
+        op = AttachOp(
+            profile=CircleProfile(diameter=lit(12.0)),
+            length=lit(20.0),
+            face=">X",
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn("faces('>X')", code)
+        self.assertIn("circle(", code)
+        self.assertIn(".extrude(20.0)", code)
+        self.assertNotIn(".hole(", code)
+
+    def test_circle_attach_with_bore(self):
+        from cadquarry.ir import AttachOp, CircleProfile
+        op = AttachOp(
+            profile=CircleProfile(diameter=lit(12.0)),
+            length=lit(20.0),
+            bore_d=lit(8.0),
+            face=">X",
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn("faces('>X')", code)
+        self.assertIn(".extrude(20.0)", code)
+        self.assertIn(".hole(8.0)", code)
+
+    def test_rect_attach_side_face(self):
+        from cadquarry.ir import AttachOp, RectProfile
+        op = AttachOp(
+            profile=RectProfile(width=lit(30.0), depth=lit(20.0)),
+            length=lit(5.0),
+            face=">Y",
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn("faces('>Y')", code)
+        self.assertIn(".rect(30.0, 20.0)", code)
+        self.assertIn(".extrude(5.0)", code)
+        self.assertNotIn(".hole(", code)
+
+    def test_attach_with_param_ref(self):
+        from cadquarry.ir import AttachOp, CircleProfile
+        op = AttachOp(
+            profile=CircleProfile(diameter=ref("tube_d")),
+            length=ref("tube_len"),
+            bore_d=ref("tube_bore"),
+            face="<X",
+        )
+        code = "\n".join(op.to_code())
+        self.assertIn('p["tube_d"]', code)
+        self.assertIn('p["tube_len"]', code)
+        self.assertIn('p["tube_bore"]', code)
+        self.assertIn("faces('<X')", code)
+
+    def test_attach_type_discriminator(self):
+        from cadquarry.ir import AttachOp, CircleProfile
+        op = AttachOp(profile=CircleProfile(diameter=lit(10.0)), length=lit(15.0))
+        self.assertEqual(op.type, "attach")
+
+    def test_attach_in_part_ir_roundtrip(self):
+        """AttachOp survives PartIR serialization (model_dump / model_validate)."""
+        from cadquarry.ir import AttachOp, CircleProfile
+        op = AttachOp(
+            profile=CircleProfile(diameter=ref("tube_d")),
+            length=ref("tube_len"),
+            bore_d=ref("bore_d"),
+            face=">Y",
+        )
+        part = PartIR(
+            id="test_attach_001",
+            params={
+                "tube_d": ParamSpec(type="float", default=12.0, group="Tube", label="Tube d"),
+                "tube_len": ParamSpec(type="float", default=20.0, group="Tube", label="Tube len"),
+                "bore_d": ParamSpec(type="float", default=8.0, group="Tube", label="Bore d"),
+            },
+            operations=[
+                BoxOp(width=lit(50.0), depth=lit(40.0), height=lit(30.0)),
+                op,
+            ],
+            metadata=PartMetadata(seed=0, generator_version="test", family="compound", tier=1),
+        )
+        dumped = part.model_dump()
+        restored = PartIR.model_validate(dumped)
+        self.assertEqual(restored.operations[1].type, "attach")
 
 
 if __name__ == "__main__":

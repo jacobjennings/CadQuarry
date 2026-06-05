@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "block_498d6924_0558",
   "params": {
     "block_w": {
@@ -31,7 +31,7 @@
     },
     "hole_d": {
       "type": "float",
-      "default": 4.3,
+      "default": 3.2,
       "min": 2.0,
       "max": 11.6,
       "step": 0.1,

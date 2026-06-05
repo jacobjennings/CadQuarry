@@ -44,14 +44,15 @@ def sample_corner_holes(
     d_default: float,
     margin_factor: float = 0.15,
     d_param: str = "hole_d",
-    hole_type: str = "simple",          # simple | counterbore | countersink
+    hole_type: str = "simple",          # simple | counterbore | countersink | square | slot
     cb_d_param: str = "cb_d",
     cb_depth_param: str = "cb_depth",
     cs_angle_param: str = "cs_angle",
+    slot_len_param: str = "hole_slot_len",
 ) -> tuple[Operation, dict[str, ParamSpec]]:
     """
     Four corner holes placed at a construction rect = parent * (1 - 2*margin).
-    Hole diameter constrained so it fits inside the margin.
+    Hole diameter (or slot width / square side) constrained to fit inside the margin.
     """
     min_dim = min(w_default, d_default)
     hole_d_max = min_dim * (margin_factor * 1.5)
@@ -60,19 +61,18 @@ def sample_corner_holes(
 
     hole_d_def = snap_fastener_diameter(rng, hole_d_min, hole_d_max)
 
-    params: dict[str, ParamSpec] = {
-        d_param: ParamSpec(
-            type="float", default=hole_d_def,
-            min=round(hole_d_min, 1), max=round(hole_d_max, 1), step=0.1,
-            group="Holes", label="Hole diameter (mm)",
-        ),
-    }
-
     # Construction rect is 70% of part dims — scales proportionally
     spacing_x = scaled(parent_w_param, 0.70)
     spacing_y = scaled(parent_d_param, 0.70)
 
     if hole_type == "counterbore":
+        params: dict[str, ParamSpec] = {
+            d_param: ParamSpec(
+                type="float", default=hole_d_def,
+                min=round(hole_d_min, 1), max=round(hole_d_max, 1), step=0.1,
+                group="Holes", label="Hole diameter (mm)",
+            ),
+        }
         cb_d_def = round(hole_d_def * 2.0, 1)
         cb_depth_def = round(hole_d_def * 0.8, 1)
         params[cb_d_param] = ParamSpec(
@@ -94,10 +94,17 @@ def sample_corner_holes(
             spacing_y=spacing_y,
         )
     elif hole_type == "countersink":
-        params[cs_angle_param] = ParamSpec(
-            type="float", default=82.0, min=60.0, max=120.0, step=15.0,
-            group="Holes", label="Countersink angle (°)",
-        )
+        params = {
+            d_param: ParamSpec(
+                type="float", default=hole_d_def,
+                min=round(hole_d_min, 1), max=round(hole_d_max, 1), step=0.1,
+                group="Holes", label="Hole diameter (mm)",
+            ),
+            cs_angle_param: ParamSpec(
+                type="float", default=82.0, min=60.0, max=120.0, step=15.0,
+                group="Holes", label="Countersink angle (°)",
+            ),
+        }
         op = CountersinkHolesOp(
             diameter=ref(d_param),
             cs_angle=ref(cs_angle_param),
@@ -105,7 +112,58 @@ def sample_corner_holes(
             spacing_x=spacing_x,
             spacing_y=spacing_y,
         )
-    else:
+    elif hole_type == "square":
+        # diameter field = square side length
+        sq_max = round(hole_d_max * 1.3, 1)
+        sq_def = round(hole_d_def * 1.2, 1)
+        params = {
+            d_param: ParamSpec(
+                type="float", default=sq_def,
+                min=round(hole_d_min, 1), max=sq_max, step=0.5,
+                group="Holes", label="Square hole size (mm)",
+            ),
+        }
+        op = HolesOp(
+            diameter=ref(d_param),
+            shape="square",
+            placement="corners",
+            spacing_x=spacing_x,
+            spacing_y=spacing_y,
+        )
+    elif hole_type == "slot":
+        # diameter = slot width (short axis); slot_len_param = long axis
+        sw_def = round(hole_d_def, 1)
+        sl_def = round(sw_def * rng.uniform(1.8, 3.0), 1)
+        sl_max = round(min_dim * 0.30, 1)
+        sl_def = min(sl_def, sl_max)
+        params = {
+            d_param: ParamSpec(
+                type="float", default=sw_def,
+                min=round(hole_d_min, 1), max=round(hole_d_max, 1), step=0.5,
+                group="Holes", label="Slot width (mm)",
+            ),
+            slot_len_param: ParamSpec(
+                type="float", default=sl_def,
+                min=round(sw_def * 1.5, 1), max=sl_max, step=0.5,
+                group="Holes", label="Slot length (mm)",
+            ),
+        }
+        op = HolesOp(
+            diameter=ref(d_param),
+            shape="slot",
+            slot_len=ref(slot_len_param),
+            placement="corners",
+            spacing_x=spacing_x,
+            spacing_y=spacing_y,
+        )
+    else:  # simple / round
+        params = {
+            d_param: ParamSpec(
+                type="float", default=hole_d_def,
+                min=round(hole_d_min, 1), max=round(hole_d_max, 1), step=0.1,
+                group="Holes", label="Hole diameter (mm)",
+            ),
+        }
         op = HolesOp(
             diameter=ref(d_param),
             placement="corners",
@@ -127,6 +185,8 @@ def sample_grid_holes(
     d_param: str = "hole_d",
     nx_param: str = "hole_nx",
     ny_param: str = "hole_ny",
+    hole_shape: str = "round",          # round | square | slot
+    slot_len_param: str = "hole_slot_len",
 ) -> tuple[Operation, dict[str, ParamSpec]]:
     nx_def = rng.randint(2, min(nx_max, 4))
     ny_def = rng.randint(2, min(ny_max, 4))
@@ -140,11 +200,20 @@ def sample_grid_holes(
     sx_def = round((w_default * 0.8) / max(nx_def - 1, 1), 1)
     sy_def = round((d_default * 0.8) / max(ny_def - 1, 1), 1)
 
+    if hole_shape == "square":
+        d_label = "Square hole size (mm)"
+        d_def = round(hole_d_def * 1.2, 1)
+        d_max = round(hole_d_max * 1.3, 1)
+    else:
+        d_label = "Hole diameter (mm)"
+        d_def = hole_d_def
+        d_max = round(hole_d_max, 1)
+
     params: dict[str, ParamSpec] = {
         d_param: ParamSpec(
-            type="float", default=hole_d_def,
-            min=round(hole_d_min, 1), max=round(hole_d_max, 1), step=0.1,
-            group="Holes", label="Hole diameter (mm)",
+            type="float", default=d_def,
+            min=round(hole_d_min, 1), max=d_max, step=0.1,
+            group="Holes", label=d_label,
         ),
         nx_param: ParamSpec(
             type="int", default=nx_def, min=1, max=nx_max, step=1,
@@ -155,13 +224,75 @@ def sample_grid_holes(
             group="Holes", label="Holes deep",
         ),
     }
+
+    slot_len_expr = None
+    if hole_shape == "slot":
+        sl_def = round(hole_d_def * rng.uniform(1.8, 3.0), 1)
+        sl_max = round(min(sx_def * 0.7, sy_def * 0.7), 1)
+        sl_def = min(sl_def, sl_max)
+        params[slot_len_param] = ParamSpec(
+            type="float", default=sl_def,
+            min=round(hole_d_def * 1.5, 1), max=sl_max, step=0.5,
+            group="Holes", label="Slot length (mm)",
+        )
+        slot_len_expr = ref(slot_len_param)
+
     op = HolesOp(
         diameter=ref(d_param),
+        shape=hole_shape,  # type: ignore[arg-type]
+        slot_len=slot_len_expr,
         placement="grid",
         spacing_x=lit(sx_def),
         spacing_y=lit(sy_def),
         nx=ref(nx_param),
         ny=ref(ny_param),
+    )
+    return op, params
+
+
+def sample_staggered_holes(
+    rng: Random,
+    parent_w_param: str,
+    parent_d_param: str,
+    w_default: float,
+    d_default: float,
+    nx_max: int = 5,
+    d_param: str = "hole_d",
+    nx_param: str = "hole_nx",
+) -> tuple[Operation, dict[str, ParamSpec]]:
+    """
+    Two staggered rows of round holes (brick/hex offset pattern).
+    Row 0 has nx holes; row 1 has nx−1 holes offset by half pitch.
+    Asymmetric — not a simple rarray — so it breaks the otherwise-uniform grid.
+    """
+    nx_def = rng.randint(3, min(nx_max, 5))
+
+    min_dim = min(w_default, d_default)
+    hole_d_max = min_dim * 0.10
+    hole_d_min = 2.0
+    hole_d_def = snap_fastener_diameter(rng, hole_d_min, hole_d_max)
+
+    sx_def = round((w_default * 0.75) / max(nx_def - 1, 1), 1)
+    sy_def = round(sx_def * rng.uniform(0.8, 1.2), 1)
+
+    params: dict[str, ParamSpec] = {
+        d_param: ParamSpec(
+            type="float", default=hole_d_def,
+            min=round(hole_d_min, 1), max=round(hole_d_max, 1), step=0.1,
+            group="Holes", label="Hole diameter (mm)",
+        ),
+        nx_param: ParamSpec(
+            type="int", default=nx_def, min=2, max=nx_max, step=1,
+            group="Holes", label="Holes per row",
+        ),
+    }
+    op = HolesOp(
+        diameter=ref(d_param),
+        shape="round",
+        placement="staggered",
+        spacing_x=lit(sx_def),
+        spacing_y=lit(sy_def),
+        nx=ref(nx_param),
     )
     return op, params
 

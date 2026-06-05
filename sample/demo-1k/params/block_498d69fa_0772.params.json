@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "block_498d69fa_0772",
   "params": {
     "block_w": {
@@ -88,6 +88,24 @@
       "default": true,
       "group": "Body",
       "label": "Fillet corners"
+    },
+    "side_tube_d": {
+      "type": "float",
+      "default": 10.4,
+      "min": 4.2,
+      "max": 18.4,
+      "step": 1.0,
+      "group": "Side Tube",
+      "label": "Side tube diameter (mm)"
+    },
+    "side_tube_len": {
+      "type": "float",
+      "default": 9.6,
+      "min": 2.9,
+      "max": 31.2,
+      "step": 1.0,
+      "group": "Side Tube",
+      "label": "Side tube length (mm)"
     }
   }
 }

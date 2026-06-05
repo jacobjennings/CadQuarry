@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "block_498d69d0_0730",
   "params": {
     "block_w": {
@@ -31,39 +31,30 @@
     },
     "hole_d": {
       "type": "float",
-      "default": 5.3,
+      "default": 5.2,
       "min": 2.0,
-      "max": 9.0,
-      "step": 0.1,
-      "group": "Holes",
-      "label": "Hole diameter (mm)"
-    },
-    "pocket_w": {
-      "type": "float",
-      "default": 31.8,
-      "min": 15.9,
-      "max": 42.3,
-      "step": 1.0,
-      "group": "Pocket",
-      "label": "Pocket width (mm)"
-    },
-    "pocket_d": {
-      "type": "float",
-      "default": 21.5,
-      "min": 10.8,
-      "max": 32.2,
-      "step": 1.0,
-      "group": "Pocket",
-      "label": "Pocket depth (mm)"
-    },
-    "pocket_h": {
-      "type": "float",
-      "default": 52.0,
-      "min": 20.8,
-      "max": 85.0,
+      "max": 11.8,
       "step": 0.5,
-      "group": "Pocket",
-      "label": "Pocket height (mm)"
+      "group": "Holes",
+      "label": "Square hole size (mm)"
+    },
+    "boss_d": {
+      "type": "float",
+      "default": 25.0,
+      "min": 12.5,
+      "max": 50.0,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss diameter (mm)"
+    },
+    "boss_h": {
+      "type": "float",
+      "default": 6.0,
+      "min": 2.4,
+      "max": 15.0,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss height (mm)"
     }
   }
 }

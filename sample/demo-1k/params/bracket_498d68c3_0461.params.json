@@ -1,10 +1,10 @@
 {
-  "cadquarry_version": "0.1.0",
+  "cadquarry_version": "0.3.0",
   "part_id": "bracket_498d68c3_0461",
   "params": {
     "base_len": {
       "type": "float",
-      "default": 85,
+      "default": 55.06,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -13,7 +13,7 @@
     },
     "vert_len": {
       "type": "float",
-      "default": 90.0,
+      "default": 46.8,
       "min": 25.0,
       "max": 90.0,
       "step": 1.0,
@@ -22,7 +22,7 @@
     },
     "bracket_w": {
       "type": "float",
-      "default": 35,
+      "default": 22.95,
       "min": 15.0,
       "max": 60.0,
       "step": 1.0,
@@ -38,11 +38,20 @@
       "group": "Body",
       "label": "Thickness (mm)"
     },
+    "top_len": {
+      "type": "float",
+      "default": 42.2,
+      "min": 25.0,
+      "max": 90.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Top flange length (mm)"
+    },
     "hole_d": {
       "type": "float",
-      "default": 5.3,
+      "default": 4.3,
       "min": 3.0,
-      "max": 10.0,
+      "max": 9.2,
       "step": 0.1,
       "group": "Holes",
       "label": "Hole diameter (mm)"
@@ -54,13 +63,13 @@
       "max": 3,
       "step": 1,
       "group": "Holes",
-      "label": "Holes per leg"
+      "label": "Holes per flange"
     },
     "gusset_t": {
       "type": "float",
-      "default": 5.2,
+      "default": 4.7,
       "min": 2.5,
-      "max": 15.0,
+      "max": 11.5,
       "step": 0.5,
       "group": "Gusset",
       "label": "Gusset thickness (mm)"

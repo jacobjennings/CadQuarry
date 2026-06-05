@@ -4,10 +4,14 @@ import unittest
 from cadquarry.compose import (
     compose,
     sample_bracket,
+    sample_compound,
     sample_plate,
     sample_revolved,
     sample_block,
     sample_enclosure,
+    _sample_block_tube,
+    _sample_block_tab,
+    _sample_pedestal,
 )
 from cadquarry.emit import emit_source
 from cadquarry.ir import PartIR
@@ -152,6 +156,196 @@ class TestFamilySamplers(unittest.TestCase):
             part = sample_bracket(Random(seed), tier=2, config={}, seed=seed, index=0)
             seen.add(part.operations[0].type)
         self.assertEqual(seen, {"lbracket", "cbracket", "zbracket"})
+
+
+class TestCompoundFamily(unittest.TestCase):
+    def _check(self, part: PartIR) -> None:
+        self.assertIsInstance(part, PartIR)
+        self.assertGreaterEqual(len(part.params), 4)
+        self.assertGreaterEqual(len(part.operations), 2)
+        code = emit_source(part)
+        self.assertTrue(_valid_python(code), f"invalid Python for {part.id}")
+        self.assertIn('p["', code)
+        # compound parts must contain at least one AttachOp
+        op_types = [op.type for op in part.operations]
+        self.assertIn("attach", op_types)
+
+    def test_compound_family_in_registry(self):
+        from cadquarry.compose import _FAMILY_SAMPLERS
+        self.assertIn("compound", _FAMILY_SAMPLERS)
+
+    def test_compose_compound_selectable(self):
+        part = compose(seed=7777, family="compound", tier=1)
+        self.assertEqual(part.metadata.family, "compound")
+        self.assertGreaterEqual(len(part.operations), 2)
+
+    def test_compound_all_tiers(self):
+        from random import Random
+        for tier in [1, 2, 3]:
+            part = sample_compound(Random(42), tier=tier, config={}, seed=42, index=0)
+            self._check(part)
+            self.assertEqual(part.metadata.tier, tier)
+
+    def test_block_tube_archetype(self):
+        from random import Random
+        for seed in range(10):
+            part = _sample_block_tube(Random(seed), tier=2, config={}, seed=seed, index=0)
+            self._check(part)
+            op_types = [op.type for op in part.operations]
+            self.assertIn("box", op_types)
+            self.assertIn("attach", op_types)
+
+    def test_block_tab_archetype(self):
+        from random import Random
+        for seed in range(10):
+            part = _sample_block_tab(Random(seed), tier=1, config={}, seed=seed, index=0)
+            self._check(part)
+            op_types = [op.type for op in part.operations]
+            self.assertIn("box", op_types)
+            self.assertIn("attach", op_types)
+            self.assertIn("holes", op_types)
+
+    def test_pedestal_archetype(self):
+        from random import Random
+        for seed in range(10):
+            part = _sample_pedestal(Random(seed), tier=1, config={}, seed=seed, index=0)
+            self._check(part)
+            op_types = [op.type for op in part.operations]
+            self.assertIn("box", op_types)
+            self.assertIn("attach", op_types)
+
+    def test_attach_op_face_variety(self):
+        """Block tube archetype uses a variety of faces across seeds."""
+        from random import Random
+        faces_seen = set()
+        for seed in range(60):
+            part = _sample_block_tube(Random(seed), tier=1, config={}, seed=seed, index=0)
+            for op in part.operations:
+                if op.type == "attach":
+                    faces_seen.add(op.face)
+        self.assertGreater(len(faces_seen), 1, "tube always on the same face — no variety")
+
+    def test_block_tier3_may_include_side_tube(self):
+        """sample_block tier 3 occasionally includes an attach op."""
+        from random import Random
+        attach_seen = False
+        for seed in range(80):
+            part = sample_block(Random(seed), tier=3, config={}, seed=seed, index=0)
+            if any(op.type == "attach" for op in part.operations):
+                attach_seen = True
+                code = emit_source(part)
+                self.assertTrue(_valid_python(code))
+                break
+        self.assertTrue(attach_seen, "block tier 3 never generated a side tube in 80 seeds")
+
+    def test_compound_emits_valid_python_many_seeds(self):
+        from random import Random
+        for seed in range(30):
+            part = sample_compound(Random(seed), tier=rng_tier(seed), config={}, seed=seed, index=0)
+            code = emit_source(part)
+            self.assertTrue(_valid_python(code), f"seed={seed} produced invalid Python")
+
+
+def rng_tier(seed: int) -> int:
+    from random import Random
+    return Random(seed).randint(1, 3)
+
+
+class TestHoleVariety(unittest.TestCase):
+    """Verify that the new hole shapes and placements are reachable through compose."""
+
+    def _collect_hole_shapes(self, seeds: range, family: str = "plate", tier: int = 2) -> set[str]:
+        from random import Random
+        from cadquarry.compose import sample_plate, sample_block
+        sampler = sample_plate if family == "plate" else sample_block
+        shapes: set[str] = set()
+        for seed in seeds:
+            part = sampler(Random(seed), tier=tier, config={}, seed=seed, index=0)
+            for op in part.operations:
+                if op.type == "holes":
+                    shapes.add(op.shape)
+        return shapes
+
+    def _collect_hole_placements(self, seeds: range, family: str = "plate", tier: int = 2) -> set[str]:
+        from random import Random
+        from cadquarry.compose import sample_plate
+        placements: set[str] = set()
+        for seed in seeds:
+            part = sample_plate(Random(seed), tier=tier, config={}, seed=seed, index=0)
+            for op in part.operations:
+                if op.type == "holes":
+                    placements.add(op.placement)
+        return placements
+
+    def test_square_holes_appear(self):
+        shapes = self._collect_hole_shapes(range(300))
+        self.assertIn("square", shapes, "square holes never sampled in 300 seeds")
+
+    def test_slot_holes_appear(self):
+        shapes = self._collect_hole_shapes(range(300))
+        self.assertIn("slot", shapes, "slot holes never sampled in 300 seeds")
+
+    def test_round_holes_still_appear(self):
+        shapes = self._collect_hole_shapes(range(300))
+        self.assertIn("round", shapes)
+
+    def test_staggered_placement_appears(self):
+        placements = self._collect_hole_placements(range(300))
+        self.assertIn("staggered", placements, "staggered placement never sampled in 300 seeds")
+
+    def test_grid_placement_appears(self):
+        placements = self._collect_hole_placements(range(300))
+        self.assertIn("grid", placements)
+
+    def test_new_hole_shapes_emit_valid_python(self):
+        """Every seed that produces square/slot/staggered must emit parseable Python."""
+        import ast
+        from random import Random
+        from cadquarry.compose import sample_plate
+        from cadquarry.emit import emit_source
+        for seed in range(300):
+            part = sample_plate(Random(seed), tier=2, config={}, seed=seed, index=0)
+            for op in part.operations:
+                if op.type == "holes" and op.shape in ("square", "slot") or (
+                        op.type == "holes" and op.placement == "staggered"):
+                    code = emit_source(part)
+                    try:
+                        ast.parse(code)
+                    except SyntaxError as e:
+                        self.fail(f"seed={seed} produced invalid Python: {e}")
+                    break  # one check per part is enough
+
+    def test_block_square_and_staggered_appear(self):
+        """Block family also surfaces the new hole types."""
+        from random import Random
+        from cadquarry.compose import sample_block
+        shapes: set[str] = set()
+        placements: set[str] = set()
+        for seed in range(300):
+            part = sample_block(Random(seed), tier=1, config={}, seed=seed, index=0)
+            for op in part.operations:
+                if op.type == "holes":
+                    shapes.add(op.shape)
+                    placements.add(op.placement)
+        self.assertIn("square", shapes, "block never got square holes in 300 seeds")
+        self.assertIn("staggered", placements, "block never got staggered in 300 seeds")
+
+    def test_generator_version_bumped(self):
+        from cadquarry.compose import GENERATOR_VERSION
+        major, minor, _ = GENERATOR_VERSION.split(".")
+        self.assertGreaterEqual(int(minor), 3, "GENERATOR_VERSION should be at least 0.3.x")
+
+    def test_slot_params_present(self):
+        """Parts with slot holes must include both width and length params."""
+        from random import Random
+        from cadquarry.compose import sample_plate
+        for seed in range(300):
+            part = sample_plate(Random(seed), tier=2, config={}, seed=seed, index=0)
+            for op in part.operations:
+                if op.type == "holes" and op.shape == "slot":
+                    self.assertIn("hole_slot_len", part.params,
+                                  f"seed={seed}: slot hole missing hole_slot_len param")
+                    break
 
 
 class TestFilter(unittest.TestCase):

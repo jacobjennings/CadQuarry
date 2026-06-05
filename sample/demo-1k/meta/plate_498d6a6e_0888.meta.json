@@ -1,0 +1,12 @@
+{
+  "cadquarry_version": "0.3.0",
+  "part_id": "plate_498d6a6e_0888",
+  "seed": 1234004590,
+  "generator_version": "0.3.0",
+  "family": "plate",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 4,
+  "ir_hash": "99e9372525772755",
+  "license": "CC0-1.0"
+}

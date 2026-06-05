@@ -2,10 +2,10 @@
 
             | Field            | Value |
             |------------------|-------|
-            | Generator        | CadQuarry v0.1.0 |
+            | Generator        | CadQuarry v0.3.0 |
             | Seed             | 1234 |
             | Total parts      | 1000 |
-            | Generated        | 2026-06-04 |
+            | Generated        | 2026-06-05 |
             | Code license     | Apache-2.0 |
             | Data license     | CC0-1.0 |
 
@@ -13,23 +13,23 @@
 
             | Family       | Count  | Share |
             |--------------|--------|-------|
-            | revolved     |    211 |  21.1% |
-| bracket      |    188 |  18.8% |
-| plate        |    169 |  16.9% |
-| block        |    159 |  15.9% |
-| flanged      |     81 |   8.1% |
-| ribbed       |     71 |   7.1% |
-| enclosure    |     70 |   7.0% |
-| profiled     |     51 |   5.1% |
+            | plate        |    211 |  21.1% |
+| revolved     |    196 |  19.6% |
+| bracket      |    173 |  17.3% |
+| block        |    153 |  15.3% |
+| flanged      |     78 |   7.8% |
+| enclosure    |     66 |   6.6% |
+| ribbed       |     66 |   6.6% |
+| profiled     |     57 |   5.7% |
 
             ## Complexity tiers
 
             | Tier   | Count  | Share |
             |--------|--------|-------|
-            | Tier 0 |    120 |  12.0% |
-| Tier 1 |    487 |  48.7% |
-| Tier 2 |    313 |  31.3% |
-| Tier 3 |     80 |   8.0% |
+            | Tier 0 |    123 |  12.3% |
+| Tier 1 |    486 |  48.6% |
+| Tier 2 |    306 |  30.6% |
+| Tier 3 |     85 |   8.5% |
 
             ## Reproducibility
 
