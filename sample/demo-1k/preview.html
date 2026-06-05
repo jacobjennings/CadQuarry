@@ -126,6 +126,22 @@
   .dl a { font-size: 11px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); }
   .dl a:hover { background: var(--surface2); color: var(--text); text-decoration: none; }
 
+  /* ── Modal view tabs (3D / Renders) ── */
+  .modal .view { display: flex; flex-direction: column; }
+  .view-tabs { position: absolute; top: 12px; left: 12px; z-index: 3; display: flex; gap: 3px; background: rgba(0,0,0,.45); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
+  .vtab { background: none; border: none; color: var(--text2); font-family: var(--font); font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 7px; cursor: pointer; transition: all .12s; }
+  .vtab:hover { color: var(--text); }
+  .vtab.active { background: var(--accent); color: #fff; }
+  .view-pane { position: absolute; inset: 0; }
+  .view-pane[hidden] { display: none; }
+  #m-pane-renders { overflow-y: auto; padding: 54px 14px 16px; }
+  .renders-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .rtile { background: radial-gradient(circle at 50% 40%, #20202a, #141418); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+  .rtile img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .rtile .rlabel { position: absolute; left: 6px; bottom: 5px; font-family: var(--mono); font-size: 10px; color: var(--text2); background: rgba(0,0,0,.5); padding: 1px 6px; border-radius: 4px; }
+  .rtile .rmiss { color: var(--text3); font-size: 12px; font-family: var(--mono); }
+  .renders-note { grid-column: 1 / -1; color: var(--text3); font-size: 12.5px; line-height: 1.6; text-align: center; padding: 28px 16px; }
+
   .banner { background: #3a2a18; border: 1px solid #6b4a22; color: #f0c98a; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; margin: 0 auto 18px; max-width: 1400px; }
   footer { max-width: 1400px; margin: 0 auto; padding: 0 24px 50px; color: var(--text3); font-size: 12px; line-height: 1.7; }
   code.inl { font-family: var(--mono); background: var(--surface2); padding: 1px 6px; border-radius: 4px; color: var(--accent2); font-size: 12px; }
@@ -202,9 +218,18 @@
   <div class="modal">
     <div class="view" id="m-view">
       <button class="mclose" id="m-close">×</button>
-      <canvas id="m-canvas"></canvas>
-      <div class="vinfo" id="m-vinfo"></div>
-      <div class="vhint">drag to orbit · scroll to zoom</div>
+      <div class="view-tabs" id="m-tabs">
+        <button class="vtab active" data-tab="3d">3D</button>
+        <button class="vtab" data-tab="renders">Renders</button>
+      </div>
+      <div class="view-pane" id="m-pane-3d">
+        <canvas id="m-canvas"></canvas>
+        <div class="vinfo" id="m-vinfo"></div>
+        <div class="vhint">drag to orbit · scroll to zoom</div>
+      </div>
+      <div class="view-pane" id="m-pane-renders" hidden>
+        <div class="renders-grid" id="m-renders"></div>
+      </div>
     </div>
     <div class="side">
       <div class="side-head">
@@ -438,6 +463,7 @@ function wireControls() {
   $('#search').addEventListener('input', e => { query = e.target.value.toLowerCase().trim(); applyFilters(); });
   $('#sort').addEventListener('change', e => { sortMode = e.target.value; applyFilters(); });
   document.querySelectorAll('#tier-chips .chip').forEach(c => c.onclick = () => setTier(c.dataset.tier));
+  document.querySelectorAll('#m-tabs .vtab').forEach(b => b.onclick = () => switchModalTab(b.dataset.tab));
   $('#m-close').onclick = closeModal;
   $('#modal-bg').onclick = e => { if (e.target.id === 'modal-bg') closeModal(); };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -524,8 +550,63 @@ async function loadCardMesh(prev) {
 }
 
 // ── Modal ──
+// Eight standard render viewpoints exported by `cadquarry export … render`,
+// written to renders/{id}/{view}.png (see cadquarry/export.py STANDARD_VIEWS).
+const RENDER_VIEWS = ['front', 'top', 'right', 'iso', 'iso_fr', 'iso_fl', 'iso_br', 'iso_bl'];
+let modalRec = null, rendersBuiltFor = null;
+
+function renderURL(r, view) { return BASE + 'renders/' + r.part_id + '/' + view + '.png'; }
+
+function switchModalTab(tab) {
+  document.querySelectorAll('#m-tabs .vtab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  $('#m-pane-3d').hidden = tab !== '3d';
+  $('#m-pane-renders').hidden = tab !== 'renders';
+  if (tab === 'renders') {
+    buildRenders();
+  } else if (mRenderer) {
+    // The 3D canvas had zero size while hidden; nudge it back to the pane size.
+    const cv = $('#m-canvas'), w = cv.clientWidth, h = cv.clientHeight;
+    if (w && h) { mRenderer.setSize(w, h, false); mCamera.aspect = w / h; mCamera.updateProjectionMatrix(); }
+  }
+}
+
+function buildRenders() {
+  const r = modalRec;
+  if (!r || rendersBuiltFor === r.part_id) return;
+  rendersBuiltFor = r.part_id;
+  const host = $('#m-renders');
+  host.innerHTML = '';
+  let failed = 0;
+  for (const view of RENDER_VIEWS) {
+    const tile = document.createElement('div');
+    tile.className = 'rtile';
+    const url = renderURL(r, view);
+    const img = document.createElement('img');
+    img.alt = view; img.loading = 'lazy';
+    img.onload = () => { tile.onclick = () => window.open(url, '_blank'); };
+    img.onerror = () => {
+      img.remove();
+      tile.style.cursor = 'default';
+      const miss = document.createElement('span'); miss.className = 'rmiss'; miss.textContent = '—';
+      tile.appendChild(miss);
+      if (++failed === RENDER_VIEWS.length) {
+        host.innerHTML = '<div class="renders-note">No render images are bundled for this corpus.<br>' +
+          'Generate the 8 perspective renders with ' +
+          '<code class="inl">cadquarry export &lt;dir&gt; --formats render</code>.</div>';
+      }
+    };
+    img.src = url;
+    tile.appendChild(img);
+    const lbl = document.createElement('span'); lbl.className = 'rlabel'; lbl.textContent = view;
+    tile.appendChild(lbl);
+    host.appendChild(tile);
+  }
+}
+
 async function openModal(r) {
   $('#modal-bg').classList.add('open');
+  modalRec = r; rendersBuiltFor = null;
+  switchModalTab('3d');
   const c = famColor(r.family);
   $('#m-pid').textContent = r.part_id;
   $('#m-tags').innerHTML =

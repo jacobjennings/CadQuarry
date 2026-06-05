@@ -156,9 +156,6 @@ Measured on an **AMD Ryzen Threadripper 9960X (24C/48T)** with the default
 
 Throughput is roughly **~250 accepted parts/sec** (sustained) after a ~2s
 worker warm-up. Anchored on real runs: 200 parts in **2.6s**, 2,000 in **9.9s**.
-For reference, the legacy one-subprocess-per-part path managed ~0.85 parts/sec
-(~90× slower) — a 50k corpus would have taken **over 16 hours** instead of
-minutes.
 
 Tune the pool with `--workers N` (default: `min(cores, 24)`). Estimates scale
 roughly linearly with core count and exclude STEP/STL/point-cloud export
@@ -286,6 +283,7 @@ sample/demo-1k/
 ├── meta/{id}.meta.json
 ├── geometry/{id}.step   STEP B-rep solids
 ├── geometry/{id}.stl    compact binary meshes (for the in-browser preview)
+├── renders/{id}/{view}.png  8 perspective PNGs (front/top/right/iso + 4 iso corners)
 ├── DATASET_CARD.md
 └── preview.html         self-contained gallery (three.js, lazy-loaded geometry)
 ```
@@ -296,10 +294,16 @@ It is corpus `demo-1k` from `seeds/v1.toml` (seed `1234`). Regenerate it:
 # 1. Regenerate the part sources + params + meta (deterministic from seed 1234)
 .venv/bin/cadquarry generate --seed 1234 --count 1000 --out sample/demo-1k/
 
-# 2. Export geometry into geometry/ — STEP B-reps + the compact binary STL
-#    meshes the in-browser preview loads
-.venv/bin/cadquarry export sample/demo-1k/ --formats step,stl
+# 2. Export geometry — STEP B-reps + the compact binary STL meshes the
+#    in-browser preview loads + the 8 perspective renders the preview's
+#    "Renders" tab shows. (Keep `stl` in the list: export drops the STL after
+#    rendering if you ask for `render` alone.)
+.venv/bin/cadquarry export sample/demo-1k/ --formats step,stl,render
 ```
+
+> The committed renders were produced straight from the existing STLs (no
+> CadQuery re-run) with [`scripts/render_sample.py`](scripts/render_sample.py):
+> `python scripts/render_sample.py sample/demo-1k/`.
 
 ---
 
