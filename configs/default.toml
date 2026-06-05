@@ -4,7 +4,10 @@
 [generation]
 seed    = 42
 count   = 100
-timeout_seconds = 30
+# Per-part execution timeout (hang detection only — a higher bound never slows
+# throughput).  The gear/threaded families solve real involute/thread geometry
+# and can take several seconds per part, so the default is generous.
+timeout_seconds = 120
 
 # ---------------------------------------------------------------------------
 # Part family weights
@@ -12,15 +15,17 @@ timeout_seconds = 30
 # dropped, so adding a new family here before the code exists is safe.
 # ---------------------------------------------------------------------------
 [distribution.families]
-plate     = 0.20   # flat plates with holes / fillets / pockets
-revolved  = 0.16   # shafts, bushings, washers — rotational geometry
-bracket   = 0.16   # angle brackets: L / C-channel / Z-offset + holes + optional gussets
-block     = 0.12   # prismatic blocks / housings
-compound  = 0.12   # multi-section assemblies (manifolds, stepped shafts, standoffs…)
-flanged   = 0.07   # revolved stub + bolt circle
-ribbed    = 0.06   # base + patterned ribs / webs
-enclosure = 0.06   # shelled box / enclosures
-profiled  = 0.05   # long constant cross-section extrusions (incl. polygon bars)
+plate     = 0.18   # flat plates with holes / fillets / pockets
+revolved  = 0.14   # shafts, bushings, washers — rotational geometry
+bracket   = 0.14   # angle brackets: L / C-channel / Z-offset + holes + optional gussets
+block     = 0.11   # prismatic blocks / housings
+compound  = 0.11   # multi-section assemblies (manifolds, stepped shafts, standoffs…)
+flanged   = 0.06   # revolved stub + bolt circle
+ribbed    = 0.05   # base + patterned ribs / webs
+enclosure = 0.05   # shelled box / enclosures
+profiled  = 0.04   # long constant cross-section extrusions (incl. polygon bars)
+gear      = 0.06   # involute/cycloid gears (py_gearworks) — requires the `mech` extra
+threaded  = 0.06   # real ISO/ACME/trapezoidal threads (bd_warehouse) — requires `mech`
 
 # ---------------------------------------------------------------------------
 # Complexity tier weights (global; clamped per family by FAMILY_TIER_SPANS)
@@ -149,6 +154,29 @@ circle_d_min  = 8.0
 circle_d_max  = 50.0
 tier_min      = 0
 tier_max      = 2
+
+# --- Mechanical families (require the `mech` extra to execute) ---------------
+# These build on the build123d/py_gearworks/bd_warehouse stack and are bridged
+# into CadQuery via each object's `.wrapped` OCP handle.  They are far slower
+# than the primitive families (real involute/thread solving), so generation
+# with a meaningful weight here takes correspondingly longer — raise the
+# execution `--timeout` accordingly (see [generation] timeout_seconds).
+
+[families.gear]
+module_min = 1.0    # ISO 54 preferred modules are snapped within [min, max]
+module_max = 6.0
+teeth_min  = 10
+teeth_max  = 40
+tier_min   = 0
+tier_max   = 3
+
+[families.threaded]
+length_min = 12.0   # thread length bounds (mm); aspect-limited per part
+length_max = 60.0
+iso_d_min  = 4.0    # ISO metric major-diameter range (mm) drawn from the
+iso_d_max  = 24.0   # standard pitch table (M4 .. M24)
+tier_min   = 0
+tier_max   = 3
 
 # ---------------------------------------------------------------------------
 # Standard fastener / stock sizes used by regularities

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cadquarry"
-version = "0.4.0"
+version = "0.5.0"
 description = "Procedural generator for diverse, valid, parametric CadQuery programs and geometry — CC0 data, Apache-2.0 code"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -19,7 +19,9 @@ classifiers = [
     "Topic :: Multimedia :: Graphics :: 3D Modeling",
 ]
 dependencies = [
-    "cadquery>=2.4.0",
+    # >=2.5.2 aligns the OCP kernel (cadquery-ocp 7.8) with the build123d stack
+    # used by the optional `mech` extra (gears/threads families).
+    "cadquery>=2.5.2",
     "pydantic>=2.0",
     "numpy>=1.24",
     "tqdm>=4.66",
@@ -28,6 +30,16 @@ dependencies = [
 [project.optional-dependencies]
 export = ["trimesh>=4.0", "moderngl>=5.10", "pillow>=10.0"]
 publish = ["huggingface_hub>=0.24", "pyarrow>=14.0"]
+# Real mechanical part families (gears + threads). These build on the
+# build123d/OCP stack and are bridged back into CadQuery via each object's
+# `.wrapped` OCP handle, so the emitted parts are NOT self-contained on
+# `cadquery` alone — installing this extra is required to execute them.
+# py_gearworks (formerly gggears) has no PyPI release; it is pinned to a commit.
+mech = [
+    "build123d>=0.10.0",
+    "bd_warehouse>=0.2.0",
+    "py_gearworks @ git+https://github.com/GarryBGoode/py_gearworks@2fc2a13d82a9997a65f30c870498f0bb3be62318",
+]
 dev = [
     "pytest>=8.0",
     "pytest-timeout>=2.0",
@@ -39,6 +51,11 @@ cadquarry = "cadquarry.__main__:main"
 
 [project.urls]
 Repository = "https://github.com/jacobjennings/CadQuarry"
+
+[tool.hatch.metadata]
+# The `mech` extra pins py_gearworks to a git commit (no PyPI release exists),
+# which is a PEP 508 direct reference; hatchling requires opting in.
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["cadquarry"]

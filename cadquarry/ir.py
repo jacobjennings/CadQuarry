@@ -947,6 +947,178 @@ class ZBracketOp(BaseModel):
         return lines
 
 
+class GearOp(BaseModel):
+    """
+    Native-quality gear built with py_gearworks (formerly gggears) and bridged
+    back into CadQuery through the shared OCP `.wrapped` handle:
+
+        _gear  = _gw.SpurGear(...)         # py_gearworks gear object
+        _gpart = _gear.build_part()        # build123d Part
+        result = cq.Workplane('XY').add(cq.Solid(_gpart.wrapped))
+
+    From there it is an ordinary single-solid `cq.Workplane`, so an optional
+    hub and axial bore are added with plain CadQuery ops (no build123d boolean
+    needed) and the rest of the pipeline (validity, signature, export, viewer)
+    is unchanged.
+
+    This is always the base (first) operation for the gear family.  Requires
+    the `mech` extra (`py_gearworks`); the emitted file is NOT self-contained
+    on `cadquery` alone.
+
+    Angles (`helix_angle`, `cone_angle`) are carried in DEGREES for UI/customizer
+    friendliness and converted to radians in the emitted code, since py_gearworks
+    works in radians.  The 20 deg pressure angle is py_gearworks' default and is
+    left unset.
+    """
+    type: Literal["gear"] = "gear"
+    kind: Literal["spur", "helical", "bevel", "cycloid", "ring"] = "spur"
+    module: Expr
+    teeth: Expr
+    width: Expr                        # gear face width (height along Z)
+    helix_angle: Expr | None = None    # degrees — helical (and optionally bevel)
+    cone_angle: Expr | None = None     # degrees — bevel pitch cone half-angle
+    profile_shift: Expr | None = None  # not applicable to cycloid
+    root_fillet: Expr | None = None
+    herringbone: bool = False          # helical only
+    bore_d: Expr | None = None         # axial through-bore (CadQuery .hole)
+    hub_d: Expr | None = None          # raised hub diameter on >Z
+    hub_h: Expr | None = None          # raised hub height
+
+    _CLASS = {
+        "spur": "SpurGear",
+        "helical": "HelicalGear",
+        "bevel": "BevelGear",
+        "cycloid": "CycloidGear",
+        "ring": "SpurRingGear",
+    }
+
+    def required_imports(self) -> list[str]:
+        return ["import math", "import py_gearworks as _gw"]
+
+    def to_code(self) -> list[str]:  # noqa: C901
+        teeth = f"int({self.teeth.to_code()})"
+        kw = [
+            f"number_of_teeth={teeth}",
+            f"height={self.width.to_code()}",
+            f"module={self.module.to_code()}",
+        ]
+        if self.kind == "helical":
+            if self.helix_angle is not None:
+                kw.append(f"helix_angle=math.radians({self.helix_angle.to_code()})")
+            kw.append(f"herringbone={self.herringbone}")
+        elif self.kind == "bevel":
+            if self.cone_angle is not None:
+                kw.append(f"cone_angle=math.radians({self.cone_angle.to_code()})")
+            if self.helix_angle is not None:
+                kw.append(f"helix_angle=math.radians({self.helix_angle.to_code()})")
+        if self.profile_shift is not None and self.kind != "cycloid":
+            kw.append(f"profile_shift={self.profile_shift.to_code()}")
+        if self.root_fillet is not None:
+            kw.append(f"root_fillet={self.root_fillet.to_code()}")
+
+        ctor = f"_gw.{self._CLASS[self.kind]}(" + ", ".join(kw) + ")"
+        lines = [
+            f"    _gear = {ctor}",
+            "    _gpart = _gear.build_part()",
+            "    result = cq.Workplane('XY').add(cq.Solid(_gpart.wrapped))",
+        ]
+
+        # Optional hub (raised pad on the top face) then an axial through-bore;
+        # boring last makes the hole run through both the gear and the hub.
+        if self.hub_d is not None and self.hub_h is not None:
+            lines += [
+                "    result = (",
+                "        result.faces('>Z').workplane()",
+                f"        .circle({self.hub_d.to_code()} / 2).extrude({self.hub_h.to_code()})",
+                "    )",
+            ]
+        if self.bore_d is not None:
+            lines.append(
+                f"    result = result.faces('>Z').workplane().hole({self.bore_d.to_code()})"
+            )
+        return lines
+
+
+class ThreadedOp(BaseModel):
+    """
+    Real threaded part built with bd_warehouse and bridged into CadQuery via
+    the shared OCP `.wrapped` handle.
+
+    bd_warehouse threads are a *separate* solid from the body they sit on, so
+    they must be fused (build123d `+`) into a single solid before the bridge,
+    or `is_valid` rejects the part (`n_solids != 1`):
+
+      external:  shank cylinder (sized to the thread root) + thread
+      internal:  (body cylinder - clearance bore) + thread
+
+    External supports ISO metric (`IsoThread`, given major-diameter + pitch),
+    plus ACME and metric-trapezoidal lead screws (`AcmeThread` /
+    `MetricTrapezoidalThread`, given a standard `size` designation).  Internal
+    threads are ISO-only (we control the bore from the major diameter).
+
+    Always the base (first) operation for the threaded family.  Requires the
+    `mech` extra (`bd_warehouse`, `build123d`).
+    """
+    type: Literal["threaded"] = "threaded"
+    standard: Literal["iso", "acme", "trapezoidal"] = "iso"
+    external: bool = True
+    length: Expr
+    major_d: Expr | None = None   # ISO: thread major diameter (also internal bore)
+    pitch: Expr | None = None     # ISO: thread pitch
+    size: Expr | None = None      # ACME / trapezoidal: designation (enum param -> str)
+    body_factor: float = 0.9      # internal body outer radius = major_d * body_factor
+
+    _CLASS = {
+        "iso": "IsoThread",
+        "acme": "AcmeThread",
+        "trapezoidal": "MetricTrapezoidalThread",
+    }
+
+    def required_imports(self) -> list[str]:
+        return ["from bd_warehouse import thread as _bdt", "import build123d as _bd"]
+
+    def to_code(self) -> list[str]:
+        length = self.length.to_code()
+        end_finishes = '("fade", "fade")'
+        ext = "True" if self.external else "False"
+        align = "(_bd.Align.CENTER, _bd.Align.CENTER, _bd.Align.MIN)"
+
+        lines: list[str] = []
+        if self.standard == "iso":
+            md = self.major_d.to_code()
+            pt = self.pitch.to_code()
+            lines.append(
+                f"    _thr = _bdt.IsoThread(major_diameter={md}, pitch={pt}, "
+                f"length={length}, external={ext}, end_finishes={end_finishes})"
+            )
+        else:
+            cls = self._CLASS[self.standard]
+            sz = self.size.to_code()
+            lines.append(
+                f"    _thr = _bdt.{cls}(size={sz}, length={length}, "
+                f"external={ext}, end_finishes={end_finishes})"
+            )
+
+        if self.external:
+            # Shank sized to the thread root so the union is a clean solid.
+            # IsoThread exposes `min_radius`; ACME/trapezoidal expose `root_radius`.
+            lines += [
+                "    _r = _thr.min_radius if hasattr(_thr, 'min_radius') else _thr.root_radius",
+                f"    _shank = _bd.Cylinder(radius=_r, height={length}, align={align})",
+                "    _part = _shank + _thr",
+            ]
+        else:
+            md = self.major_d.to_code()
+            lines += [
+                f"    _body = _bd.Cylinder(radius=({md}) * {self.body_factor!r}, "
+                f"height={length}, align={align})",
+                f"    _bore = _bd.Cylinder(radius=({md}) / 2, height={length}, align={align})",
+                "    _part = (_body - _bore) + _thr",
+            ]
+        lines.append("    result = cq.Workplane('XY').add(cq.Solid(_part.wrapped))")
+        return lines
+
+
 Operation = Annotated[
     Union[
         BoxOp, ExtrudeOp, RevolveOp,
@@ -955,6 +1127,7 @@ Operation = Annotated[
         ShellOp, PocketOp, BossOp, RibsOp,
         AttachOp,
         LBracketOp, CBracketOp, ZBracketOp,
+        GearOp, ThreadedOp,
     ],
     Field(discriminator="type"),
 ]

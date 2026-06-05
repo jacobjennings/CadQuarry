@@ -553,7 +553,7 @@ def build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--seed", type=int, default=42, metavar="SEED", help="Random seed (default: 42)")
     gen.add_argument("--out", default="dataset", metavar="DIR", help="Output directory")
     gen.add_argument("--config", default=None, metavar="TOML", help="Config file (default: configs/default.toml)")
-    gen.add_argument("--timeout", type=float, default=30.0, metavar="SEC", help="Execution timeout per part")
+    gen.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Execution timeout per part (hang detection; generous for slow gear/threaded parts)")
     gen.add_argument("--no-exec", action="store_true", help="Skip execution validation (faster, less safe)")
     gen.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel execution workers (0 = auto)")
     gen.add_argument("--family", default=None, help="Force a part family (plate, revolved, block, …)")
@@ -571,7 +571,7 @@ def build_parser() -> argparse.ArgumentParser:
     bld.add_argument("--no-export", action="store_true", help="Generate only; skip geometry export")
     bld.add_argument("--config", default=None, metavar="TOML", help="Config file (default: configs/default.toml)")
     bld.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: seeds/v1.toml)")
-    bld.add_argument("--timeout", type=float, default=60.0, metavar="SEC", help="Per-part timeout for generate and export")
+    bld.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export (hang detection; generous for slow gear/threaded parts)")
     bld.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
     bld.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
     bld.add_argument("--verbose", "-v", action="store_true")
@@ -582,7 +582,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--set", action="append", metavar="KEY=VALUE", help="Parameter override; repeat for multiple (e.g. --set plate_w=60 --set n_holes=6)")
     run.add_argument("--export", metavar="FORMAT", help="Export format: stl, step, svg, render, pointcloud")
     run.add_argument("--out", default=None, metavar="PATH", help="Output path for export")
-    run.add_argument("--timeout", type=float, default=30.0)
+    run.add_argument("--timeout", type=float, default=120.0)
 
     # serve
     srv = sub.add_parser("serve", help="Launch live customizer (part) or gallery (dataset)")
@@ -595,14 +595,14 @@ def build_parser() -> argparse.ArgumentParser:
     exp = sub.add_parser("export", help="Export geometry artifacts for an existing corpus")
     exp.add_argument("dataset", metavar="DIR")
     exp.add_argument("--formats", default="step,stl,render", help="Comma-separated: step,stl,svg,pointcloud,render (default: step,stl,render)")
-    exp.add_argument("--timeout", type=float, default=60.0)
+    exp.add_argument("--timeout", type=float, default=120.0)
     exp.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel export workers (0 = auto)")
     exp.add_argument("--verbose", "-v", action="store_true")
 
     # verify
     ver = sub.add_parser("verify", help="Re-execute corpus and check validity + signatures")
     ver.add_argument("dataset", metavar="DIR")
-    ver.add_argument("--timeout", type=float, default=30.0)
+    ver.add_argument("--timeout", type=float, default=120.0)
 
     # info
     inf = sub.add_parser("info", help="Print parameter schema for a part")
