@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-Generate the CadQuarry corpus size-ladder and publish it to a HuggingFace
-dataset repository.
+Pack pre-built CadQuarry corpora and publish them to a HuggingFace dataset repo.
+
+This script does **not** generate or render anything. Corpus generation and
+geometry export are a separate, explicit step — run ``cadquarry build`` first:
+
+    cadquarry build --sizes 1k 10k --formats step,stl,render --out datasets/
+
+That writes one ``datasets/{tag}/`` corpus per size (manifest + parts + geometry
++ renders). This publisher then only **packs** those artifacts into HuggingFace
+configs and **uploads** them.
 
 Design goals
 ------------
@@ -28,28 +36,31 @@ Variants published per corpus size
   {tag}-full         — + renders + STL + STEP (everything)
 
 Each of the above is also published as ``{tag}-t0-2[…]`` (tiers 0–2 only),
-with data nested under ``{tag}/tier0-2/``.
+with data nested under ``{tag}/tier0-2/``. Geometry variants are skipped
+automatically for any corpus that lacks the corresponding artifacts.
 
 Examples
 --------
-    # Build + upload just the small configs (fast, code-only)
+    # Build the corpora first (separate step):
+    cadquarry build --sizes 1k 2k 5k --formats step,stl,render --out datasets/
+
+    # Pack + upload just the small configs (code-only)
     python scripts/publish_to_hf.py --sizes 1k 2k 5k --code-only
 
     # Everything, to your own repo
     python scripts/publish_to_hf.py --all --repo-id me/cadquarry
 
-    # Generate + pack locally but do not upload (inspect .hf_build/)
+    # Pack locally but do not upload (inspect .hf_build/)
     python scripts/publish_to_hf.py --sizes 1k --dry-run
 
-    # Full pipeline with all geometry variants
-    python scripts/publish_to_hf.py --sizes 1k 10k
+    # Read corpora from a custom location
+    python scripts/publish_to_hf.py --sizes 1k --corpus-root /data/cadquarry
 """
 from __future__ import annotations
 
 import argparse
 import os
 import sys
-import textwrap
 import tomllib
 from pathlib import Path
 
@@ -58,14 +69,14 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from cadquarry import __version__ as GEN_VERSION          # noqa: E402
 from cadquarry.dataset import (                            # noqa: E402
+    load_manifest,
     pack_corpus_jsonl,
     pack_corpus_parquet,
     RENDER_VIEWS,
 )
-from cadquarry.export import export_corpus_geometry        # noqa: E402
 
 SEEDS_FILE = REPO_ROOT / "seeds" / "v1.toml"
-DEFAULT_CONFIG = REPO_ROOT / "configs" / "default.toml"
+DEFAULT_CORPUS_ROOT = REPO_ROOT / "datasets"
 
 # ── variant definitions ────────────────────────────────────────────────────────
 # Each entry: (suffix, include_renders, include_stl, include_step)
@@ -128,50 +139,33 @@ def resolve_token() -> str | None:
     return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN") or None
 
 
-# ── build steps ───────────────────────────────────────────────────────────────
+# ── corpus resolution ───────────────────────────────────────────────────────────
 
-def generate_corpus(
-    out_dir: Path, count: int, seed: int, workers: int, force: bool, timeout: float,
-) -> None:
-    import subprocess
-    manifest = out_dir / "manifest.jsonl"
-    if manifest.exists() and not force:
-        n = sum(1 for _ in manifest.open())
-        if n >= count:
-            print(f"  · reusing existing corpus ({n} parts) at {out_dir}")
-            return
-    cmd = [
-        sys.executable, "-m", "cadquarry", "generate",
-        "--seed", str(seed), "--count", str(count),
-        "--out", str(out_dir), "--config", str(DEFAULT_CONFIG),
-        "--timeout", str(timeout),
-    ]
-    if workers:
-        cmd += ["--workers", str(workers)]
-    print(f"  · generating {count} parts (seed={seed}) …")
-    subprocess.run(cmd, cwd=REPO_ROOT, check=True)
+def resolve_corpus_dir(corpus_root: Path, tag: str, expected_count: int) -> Path:
+    """
+    Return the pre-built corpus directory for ``tag`` under ``corpus_root``.
 
-
-def export_geometry(
-    corpus_dir: Path,
-    workers: int,
-    formats: list[str],
-    timeout: float,
-    verbose: bool,
-) -> None:
-    """Export geometry artifacts for a corpus using the cadquarry export pipeline."""
-    n = default_worker_count(workers)
-    print(f"  · exporting geometry ({', '.join(formats)}, {n} workers) …")
-    counts = export_corpus_geometry(
-        corpus_dir, formats=formats, n_workers=n, timeout=timeout, verbose=verbose,
-    )
-    for fmt, cnt in counts.items():
-        print(f"    {fmt}: {cnt} files")
-
-
-def default_worker_count(n: int) -> int:
-    import os as _os
-    return n or min(_os.cpu_count() or 4, 16)
+    Generation/rendering is a separate step (``cadquarry build``); this raises a
+    clear error if the corpus is missing so the user knows to build it first.
+    """
+    corpus_dir = corpus_root / tag
+    manifest = corpus_dir / "manifest.jsonl"
+    if not manifest.exists():
+        raise SystemExit(
+            f"No corpus found at {corpus_dir} (missing manifest.jsonl).\n"
+            f"Build it first (separate step):\n"
+            f"    cadquarry build --sizes {tag} --formats step,stl,render "
+            f"--out {corpus_root}"
+        )
+    n = len(load_manifest(corpus_dir))
+    if expected_count and n < expected_count:
+        print(
+            f"  · warning: {tag} has {n} parts, expected {expected_count:,} "
+            f"(packing what's present)"
+        )
+    else:
+        print(f"  · using pre-built corpus ({n:,} parts) at {corpus_dir}")
+    return corpus_dir
 
 
 # ── packing ───────────────────────────────────────────────────────────────────
@@ -591,31 +585,33 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument(
         "--sizes", nargs="+", metavar="TAG",
-        help=f"Sizes to build/upload (default: 1k). Available: {', '.join(ladder)}",
+        help=f"Sizes to pack/upload (default: 1k). Available: {', '.join(ladder)}",
     )
-    ap.add_argument("--all", action="store_true", help="Build/upload every size in the ladder")
+    ap.add_argument("--all", action="store_true", help="Pack/upload every size in the ladder")
     ap.add_argument(
         "--repo-id", default=os.environ.get("CADQUARRY_HF_REPO") or default_repo,
         help="HF dataset repo id (default: from seeds/v1.toml or CADQUARRY_HF_REPO)",
     )
     ap.add_argument(
-        "--workdir", default=str(REPO_ROOT / ".hf_build"),
-        help="Staging dir for generated corpora (default: .hf_build)",
+        "--corpus-root", default=str(DEFAULT_CORPUS_ROOT),
+        help="Dir holding pre-built corpora as {root}/{tag}/ "
+             "(default: datasets/; produced by `cadquarry build`)",
     )
-    ap.add_argument("--workers", type=int, default=0, help="Generation/export workers (0 = auto)")
-    ap.add_argument("--timeout", type=float, default=60.0, help="Per-part timeout (default: 60s)")
+    ap.add_argument(
+        "--workdir", default=str(REPO_ROOT / ".hf_build"),
+        help="Staging dir for the packed upload tree (default: .hf_build)",
+    )
     ap.add_argument(
         "--code-only", action="store_true",
-        help="Skip geometry export; publish only the code+metadata (JSONL) variant",
+        help="Publish only the code+metadata (JSONL) variant; ignore geometry",
     )
-    ap.add_argument("--no-renders", action="store_true", help="Skip render generation and render variants")
-    ap.add_argument("--no-stl",     action="store_true", help="Skip STL export and STL variants")
-    ap.add_argument("--no-step",    action="store_true", help="Skip STEP export and STEP variants")
+    ap.add_argument("--no-renders", action="store_true", help="Skip render variants")
+    ap.add_argument("--no-stl",     action="store_true", help="Skip STL variants")
+    ap.add_argument("--no-step",    action="store_true", help="Skip STEP variants")
     ap.add_argument("--private", action="store_true", help="Create the dataset repo as private")
-    ap.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
     ap.add_argument(
         "--dry-run", action="store_true",
-        help="Generate + pack locally, do not upload",
+        help="Pack locally, do not upload",
     )
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args(argv)
@@ -631,19 +627,12 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         raise SystemExit(f"Unknown size(s): {unknown}. Available: {', '.join(ladder)}")
 
-    # Resolve which content types to export based on flags.
+    corpus_root = Path(args.corpus_root)
+
+    # Resolve which content types to pack based on flags.
     want_renders = not args.code_only and not args.no_renders
     want_stl     = not args.code_only and not args.no_stl
     want_step    = not args.code_only and not args.no_step
-
-    # Geometry formats we actually need to export.
-    geo_formats: list[str] = []
-    if want_renders:
-        geo_formats.append("render")
-    if want_stl:
-        geo_formats.append("stl")
-    if want_step:
-        geo_formats.append("step")
 
     # Active variant set: code always, geometry variants only when wanted.
     active_variants = [
@@ -688,17 +677,7 @@ def main(argv: list[str] | None = None) -> int:
     for tag in sorted(tags, key=tag_to_int):
         spec = ladder[tag]
         print(f"\n=== {tag}: {spec['count']:,} parts (seed {spec['seed']}) ===")
-        corpus_dir = staging / "corpora" / tag
-
-        generate_corpus(
-            corpus_dir, spec["count"], spec["seed"],
-            args.workers, args.force, args.timeout,
-        )
-
-        if geo_formats:
-            export_geometry(
-                corpus_dir, args.workers, geo_formats, args.timeout, args.verbose,
-            )
+        corpus_dir = resolve_corpus_dir(corpus_root, tag, spec["count"])
 
         tag_dir = upload_root / tag
         built[tag] = []
@@ -733,7 +712,7 @@ def main(argv: list[str] | None = None) -> int:
     (upload_root / "README.md").write_text(readme, encoding="utf-8")
 
     if args.dry_run:
-        print(f"\n[dry-run] Built {sorted(built)} under {upload_root}. Skipping upload.")
+        print(f"\n[dry-run] Packed {sorted(built)} under {upload_root}. Skipping upload.")
         return 0
 
     assert api is not None
