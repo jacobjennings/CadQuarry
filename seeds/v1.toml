@@ -102,8 +102,3 @@ seed = 100100
 tag = "200k"
 count = 200000
 seed = 220220
-
-[[publish.corpus]]
-tag = "500k"
-count = 500000
-seed = 500500
