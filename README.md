@@ -30,7 +30,7 @@ The committed sample renders its real geometry directly in your browser:
 
 ## What it does
 
-- Generates large batches of unique, executable [CadQuery](https://cadquery.readthedocs.io) programs across a broad operation vocabulary (plates, shafts, blocks, enclosures, flanged hubs, ribbed structures, profiled extrusions, and L/C/Z angle brackets). Render images and STL/STEP files are included using the default parameters for each object.
+- Generates large batches of unique, executable [CadQuery](https://cadquery.readthedocs.io) programs across a broad operation vocabulary (plates, shafts, blocks, enclosures, flanged hubs, ribbed structures, profiled extrusions, L/C/Z angle brackets, and multi-section compound assemblies — manifolds, stepped shafts, standoffs — with round, polygonal, slot, and rectangular cross-sections). Render images and STL/STEP files are included using the default parameters for each object.
 - Guarantees validity by execution — every accepted part actually builds to a non-empty solid.
 - Every program is **parametric by construction**: it declares a machine-readable `PARAMS` schema (typed, range-bounded, UI-labeled) and is a pure function `build(p)` of those parameters.
 - Ships a live **customizer**: open any part, move sliders, the 3D view updates.
@@ -104,14 +104,15 @@ environment — if you prefer, run `source .venv/bin/activate` once and drop the
 
 | Family | Description | Weight |
 |---|---|---|
-| `plate` | Flat rectangular plates with holes, fillets, pockets | 22% |
-| `bracket` | Angle brackets — L (single leg), C/channel (two legs), Z (cranked offset) — with per-leg holes and optional gussets | 18% |
-| `revolved` | Shafts, bushings, washers — solid of revolution | 18% |
-| `block` | Prismatic blocks/housings with pockets and bosses | 15% |
-| `flanged` | Revolved stub + polar bolt-circle pattern | 8% |
-| `ribbed` | Base plate + patterned thin ribs | 7% |
-| `enclosure` | Shelled box (hollow, open-top) | 7% |
-| `profiled` | Long constant cross-section (rod, tube, polygon bar) | 5% |
+| `plate` | Flat rectangular plates with holes, fillets, pockets | 20% |
+| `bracket` | Angle brackets — L (single leg), C/channel (two legs), Z (cranked offset) — with per-leg holes and optional gussets | 16% |
+| `revolved` | Shafts, bushings, washers — solid of revolution | 16% |
+| `block` | Prismatic blocks/housings with pockets and bosses | 12% |
+| `compound` | Multi-section assemblies — manifolds (bored side ports), stepped shafts (+ polygon drive heads), polygon standoffs, pedestals, side spigots, mounting tabs. Sections use round, polygonal (hex/oct), slot, and rect cross-sections | 12% |
+| `flanged` | Revolved stub + polar bolt-circle pattern | 7% |
+| `ribbed` | Base plate + patterned thin ribs | 6% |
+| `enclosure` | Shelled box (hollow, open-top) | 6% |
+| `profiled` | Long constant cross-section — rod, tube, slot, or 3/4/5/6/8-sided polygon bar | 5% |
 
 Family weights, tier distributions, and per-family dimension ranges are all tunable via `configs/default.toml`.
 
@@ -121,10 +122,14 @@ Family weights, tier distributions, and per-family dimension ranges are all tuna
 
 | Tier | Description | Default weight |
 |---|---|---|
-| 0 | Single feature | 25% |
-| 1 | 2–3 ops, holes, basic primitives | 40% |
-| 2 | Fillets, chamfers, counterbore/countersink | 25% |
-| 3 | Pockets, bosses, ribs, deep trees | 10% |
+| 0 | Single feature / bare primitive | 25% |
+| 1 | 2–3 ops: holes, a base + one attached section (spigot, column, tab) | 40% |
+| 2 | Fillets, chamfers, counterbore/countersink, drive heads, extra ports | 25% |
+| 3 | Pockets, bosses, ribs, additional bored ports, deep multi-section trees | 10% |
+
+Tiers are clamped per family (e.g. `bracket`/`block`/`compound` start at tier 1),
+and the `compound` family scales section count with tier — a manifold sprouts
+2 → 3 → 4 bored ports as the tier rises.
 
 ---
 
@@ -279,7 +284,8 @@ sample/demo-1k/
 ├── parts/{id}.py        parametric CadQuery source
 ├── params/{id}.params.json
 ├── meta/{id}.meta.json
-├── stl/{id}.stl         compact binary meshes (for the in-browser preview)
+├── geometry/{id}.step   STEP B-rep solids
+├── geometry/{id}.stl    compact binary meshes (for the in-browser preview)
 ├── DATASET_CARD.md
 └── preview.html         self-contained gallery (three.js, lazy-loaded geometry)
 ```
@@ -287,9 +293,72 @@ sample/demo-1k/
 It is corpus `demo-1k` from `seeds/v1.toml` (seed `1234`). Regenerate it:
 
 ```bash
+# 1. Regenerate the part sources + params + meta (deterministic from seed 1234)
 .venv/bin/cadquarry generate --seed 1234 --count 1000 --out sample/demo-1k/
-.venv/bin/python scripts/export_stl.py sample/demo-1k   # refresh preview meshes
+
+# 2. Export geometry into geometry/ — STEP B-reps + the compact binary STL
+#    meshes the in-browser preview loads
+.venv/bin/cadquarry export sample/demo-1k/ --formats step,stl
 ```
+
+---
+
+## Using the published dataset (Hugging Face)
+
+The full corpus is published at
+[`jacobjennings/cadquarry`](https://huggingface.co/datasets/jacobjennings/cadquarry).
+You don't need to install CadQuarry or CadQuery to consume it — just the
+`datasets` library.
+
+```bash
+pip install datasets
+```
+
+```python
+from datasets import load_dataset
+
+# Code + metadata only (fastest; JSONL-backed):
+ds = load_dataset("jacobjennings/cadquarry", "1k", split="train")
+print(ds[0]["source"])   # full parametric CadQuery program (the canonical artifact)
+print(ds[0]["family"])   # e.g. "plate", "revolved", "compound"
+print(ds[0]["params"])   # typed parameter schema (JSON)
+
+# With 8-view shaded renders (PIL images):
+ds = load_dataset("jacobjennings/cadquarry", "1k-renders", split="train")
+ds[0]["render_iso"].show()
+
+# With binary STL meshes:
+import io, trimesh
+ds = load_dataset("jacobjennings/cadquarry", "1k-stl", split="train")
+mesh = trimesh.load(io.BytesIO(ds[0]["stl_bytes"]), file_type="stl")
+
+# Everything (renders + STL + STEP B-rep):
+ds = load_dataset("jacobjennings/cadquarry", "1k-full", split="train")
+with open("part.step", "wb") as f:
+    f.write(ds[0]["step_bytes"])
+```
+
+### Configs
+
+Each corpus size is published as **six** configs, so you fetch only what you
+need. Swap the `1k` prefix for any size in the ladder:
+
+| Config | Contents | Format |
+|---|---|---|
+| `<tag>` | CadQuery source + metadata | JSONL |
+| `<tag>-renders` | + 8-view render images | Parquet (`render_*` = image) |
+| `<tag>-stl` | + binary STL mesh | Parquet (`stl_bytes` = binary) |
+| `<tag>-step` | + binary STEP B-rep | Parquet (`step_bytes` = binary) |
+| `<tag>-geo` | + renders + STL | Parquet |
+| `<tag>-full` | + renders + STL + STEP | Parquet |
+
+Available `<tag>` sizes (from [`seeds/v1.toml`](seeds/v1.toml)): `1k`, `2k`,
+`5k`, `10k`, `20k`, `50k`, `100k`, `200k`, `500k`. For example,
+`load_dataset("jacobjennings/cadquarry", "50k-stl")`.
+
+Every part is reproducible bit-for-bit from its seed, so the published data is a
+**convenience artifact** — the generator plus `seeds/v1.toml` is the canonical
+source.
 
 ---
 
@@ -297,11 +366,13 @@ It is corpus `demo-1k` from `seeds/v1.toml` (seed `1234`). Regenerate it:
 
 [`scripts/publish_to_hf.py`](scripts/publish_to_hf.py) builds the reproducible
 size ladder (1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k, 500k) and uploads each as a
-`load_dataset` config of one HF dataset. Each size is packed into a single
-`corpus.jsonl` with the parametric `source` and `params` inlined.
+set of `load_dataset` configs of one HF dataset. The code-only variant is packed
+into a single `corpus.jsonl` with the parametric `source` and `params` inlined;
+the geometry variants (renders/STL/STEP) are packed into Snappy-compressed
+Parquet with typed binary columns.
 
 ```bash
-uv pip install -e ".[publish]"          # adds huggingface_hub
+uv pip install -e ".[publish]"          # adds huggingface_hub + pyarrow
 
 # Build + upload the small configs to your own repo
 .venv/bin/python scripts/publish_to_hf.py --sizes 1k 2k 5k --repo-id <user>/cadquarry
@@ -327,8 +398,10 @@ All distribution knobs live in `configs/default.toml`. Key sections:
 
 ```toml
 [distribution.families]
-plate    = 0.22
-revolved = 0.18
+plate    = 0.20
+revolved = 0.16
+bracket  = 0.16
+compound = 0.12
 ...
 
 [distribution.tiers]

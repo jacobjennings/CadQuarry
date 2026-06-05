@@ -457,7 +457,7 @@ Each corpus size ships as six HuggingFace configs so you only fetch what you nee
 | Column | Type | Description |
 |--------|------|-------------|
 | `part_id` | string | Unique deterministic identifier |
-| `family` | string | `plate`, `revolved`, `block`, `enclosure`, `flanged`, `ribbed`, `profiled` |
+| `family` | string | `plate`, `bracket`, `revolved`, `block`, `compound`, `enclosure`, `flanged`, `ribbed`, `profiled` |
 | `tier` | int32 | Complexity tier 0–3 |
 | `seed` | int64 | Per-part seed |
 | `symmetry` | string | Detected symmetry class |

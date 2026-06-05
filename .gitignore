@@ -224,6 +224,9 @@ __marimo__/
 /dataset-repro/
 .hf_build/
 
+# Editor / agent local settings
+.claude/
+
 # The committed sample corpus lives under sample/ and MUST be tracked, even
 # though the Python template above ignores any directory literally named
 # `parts/`. Re-include the whole sample tree (directories first, then files).

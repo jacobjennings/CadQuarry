@@ -510,7 +510,7 @@ function makeCard(r) {
   return card;
 }
 
-function stlURL(r) { return BASE + 'stl/' + r.part_id + '.stl'; }
+function stlURL(r) { return BASE + 'geometry/' + r.part_id + '.stl'; }
 
 async function loadCardMesh(prev) {
   const pid = prev.dataset.pid;

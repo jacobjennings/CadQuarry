@@ -10,6 +10,7 @@ relevant sub-tables and falls back to hard-coded defaults when absent.
 """
 from __future__ import annotations
 
+import math
 import uuid
 from random import Random
 from typing import Any
@@ -62,19 +63,19 @@ from .features import (
 # Cross-cutting symmetry modes (Stage D regularity).
 SYMMETRY_MODES = ["mirror_x", "mirror_xy", "radial"]
 
-GENERATOR_VERSION = "0.3.0"
+GENERATOR_VERSION = "0.4.0"
 
 # Default family weights; overridden by config.
 DEFAULT_FAMILY_WEIGHTS = {
     "plate":    0.20,
-    "bracket":  0.17,
-    "revolved": 0.17,
-    "block":    0.13,
-    "compound": 0.10,
+    "bracket":  0.16,
+    "revolved": 0.16,
+    "block":    0.12,
+    "compound": 0.12,
     "flanged":  0.07,
     "ribbed":   0.06,
     "enclosure":0.06,
-    "profiled": 0.04,
+    "profiled": 0.05,
 }
 
 # Default tier weights (before family clamping).
@@ -951,7 +952,7 @@ def sample_profiled(rng: Random, tier: int, config: dict, seed: int, index: int)
         ]
     elif profile_kind == "polygon":
         r_def = _nice(rng, 6.0, 25.0, 0.3)
-        sides = rng.choice([4, 6, 8])
+        sides = rng.choice([3, 4, 5, 6, 8])
         l_def = round(r_def * rng.uniform(4.0, 12.0), 1)
         l_def = min(l_def, 200.0)
 
@@ -1017,17 +1018,130 @@ def sample_profiled(rng: Random, tier: int, config: dict, seed: int, index: int)
 
 
 # ---------------------------------------------------------------------------
-# Family: compound (multi-section parts)
+# Family: compound (multi-section assemblies)
 # ---------------------------------------------------------------------------
 
-# Side faces used for attachment operations.
+# Side faces used for side-attachment operations.
 _SIDE_FACES = [">X", "<X", ">Y", "<Y"]
+
+
+def _sample_attach_section(
+    rng: Random,
+    size_def: float,
+    size_max: float,
+    prefix: str,
+    group: str,
+    kinds: list[str] | None = None,
+) -> tuple[Any, dict[str, ParamSpec], float]:
+    """
+    Sample a cross-section profile for an attached spigot / boss / column whose
+    bounding envelope fits within ``size_max`` mm (defaulting near ``size_def``).
+
+    Round sections stay the most common (tubes, columns), but polygonal and
+    slotted / rectangular sections give the corpus genuine profile variety
+    instead of an endless run of cylinders.
+
+    Returns ``(profile, params, min_extent_def)`` where ``min_extent_def`` is the
+    section's smallest width — used both to size a centered bore and as a fit
+    check.  Parameter names are namespaced by ``prefix`` so several attachments
+    can coexist in one part.
+    """
+    weights = {"circle": 0.42, "polygon": 0.33, "slot": 0.13, "rect": 0.12}
+    if kinds is not None:
+        weights = {k: weights[k] for k in kinds}
+    names = list(weights)
+    kind = _weighted_choice(rng, names, [weights[n] for n in names])
+
+    params: dict[str, ParamSpec] = {}
+
+    if kind == "circle":
+        d_def = max(4.0, round(size_def, 1))
+        params[f"{prefix}_d"] = ParamSpec(
+            type="float", default=d_def,
+            min=round(d_def * 0.4, 1), max=round(size_max, 1), step=1.0,
+            group=group, label=f"{group} diameter (mm)",
+        )
+        return CircleProfile(diameter=ref(f"{prefix}_d")), params, d_def
+
+    if kind == "polygon":
+        sides = rng.choice([5, 6, 6, 8])
+        r_def = max(3.0, round(size_def / 2.0, 1))
+        params[f"{prefix}_sides"] = ParamSpec(
+            type="int", default=sides, min=3, max=8, step=1,
+            group=group, label=f"{group} sides",
+        )
+        params[f"{prefix}_r"] = ParamSpec(
+            type="float", default=r_def,
+            min=round(r_def * 0.5, 1), max=round(size_max / 2.0, 1), step=1.0,
+            group=group, label=f"{group} circumradius (mm)",
+        )
+        prof = PolygonProfile(sides=ref(f"{prefix}_sides"),
+                              circumscribed_r=ref(f"{prefix}_r"))
+        # Across-flats of a regular n-gon = 2 r cos(pi/n) — the safe bore width.
+        min_extent = 2 * r_def * math.cos(math.pi / sides)
+        return prof, params, min_extent
+
+    if kind == "slot":
+        w_def = max(4.0, round(size_def * 0.7, 1))
+        l_def = round(min(size_max, w_def * rng.uniform(1.6, 2.6)), 1)
+        params[f"{prefix}_w"] = ParamSpec(
+            type="float", default=w_def,
+            min=round(w_def * 0.5, 1), max=round(size_max * 0.8, 1), step=0.5,
+            group=group, label=f"{group} width (mm)",
+        )
+        params[f"{prefix}_slot_l"] = ParamSpec(
+            type="float", default=l_def,
+            min=round(w_def * 1.2, 1), max=round(size_max, 1), step=1.0,
+            group=group, label=f"{group} slot length (mm)",
+        )
+        prof = SlotProfile(length=ref(f"{prefix}_slot_l"), width=ref(f"{prefix}_w"))
+        return prof, params, w_def
+
+    # rect
+    a_def = max(6.0, round(size_def, 1))
+    b_def = max(6.0, round(size_def * rng.uniform(0.5, 0.9), 1))
+    params[f"{prefix}_a"] = ParamSpec(
+        type="float", default=a_def,
+        min=round(a_def * 0.5, 1), max=round(size_max, 1), step=1.0,
+        group=group, label=f"{group} width (mm)",
+    )
+    params[f"{prefix}_b"] = ParamSpec(
+        type="float", default=b_def,
+        min=round(b_def * 0.5, 1), max=round(size_max, 1), step=1.0,
+        group=group, label=f"{group} depth (mm)",
+    )
+    prof = RectProfile(width=ref(f"{prefix}_a"), depth=ref(f"{prefix}_b"))
+    return prof, params, min(a_def, b_def)
+
+
+def _maybe_bore(
+    rng: Random,
+    prefix: str,
+    min_extent_def: float,
+    group: str,
+    prob: float = 0.6,
+    label: str = "Bore diameter (mm)",
+) -> tuple[Any, dict[str, ParamSpec]]:
+    """Optionally produce a centered through-bore (expr, params) for an attachment."""
+    if rng.random() >= prob:
+        return None, {}
+    bd_def = max(2.0, round(min_extent_def * rng.uniform(0.40, 0.62), 1))
+    params = {
+        f"{prefix}_bore": ParamSpec(
+            type="float", default=bd_def,
+            min=2.0, max=round(min_extent_def * 0.72, 1), step=0.5,
+            group=group, label=label,
+        )
+    }
+    return ref(f"{prefix}_bore"), params
 
 
 def _sample_block_tube(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
     """
-    Rectangular block with a hollow cylindrical tube projecting from one side
-    face — like a hydraulic fitting body, sensor housing, or pipe stub.
+    Rectangular block with a spigot projecting from one side face — a hydraulic
+    fitting body, sensor housing, or pipe stub.  The spigot cross-section may be
+    round, polygonal (hex/oct fitting), slotted, or rectangular, and is usually
+    bored through.
     """
     w_def = _nice(rng, 20.0, 80.0)
     d_def = round(max(15.0, w_def * rng.uniform(0.5, 1.4)), 1)
@@ -1049,38 +1163,23 @@ def _sample_block_tube(rng: Random, tier: int, config: dict, seed: int, index: i
     face_dim_a, face_dim_b = (d_def, h_def) if face in (">X", "<X") else (w_def, h_def)
     min_face_dim = min(face_dim_a, face_dim_b)
 
-    tube_d_def = round(min_face_dim * rng.uniform(0.20, 0.48), 1)
-    tube_d_def = max(5.0, tube_d_def)
-    tube_l_def = round(tube_d_def * rng.uniform(0.8, 2.5), 1)
-    tube_l_def = max(5.0, tube_l_def)
+    spig_def = max(5.0, round(min_face_dim * rng.uniform(0.25, 0.48), 1))
+    spig_max = round(min_face_dim * 0.70, 1)
+    prof, sp, min_ext = _sample_attach_section(rng, spig_def, spig_max, "spig", "Spigot")
+    params.update(sp)
 
-    params["tube_d"] = ParamSpec(
-        type="float", default=tube_d_def,
-        min=round(tube_d_def * 0.4, 1),
-        max=round(min(min_face_dim * 0.65, tube_d_def * 2.0), 1),
-        step=1.0, group="Tube", label="Tube outer diameter (mm)",
-    )
-    params["tube_len"] = ParamSpec(
-        type="float", default=tube_l_def,
-        min=round(tube_d_def * 0.3, 1), max=round(tube_d_def * 4.0, 1),
-        step=1.0, group="Tube", label="Tube length (mm)",
+    spig_l_def = max(5.0, round(min_ext * rng.uniform(0.8, 2.5), 1))
+    params["spig_len"] = ParamSpec(
+        type="float", default=spig_l_def,
+        min=round(min_ext * 0.3, 1), max=round(min_ext * 4.0, 1),
+        step=1.0, group="Spigot", label="Spigot length (mm)",
     )
 
-    bore_expr = None
-    if rng.random() < 0.70:
-        bore_d_def = max(2.0, round(tube_d_def * rng.uniform(0.40, 0.70), 1))
-        params["tube_bore"] = ParamSpec(
-            type="float", default=bore_d_def,
-            min=2.0, max=round(tube_d_def * 0.80, 1), step=0.5,
-            group="Tube", label="Tube bore diameter (mm)",
-        )
-        bore_expr = ref("tube_bore")
+    bore_expr, bp = _maybe_bore(rng, "spig", min_ext, "Spigot", prob=0.70)
+    params.update(bp)
 
     ops.append(AttachOp(
-        profile=CircleProfile(diameter=ref("tube_d")),
-        length=ref("tube_len"),
-        bore_d=bore_expr,
-        face=face,
+        profile=prof, length=ref("spig_len"), bore_d=bore_expr, face=face,
     ))
 
     if tier >= 2:
@@ -1214,33 +1313,29 @@ def _sample_pedestal(rng: Random, tier: int, config: dict, seed: int, index: int
                             group="Base", label="Base depth (mm)"),
         "base_h": ParamSpec(type="float", default=base_h_def, min=3.0, max=30.0, step=0.5,
                             group="Base", label="Base thickness (mm)"),
-        "col_d": ParamSpec(
-            type="float", default=col_d_def,
-            min=round(col_d_def * 0.4, 1), max=round(min_base * 0.5, 1),
-            step=1.0, group="Column", label="Column diameter (mm)",
-        ),
-        "col_h": ParamSpec(
-            type="float", default=col_h_def,
-            min=round(col_h_def * 0.3, 1), max=round(col_h_def * 3.0, 1),
-            step=1.0, group="Column", label="Column height (mm)",
-        ),
     }
     ops: list[Operation] = [
         BoxOp(width=ref("base_w"), depth=ref("base_d"), height=ref("base_h")),
     ]
 
-    bore_expr = None
-    if rng.random() < 0.55:
-        bore_d_def = max(2.0, round(col_d_def * rng.uniform(0.30, 0.60), 1))
-        params["col_bore"] = ParamSpec(
-            type="float", default=bore_d_def,
-            min=2.0, max=round(col_d_def * 0.75, 1), step=0.5,
-            group="Column", label="Column bore diameter (mm)",
-        )
-        bore_expr = ref("col_bore")
+    # Column may be round or polygonal (a hex/oct standoff post).
+    prof, cp, min_ext = _sample_attach_section(
+        rng, col_d_def, round(min_base * 0.5, 1), "col", "Column",
+        kinds=["circle", "polygon"],
+    )
+    params.update(cp)
+    params["col_h"] = ParamSpec(
+        type="float", default=col_h_def,
+        min=round(col_h_def * 0.3, 1), max=round(col_h_def * 3.0, 1),
+        step=1.0, group="Column", label="Column height (mm)",
+    )
+
+    bore_expr, bp = _maybe_bore(rng, "col", min_ext, "Column", prob=0.55,
+                                label="Column bore diameter (mm)")
+    params.update(bp)
 
     ops.append(AttachOp(
-        profile=CircleProfile(diameter=ref("col_d")),
+        profile=prof,
         length=ref("col_h"),
         bore_d=bore_expr,
         face=">Z",
@@ -1269,26 +1364,293 @@ def _sample_pedestal(rng: Random, tier: int, config: dict, seed: int, index: int
     )
 
 
-_COMPOUND_ARCHETYPES = ["block_tube", "block_tab", "pedestal"]
+def _sample_manifold(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Block body sprouting several identical bored ports from its side faces — a
+    hydraulic / pneumatic manifold, junction block, or distribution body.  The
+    number of ports scales with tier (2 → 3 → 4), ports are round or polygonal
+    (hex fittings), and each is bored through, so collinear ports form real
+    cross-drilled passages.  The top face is kept clear for mounting holes.
+    """
+    w_def = _nice(rng, 30.0, 90.0)
+    d_def = round(max(20.0, w_def * rng.uniform(0.6, 1.1)), 1)
+    h_def = round(max(20.0, w_def * rng.uniform(0.5, 1.0)), 1)
+
+    params: dict[str, ParamSpec] = {
+        "block_w": ParamSpec(type="float", default=w_def, min=20.0, max=120.0, step=1.0,
+                             group="Body", label="Body width (mm)"),
+        "block_d": ParamSpec(type="float", default=d_def, min=15.0, max=120.0, step=1.0,
+                             group="Body", label="Body depth (mm)"),
+        "block_h": ParamSpec(type="float", default=h_def, min=15.0, max=120.0, step=1.0,
+                             group="Body", label="Body height (mm)"),
+    }
+    ops: list[Operation] = [
+        BoxOp(width=ref("block_w"), depth=ref("block_d"), height=ref("block_h"))
+    ]
+
+    n_ports = {1: 2, 2: 3, 3: 4}.get(tier, 2)
+    faces = rng.sample(_SIDE_FACES, min(n_ports, len(_SIDE_FACES)))
+
+    min_face = min(w_def, d_def, h_def)
+    port_def = max(5.0, round(min_face * rng.uniform(0.18, 0.34), 1))
+    port_max = round(min_face * 0.45, 1)
+    prof, pp, min_ext = _sample_attach_section(
+        rng, port_def, port_max, "port", "Ports", kinds=["circle", "polygon"],
+    )
+    params.update(pp)
+    port_l_def = max(4.0, round(min_ext * rng.uniform(0.5, 1.4), 1))
+    params["port_len"] = ParamSpec(
+        type="float", default=port_l_def,
+        min=round(min_ext * 0.25, 1), max=round(min_ext * 3.0, 1),
+        step=1.0, group="Ports", label="Port boss length (mm)",
+    )
+    # Manifolds are bored by definition — high probability, shared bore size.
+    bore_expr, bp = _maybe_bore(rng, "port", min_ext, "Ports", prob=0.9,
+                                label="Port bore diameter (mm)")
+    params.update(bp)
+
+    for face in faces:
+        ops.append(AttachOp(
+            profile=prof, length=ref("port_len"), bore_d=bore_expr, face=face,
+        ))
+
+    # Mounting holes on the (still-flat) top face.
+    if tier >= 2:
+        hole_op, hp = sample_corner_holes(rng, "block_w", "block_d", w_def, d_def)
+        params.update(hp)
+        ops.append(hole_op)
+
+    if tier >= 3:
+        fillet_op, fp = sample_fillet(rng, "block_w", "block_d", edge_selector="|Z")
+        params.update(fp)
+        ops.append(fillet_op)
+
+    return PartIR(
+        id=_make_id(seed, "compound", index),
+        params=params, operations=ops,
+        metadata=PartMetadata(seed=seed, generator_version=GENERATOR_VERSION,
+                              family="compound", tier=tier, op_count=len(ops)),
+    )
+
+
+def _sample_stepped_shaft(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Multi-diameter shaft: a turned cylinder with a narrower coaxial step on top,
+    optionally capped by a polygonal drive head (hex/oct) and bored through the
+    axis (a hollow stepped spindle).  Round → round → polygon stacking gives a
+    recognisable turned/machined part with profile variety.
+    """
+    d_def = _nice(rng, 12.0, 50.0, 0.3)
+    l_def = round(max(8.0, d_def * rng.uniform(0.8, 2.2)), 1)
+
+    params: dict[str, ParamSpec] = {
+        "shaft_d": ParamSpec(
+            type="float", default=d_def,
+            min=round(d_def * 0.5, 1), max=round(d_def * 1.8, 1), step=1.0,
+            group="Body", label="Shaft diameter (mm)",
+        ),
+        "shaft_len": ParamSpec(
+            type="float", default=l_def,
+            min=round(l_def * 0.4, 1), max=round(l_def * 2.0, 1), step=1.0,
+            group="Body", label="Shaft length (mm)",
+        ),
+    }
+    # Extruded (not revolved) base: a Z-axis cylinder whose ">Z" top is a clean
+    # planar face that the coaxial steps can attach to.
+    ops: list[Operation] = [
+        ExtrudeOp(
+            profile=CircleProfile(diameter=ref("shaft_d")),
+            distance=ref("shaft_len"),
+        )
+    ]
+
+    # First step: a narrower coaxial cylinder (always present).
+    step_d_def = round(d_def * rng.uniform(0.45, 0.72), 1)
+    step_l_def = round(l_def * rng.uniform(0.4, 0.9), 1)
+    params["step_d"] = ParamSpec(
+        type="float", default=step_d_def,
+        min=round(step_d_def * 0.5, 1), max=round(d_def * 0.9, 1), step=1.0,
+        group="Step", label="Step diameter (mm)",
+    )
+    params["step_len"] = ParamSpec(
+        type="float", default=step_l_def,
+        min=round(step_l_def * 0.3, 1), max=round(step_l_def * 2.5, 1), step=1.0,
+        group="Step", label="Step length (mm)",
+    )
+
+    # (profile, length_expr, min_extent) for each axial attachment, top-most last.
+    sections: list[tuple[Any, Any, float]] = [
+        (CircleProfile(diameter=ref("step_d")), ref("step_len"), step_d_def)
+    ]
+
+    if tier >= 2 and rng.random() < 0.6:
+        sides = rng.choice([6, 6, 8])
+        head_r_def = round(step_d_def * rng.uniform(0.35, 0.45), 1)
+        head_l_def = round(step_d_def * rng.uniform(0.4, 0.8), 1)
+        params["head_sides"] = ParamSpec(
+            type="int", default=sides, min=3, max=8, step=1,
+            group="Head", label="Drive head sides",
+        )
+        params["head_r"] = ParamSpec(
+            type="float", default=head_r_def,
+            min=round(head_r_def * 0.6, 1), max=round(step_d_def * 0.48, 1), step=1.0,
+            group="Head", label="Drive head circumradius (mm)",
+        )
+        params["head_len"] = ParamSpec(
+            type="float", default=head_l_def,
+            min=round(head_l_def * 0.3, 1), max=round(head_l_def * 2.0, 1), step=1.0,
+            group="Head", label="Drive head length (mm)",
+        )
+        head_min_ext = 2 * head_r_def * math.cos(math.pi / sides)
+        sections.append((
+            PolygonProfile(sides=ref("head_sides"), circumscribed_r=ref("head_r")),
+            ref("head_len"), head_min_ext,
+        ))
+
+    # Optional axial through-bore, drilled from the top-most section so it runs
+    # the full length (a hollow stepped shaft).  Sized to the slimmest section.
+    smallest = min(mn for _, _, mn in sections)
+    bore_expr, bp = _maybe_bore(rng, "axial", smallest, "Bore", prob=0.5,
+                                label="Axial bore diameter (mm)")
+    params.update(bp)
+
+    for i, (prof, len_expr, _mn) in enumerate(sections):
+        is_top = i == len(sections) - 1
+        ops.append(AttachOp(
+            profile=prof, length=len_expr,
+            bore_d=bore_expr if is_top else None, face=">Z",
+        ))
+
+    if tier >= 3:
+        cham_op, cp = sample_chamfer(rng, edge_selector="<Z")
+        params.update(cp)
+        ops.append(cham_op)
+
+    return PartIR(
+        id=_make_id(seed, "compound", index),
+        params=params, operations=ops,
+        metadata=PartMetadata(seed=seed, generator_version=GENERATOR_VERSION,
+                              family="compound", tier=tier, op_count=len(ops)),
+    )
+
+
+def _sample_polygon_standoff(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    Regular-polygon prism base (pentagon/hex/octagon) with a central round column
+    rising from the top — a hex standoff, spacer, or knob blank.  The polygonal
+    *base* is the variety driver here; the column is usually bored through for a
+    clean spacer.
+    """
+    sides = rng.choice([5, 6, 6, 8])
+    r_def = _nice(rng, 10.0, 30.0, 0.3)
+    h_def = round(max(4.0, r_def * rng.uniform(0.4, 1.2)), 1)
+
+    params: dict[str, ParamSpec] = {
+        "base_sides": ParamSpec(
+            type="int", default=sides, min=3, max=8, step=1,
+            group="Base", label="Base sides",
+        ),
+        "base_r": ParamSpec(
+            type="float", default=r_def,
+            min=round(r_def * 0.6, 1), max=round(r_def * 1.6, 1), step=1.0,
+            group="Base", label="Base circumradius (mm)",
+        ),
+        "base_h": ParamSpec(
+            type="float", default=h_def,
+            min=round(h_def * 0.4, 1), max=round(h_def * 2.5, 1), step=1.0,
+            group="Base", label="Base height (mm)",
+        ),
+    }
+    ops: list[Operation] = [
+        ExtrudeOp(
+            profile=PolygonProfile(sides=ref("base_sides"), circumscribed_r=ref("base_r")),
+            distance=ref("base_h"),
+        )
+    ]
+
+    across_flats = 2 * r_def * math.cos(math.pi / sides)
+    col_d_def = round(across_flats * rng.uniform(0.40, 0.65), 1)
+    col_h_def = round(h_def * rng.uniform(0.5, 1.5) + r_def * 0.5, 1)
+    params["col_d"] = ParamSpec(
+        type="float", default=col_d_def,
+        min=round(col_d_def * 0.5, 1), max=round(across_flats * 0.8, 1), step=1.0,
+        group="Column", label="Column diameter (mm)",
+    )
+    params["col_h"] = ParamSpec(
+        type="float", default=col_h_def,
+        min=round(col_h_def * 0.3, 1), max=round(col_h_def * 2.5, 1), step=1.0,
+        group="Column", label="Column height (mm)",
+    )
+
+    bore_expr, bp = _maybe_bore(rng, "col", col_d_def, "Column", prob=0.7,
+                                label="Column bore diameter (mm)")
+    params.update(bp)
+
+    ops.append(AttachOp(
+        profile=CircleProfile(diameter=ref("col_d")),
+        length=ref("col_h"), bore_d=bore_expr, face=">Z",
+    ))
+
+    if tier >= 2 and rng.random() < 0.5:
+        fillet_op, fp = sample_fillet(rng, "base_r", "base_r", edge_selector="|Z")
+        params.update(fp)
+        ops.append(fillet_op)
+
+    return PartIR(
+        id=_make_id(seed, "compound", index),
+        params=params, operations=ops,
+        metadata=PartMetadata(seed=seed, generator_version=GENERATOR_VERSION,
+                              family="compound", tier=tier, op_count=len(ops)),
+    )
+
+
+# Compound archetype sampling weights; overridable via config.
+DEFAULT_COMPOUND_ARCHETYPE_WEIGHTS = {
+    "manifold":         0.22,
+    "stepped_shaft":    0.20,
+    "polygon_standoff": 0.16,
+    "block_tube":       0.16,
+    "pedestal":         0.14,
+    "block_tab":        0.12,
+}
+
+_COMPOUND_SAMPLERS = {
+    "block_tube":       _sample_block_tube,
+    "block_tab":        _sample_block_tab,
+    "pedestal":         _sample_pedestal,
+    "manifold":         _sample_manifold,
+    "stepped_shaft":    _sample_stepped_shaft,
+    "polygon_standoff": _sample_polygon_standoff,
+}
 
 
 def sample_compound(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
     """
-    Multi-section compound parts — a primary body with one or more distinctly-
-    styled secondary sections attached to it.
+    Multi-section compound assemblies — a primary body with one or more
+    distinctly-styled secondary sections attached and (usually) bored.
 
     Archetypes:
-      block_tube  — rectangular block + hollow cylindrical tube off a side face
-      block_tab   — rectangular block + flat mounting tab with bolt holes
-      pedestal    — wide flat base plate + narrow cylindrical column on top
+      manifold          block + several bored side ports (round or hex fittings)
+      stepped_shaft     turned cylinder + narrower step + optional hex drive head
+      polygon_standoff  polygon prism base + central bored column (hex spacer)
+      block_tube        block + a single side spigot (round/polygon/slot/rect)
+      pedestal          flat base plate + a column (round or polygonal) on top
+      block_tab         block + flat mounting tab with bolt holes
+
+    Archetype weights come from ``[families.compound] archetype_weights`` in the
+    config, falling back to ``DEFAULT_COMPOUND_ARCHETYPE_WEIGHTS``.
     """
-    archetype = rng.choice(_COMPOUND_ARCHETYPES)
-    if archetype == "block_tube":
-        return _sample_block_tube(rng, tier, config, seed, index)
-    elif archetype == "block_tab":
-        return _sample_block_tab(rng, tier, config, seed, index)
+    aw = config.get("families", {}).get("compound", {}).get(
+        "archetype_weights", DEFAULT_COMPOUND_ARCHETYPE_WEIGHTS
+    )
+    names = [n for n in aw if n in _COMPOUND_SAMPLERS]
+    if not names:
+        names = list(_COMPOUND_SAMPLERS)
+        weights = [1.0] * len(names)
     else:
-        return _sample_pedestal(rng, tier, config, seed, index)
+        weights = [aw[n] for n in names]
+    archetype = _weighted_choice(rng, names, weights)
+    return _COMPOUND_SAMPLERS[archetype](rng, tier, config, seed, index)
 
 
 # ---------------------------------------------------------------------------

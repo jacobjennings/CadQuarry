@@ -2,7 +2,7 @@
 
             | Field            | Value |
             |------------------|-------|
-            | Generator        | CadQuarry v0.3.0 |
+            | Generator        | CadQuarry v0.4.0 |
             | Seed             | 1234 |
             | Total parts      | 1000 |
             | Generated        | 2026-06-05 |
@@ -13,23 +13,24 @@
 
             | Family       | Count  | Share |
             |--------------|--------|-------|
-            | revolved     |    213 |  21.3% |
-| bracket      |    191 |  19.1% |
-| plate        |    167 |  16.7% |
-| block        |    152 |  15.2% |
-| flanged      |     81 |   8.1% |
-| ribbed       |     73 |   7.3% |
-| enclosure    |     72 |   7.2% |
+            | revolved     |    193 |  19.3% |
+| bracket      |    165 |  16.5% |
+| plate        |    156 |  15.6% |
+| compound     |    120 |  12.0% |
+| block        |    116 |  11.6% |
+| flanged      |     78 |   7.8% |
+| ribbed       |     61 |   6.1% |
+| enclosure    |     60 |   6.0% |
 | profiled     |     51 |   5.1% |
 
             ## Complexity tiers
 
             | Tier   | Count  | Share |
             |--------|--------|-------|
-            | Tier 0 |    120 |  12.0% |
+            | Tier 0 |    110 |  11.0% |
 | Tier 1 |    495 |  49.5% |
-| Tier 2 |    311 |  31.1% |
-| Tier 3 |     74 |   7.4% |
+| Tier 2 |    313 |  31.3% |
+| Tier 3 |     82 |   8.2% |
 
             ## Reproducibility
 
