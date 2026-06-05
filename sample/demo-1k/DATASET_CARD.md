@@ -13,23 +13,23 @@
 
             | Family       | Count  | Share |
             |--------------|--------|-------|
-            | plate        |    211 |  21.1% |
-| revolved     |    196 |  19.6% |
-| bracket      |    173 |  17.3% |
-| block        |    153 |  15.3% |
-| flanged      |     78 |   7.8% |
-| enclosure    |     66 |   6.6% |
-| ribbed       |     66 |   6.6% |
-| profiled     |     57 |   5.7% |
+            | revolved     |    213 |  21.3% |
+| bracket      |    191 |  19.1% |
+| plate        |    167 |  16.7% |
+| block        |    152 |  15.2% |
+| flanged      |     81 |   8.1% |
+| ribbed       |     73 |   7.3% |
+| enclosure    |     72 |   7.2% |
+| profiled     |     51 |   5.1% |
 
             ## Complexity tiers
 
             | Tier   | Count  | Share |
             |--------|--------|-------|
-            | Tier 0 |    123 |  12.3% |
-| Tier 1 |    486 |  48.6% |
-| Tier 2 |    306 |  30.6% |
-| Tier 3 |     85 |   8.5% |
+            | Tier 0 |    120 |  12.0% |
+| Tier 1 |    495 |  49.5% |
+| Tier 2 |    311 |  31.1% |
+| Tier 3 |     74 |   7.4% |
 
             ## Reproducibility
 
