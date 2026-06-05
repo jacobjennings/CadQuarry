@@ -1,30 +1,24 @@
-#!/usr/bin/env python3
 """
 Pack pre-built CadQuarry corpora and publish them to a HuggingFace dataset repo.
 
-This script does **not** generate or render anything. Corpus generation and
-geometry export are a separate, explicit step — run ``cadquarry build`` first:
+This module does **not** generate or render anything. Corpus generation and
+geometry export are a separate, explicit step — run ``cadquarry build`` first,
+which writes one ``datasets/{tag}/`` corpus per size (manifest + parts +
+geometry + renders). This publisher then only **packs** those artifacts into
+HuggingFace configs and **uploads** them.  It is driven through the CLI:
 
-    cadquarry build --sizes 1k 10k --formats step,stl,render --out datasets/
-
-That writes one ``datasets/{tag}/`` corpus per size (manifest + parts + geometry
-+ renders). This publisher then only **packs** those artifacts into HuggingFace
-configs and **uploads** them.
+    cadquarry publish              # all built sizes -> <user>/cadquarry
+    cadquarry publish --sizes 1k 2k 5k --dry-run
 
 Design goals
 ------------
 * **No secrets in the repo.** The HF token is read from the environment
-  (``HF_TOKEN``, falling back to ``HUGGING_FACE_HUB_TOKEN``) or from a prior
+  (``HF_TOKEN``, falling back to ``HUGGING_FACE_HUB_TOKEN``) or a prior
   ``huggingface-cli login``. It is never printed, logged, or written to disk.
-* **Reproducible.** Every size is pinned to a ``(count, seed)`` in
-  ``seeds/v1.toml`` under ``[[publish.corpus]]``. The generator version + seed
-  regenerate each corpus bit-for-bit, so the upload is a convenience artifact.
-* **Six content variants per corpus.** Each HuggingFace config gives consumers
-  exactly the columns they need without fetching data they don't.
-* **Two complexity-tier slices per corpus.** Each content variant is published
-  for *all tiers* (canonical names) and again limited to *tiers 0–2 inclusive*
-  (a ``-t0-2`` config suffix), so consumers can opt out of the highest-complexity
-  parts without post-filtering.
+* **Reproducible.** Every size is pinned to a ``(count, seed)`` in the active
+  ``seeds/v*.toml`` under ``[[publish.corpus]]``.
+* **Six content variants per corpus** × **two complexity-tier slices** so
+  consumers fetch exactly the columns/tiers they need.
 
 Variants published per corpus size
 -----------------------------------
@@ -35,59 +29,47 @@ Variants published per corpus size
   {tag}-geo          — + renders + STL (no STEP)
   {tag}-full         — + renders + STL + STEP (everything)
 
-Each of the above is also published as ``{tag}-t0-2[…]`` (tiers 0–2 only),
-with data nested under ``{tag}/tier0-2/``. Geometry variants are skipped
-automatically for any corpus that lacks the corresponding artifacts.
-
-Examples
---------
-    # Build the corpora first (separate step):
-    cadquarry build --sizes 1k 2k 5k --formats step,stl,render --out datasets/
-
-    # Pack + upload just the small configs (code-only)
-    python scripts/publish_to_hf.py --sizes 1k 2k 5k --code-only
-
-    # Everything, to your own repo
-    python scripts/publish_to_hf.py --all --repo-id me/cadquarry
-
-    # Pack locally but do not upload (inspect .hf_build/)
-    python scripts/publish_to_hf.py --sizes 1k --dry-run
-
-    # Read corpora from a custom location
-    python scripts/publish_to_hf.py --sizes 1k --corpus-root /data/cadquarry
+Each is also published as ``{tag}-t0-2[…]`` (tiers 0–2 only), with data nested
+under ``{tag}/tier0-2/``. Geometry variants are skipped automatically for any
+corpus that lacks the corresponding artifacts.
 """
 from __future__ import annotations
 
-import argparse
 import os
-import sys
 import tomllib
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT))
-
-from cadquarry import __version__ as GEN_VERSION          # noqa: E402
-from cadquarry.dataset import (                            # noqa: E402
+from . import __version__ as GEN_VERSION
+from .dataset import (
+    RENDER_VIEWS,
     load_manifest,
     pack_corpus_jsonl,
     pack_corpus_parquet,
-    RENDER_VIEWS,
 )
 
-def _default_seeds_file() -> Path:
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SEEDS_DIR = REPO_ROOT / "seeds"
+DEFAULT_CORPUS_ROOT = REPO_ROOT / "datasets"
+DEFAULT_WORKDIR = REPO_ROOT / ".hf_build"
+
+
+class PublishError(Exception):
+    """Raised for user-facing publish failures (missing corpus, token, etc.)."""
+
+
+# ── seed list resolution ─────────────────────────────────────────────────────
+
+def default_seeds_path() -> Path:
     """
     The published seed list matching the current generator version: the
-    seeds/v*.toml whose [meta].generator_version == cadquarry.__version__,
-    else the highest-numbered list (falling back to v1.toml).
+    ``seeds/v*.toml`` whose ``[meta].generator_version == cadquarry.__version__``,
+    else the highest-numbered list (falling back to ``v1.toml``).
     """
-    seeds_dir = REPO_ROOT / "seeds"
-
     def _vnum(p: Path) -> int:
         digits = "".join(ch for ch in p.stem if ch.isdigit())
         return int(digits) if digits else 0
 
-    candidates = sorted(seeds_dir.glob("v*.toml"), key=_vnum)
+    candidates = sorted(SEEDS_DIR.glob("v*.toml"), key=_vnum)
     match = None
     for p in candidates:
         try:
@@ -101,43 +83,13 @@ def _default_seeds_file() -> Path:
         return match
     if candidates:
         return candidates[-1]
-    return seeds_dir / "v1.toml"
+    return SEEDS_DIR / "v1.toml"
 
 
-SEEDS_FILE = _default_seeds_file()
-DEFAULT_CORPUS_ROOT = REPO_ROOT / "datasets"
-
-# ── variant definitions ────────────────────────────────────────────────────────
-# Each entry: (suffix, include_renders, include_stl, include_step)
-# "" suffix = the primary code-only JSONL config.
-VARIANTS: list[tuple[str, bool, bool, bool]] = [
-    ("",         False, False, False),  # code + metadata only  (JSONL)
-    ("-renders", True,  False, False),  # + renders             (Parquet)
-    ("-stl",     False, True,  False),  # + STL                 (Parquet)
-    ("-step",    False, False, True),   # + STEP                (Parquet)
-    ("-geo",     True,  True,  False),  # + renders + STL       (Parquet)
-    ("-full",    True,  True,  True),   # + renders + STL + STEP (Parquet)
-]
-
-# ── tier slices ─────────────────────────────────────────────────────────────────
-# A second, orthogonal axis: every content variant is published once for all
-# tiers and once limited to tiers 0–2 (inclusive).
-# Each entry: (subdir, config_part, tier_max)
-#   subdir      — files nested under "{tag}/{subdir}/" ("" = directly in "{tag}/")
-#   config_part — inserted between {tag} and the content suffix in the config name
-#   tier_max    — inclusive complexity-tier cap (None = keep every tier)
-# The all-tiers slice keeps the canonical unlabeled config names (and the default).
-TIER_SLICES: list[tuple[str, str, int | None]] = [
-    ("",        "",      None),
-    ("tier0-2", "-t0-2", 2),
-]
-
-
-# ── seed ladder ────────────────────────────────────────────────────────────────
-
-def load_publish_ladder() -> tuple[str, dict[str, dict]]:
+def load_publish_ladder(seeds_path: Path | None = None) -> tuple[str, dict[str, dict]]:
     """Return (default_repo_id, {tag: {count, seed}}) from the active seed list."""
-    with open(SEEDS_FILE, "rb") as f:
+    seeds_path = seeds_path or default_seeds_path()
+    with open(seeds_path, "rb") as f:
         data = tomllib.load(f)
     pub = data.get("publish", {})
     repo_id = pub.get("repo_id", "cadquarry")
@@ -145,7 +97,7 @@ def load_publish_ladder() -> tuple[str, dict[str, dict]]:
     for entry in pub.get("corpus", []):
         ladder[str(entry["tag"])] = {"count": int(entry["count"]), "seed": int(entry["seed"])}
     if not ladder:
-        raise SystemExit(f"No [[publish.corpus]] entries found in {SEEDS_FILE}")
+        raise PublishError(f"No [[publish.corpus]] entries found in {seeds_path}")
     return repo_id, ladder
 
 
@@ -162,42 +114,52 @@ def tag_to_int(tag: str) -> int:
         return 0
 
 
-# ── auth ───────────────────────────────────────────────────────────────────────
-
 def resolve_token() -> str | None:
     return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN") or None
 
 
-# ── corpus resolution ───────────────────────────────────────────────────────────
+# ── variant + tier-slice definitions ─────────────────────────────────────────
+# Each VARIANTS entry: (suffix, include_renders, include_stl, include_step).
+# "" suffix = the primary code-only JSONL config.
+VARIANTS: list[tuple[str, bool, bool, bool]] = [
+    ("",         False, False, False),  # code + metadata only  (JSONL)
+    ("-renders", True,  False, False),  # + renders             (Parquet)
+    ("-stl",     False, True,  False),  # + STL                 (Parquet)
+    ("-step",    False, False, True),   # + STEP                (Parquet)
+    ("-geo",     True,  True,  False),  # + renders + STL       (Parquet)
+    ("-full",    True,  True,  True),   # + renders + STL + STEP (Parquet)
+]
+
+# Orthogonal axis: every content variant is published once for all tiers and
+# once limited to tiers 0–2 (inclusive). Each entry: (subdir, config_part, tier_max).
+TIER_SLICES: list[tuple[str, str, int | None]] = [
+    ("",        "",      None),
+    ("tier0-2", "-t0-2", 2),
+]
+
+
+# ── corpus resolution + packing ──────────────────────────────────────────────
 
 def resolve_corpus_dir(corpus_root: Path, tag: str, expected_count: int) -> Path:
     """
-    Return the pre-built corpus directory for ``tag`` under ``corpus_root``.
-
-    Generation/rendering is a separate step (``cadquarry build``); this raises a
-    clear error if the corpus is missing so the user knows to build it first.
+    Return the pre-built corpus directory for ``tag`` under ``corpus_root``,
+    raising a clear error (pointing at ``cadquarry build``) if it's missing.
     """
     corpus_dir = corpus_root / tag
     manifest = corpus_dir / "manifest.jsonl"
     if not manifest.exists():
-        raise SystemExit(
+        raise PublishError(
             f"No corpus found at {corpus_dir} (missing manifest.jsonl).\n"
             f"Build it first (separate step):\n"
-            f"    cadquarry build --sizes {tag} --formats step,stl,render "
-            f"--out {corpus_root}"
+            f"    cadquarry build --sizes {tag} --formats step,stl,render --out {corpus_root}"
         )
     n = len(load_manifest(corpus_dir))
     if expected_count and n < expected_count:
-        print(
-            f"  · warning: {tag} has {n} parts, expected {expected_count:,} "
-            f"(packing what's present)"
-        )
+        print(f"  · warning: {tag} has {n} parts, expected {expected_count:,} (packing what's present)")
     else:
         print(f"  · using pre-built corpus ({n:,} parts) at {corpus_dir}")
     return corpus_dir
 
-
-# ── packing ───────────────────────────────────────────────────────────────────
 
 def pack_variant(
     corpus_dir: Path,
@@ -212,44 +174,32 @@ def pack_variant(
     include_step: bool,
 ) -> tuple[str, str] | None:
     """
-    Pack one (tier slice × content variant) into the upload tree.  Returns
-    (config_name, relative_data_file) on success, or None if the required
-    geometry files are missing.
-
-    ``tag_dir`` is ``upload_root/{tag}``; ``tier_subdir`` ("" or e.g. "tier0-2")
-    nests the data file, ``tier_part`` ("" or "-t0-2") labels the config name, and
-    ``tier_max`` caps the included complexity tier (None = all tiers).
+    Pack one (tier slice × content variant) into the upload tree. Returns
+    (config_name, relative_data_file), or None if required geometry is missing.
     """
     config_name = f"{tag}{tier_part}{suffix}"
 
-    # Detect whether the needed geometry is actually present.
     if include_renders:
         render_base = corpus_dir / "renders"
         if not render_base.is_dir() or not any(render_base.iterdir()):
             print(f"    · skipping {config_name!r} — no renders found")
             return None
-    if include_stl:
-        geo_dir = corpus_dir / "geometry"
-        if not any(geo_dir.glob("*.stl")):
-            print(f"    · skipping {config_name!r} — no STL files found")
-            return None
-    if include_step:
-        geo_dir = corpus_dir / "geometry"
-        if not any(geo_dir.glob("*.step")):
-            print(f"    · skipping {config_name!r} — no STEP files found")
-            return None
+    if include_stl and not any((corpus_dir / "geometry").glob("*.stl")):
+        print(f"    · skipping {config_name!r} — no STL files found")
+        return None
+    if include_step and not any((corpus_dir / "geometry").glob("*.step")):
+        print(f"    · skipping {config_name!r} — no STEP files found")
+        return None
 
     dest = tag_dir / tier_subdir if tier_subdir else tag_dir
     dest.mkdir(parents=True, exist_ok=True)
     rel_prefix = f"{tag}/{tier_subdir}/" if tier_subdir else f"{tag}/"
 
     if not suffix:
-        # Code-only variant: JSONL (HF dataset viewer can browse it inline).
         out = dest / "corpus.jsonl"
         n = pack_corpus_jsonl(corpus_dir, out, include_source=True, tier_max=tier_max)
         data_file = f"{rel_prefix}corpus.jsonl"
     else:
-        # Geometry variant: Parquet with binary columns.
         fname = f"corpus{suffix}.parquet"
         out = dest / fname
         n = pack_corpus_parquet(
@@ -270,10 +220,6 @@ def pack_variant(
 # ── README / dataset card ─────────────────────────────────────────────────────
 
 def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool) -> str:
-    """
-    Return the `  features:` YAML block for a Parquet config entry.
-    Items are at 2-space indent from the config `- ` bullet.
-    """
     base = [
         "  features:",
         "  - name: part_id",
@@ -315,10 +261,6 @@ def _configs_yaml(
     built: dict[str, list[tuple[str, str, bool, bool, bool]]],
     all_tags: list[str],
 ) -> str:
-    """
-    Build the `configs:` YAML block.  Each entry starts with `- ` (no extra
-    indent) so it nests correctly under `configs:` in the front-matter.
-    """
     lines: list[str] = []
     first_code = True
     for tag in all_tags:
@@ -336,7 +278,7 @@ def _configs_yaml(
 
 def build_dataset_readme(
     repo_id: str,
-    built: dict[str, list[tuple[str, str, bool, bool, bool]]],  # {tag: [(config, file, r, s, sp), …]}
+    built: dict[str, list[tuple[str, str, bool, bool, bool]]],
     ladder: dict[str, dict],
 ) -> str:
     all_tags = sorted(built.keys(), key=tag_to_int)
@@ -366,7 +308,6 @@ def build_dataset_readme(
     has_stl     = any(s          for t in all_tags for _, _, r, s, sp in built[t])
     has_full    = any(r and s and sp for t in all_tags for _, _, r, s, sp in built[t])
 
-    # ── YAML front-matter (built as a plain string — no textwrap.dedent) ─────
     fm_lines = [
         "---",
         "license: cc0-1.0",
@@ -389,7 +330,6 @@ def build_dataset_readme(
     ]
     front_matter = "\n".join(fm_lines)
 
-    # ── quickstart snippets ──────────────────────────────────────────────────
     render_snip = (
         f'\n# With 8-view renders (PIL Images):\n'
         f'ds = load_dataset("{repo_id}", "{ex_tag}-renders", split="train")\n'
@@ -412,7 +352,6 @@ def build_dataset_readme(
         f'    f.write(ds[0]["step_bytes"])\n'
     ) if has_full else ""
 
-    # ── body ─────────────────────────────────────────────────────────────────
     body = f"""\
 # CadQuarry
 
@@ -533,7 +472,7 @@ with `tier == 3`. Data files live under `{{tag}}/` (all tiers) and
 | Column | Type | Description |
 |--------|------|-------------|
 | `part_id` | string | Unique deterministic identifier |
-| `family` | string | `plate`, `bracket`, `revolved`, `block`, `compound`, `enclosure`, `flanged`, `ribbed`, `profiled` |
+| `family` | string | `plate`, `bracket`, `revolved`, `block`, `compound`, `enclosure`, `flanged`, `ribbed`, `profiled`, `gear`, `threaded` |
 | `tier` | int32 | Complexity tier 0–3 |
 | `seed` | int64 | Per-part seed |
 | `symmetry` | string | Detected symmetry class |
@@ -604,66 +543,48 @@ cq.exporters.export(result, "part.step")
     return front_matter + "\n" + body
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+# ── entry point ───────────────────────────────────────────────────────────────
 
-def main(argv: list[str] | None = None) -> int:
+def publish(
+    *,
+    sizes: list[str] | None = None,
+    all_sizes: bool = False,
+    repo_id: str | None = None,
+    corpus_root: str | Path | None = None,
+    workdir: str | Path | None = None,
+    code_only: bool = False,
+    no_renders: bool = False,
+    no_stl: bool = False,
+    no_step: bool = False,
+    private: bool = False,
+    dry_run: bool = False,
+    verbose: bool = False,
+) -> int:
+    """
+    Pack the pre-built corpora and upload them to HuggingFace.
+
+    With neither ``sizes`` nor ``all_sizes`` given, publishes **all** sizes in
+    the ladder (the natural pairing with a bare ``cadquarry build``).
+    """
     default_repo, ladder = load_publish_ladder()
 
-    ap = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    ap.add_argument(
-        "--sizes", nargs="+", metavar="TAG",
-        help=f"Sizes to pack/upload (default: 1k). Available: {', '.join(ladder)}",
-    )
-    ap.add_argument("--all", action="store_true", help="Pack/upload every size in the ladder")
-    ap.add_argument(
-        "--repo-id", default=os.environ.get("CADQUARRY_HF_REPO") or default_repo,
-        help="HF dataset repo id (default: from the active seed list or CADQUARRY_HF_REPO)",
-    )
-    ap.add_argument(
-        "--corpus-root", default=str(DEFAULT_CORPUS_ROOT),
-        help="Dir holding pre-built corpora as {root}/{tag}/ "
-             "(default: datasets/; produced by `cadquarry build`)",
-    )
-    ap.add_argument(
-        "--workdir", default=str(REPO_ROOT / ".hf_build"),
-        help="Staging dir for the packed upload tree (default: .hf_build)",
-    )
-    ap.add_argument(
-        "--code-only", action="store_true",
-        help="Publish only the code+metadata (JSONL) variant; ignore geometry",
-    )
-    ap.add_argument("--no-renders", action="store_true", help="Skip render variants")
-    ap.add_argument("--no-stl",     action="store_true", help="Skip STL variants")
-    ap.add_argument("--no-step",    action="store_true", help="Skip STEP variants")
-    ap.add_argument("--private", action="store_true", help="Create the dataset repo as private")
-    ap.add_argument(
-        "--dry-run", action="store_true",
-        help="Pack locally, do not upload",
-    )
-    ap.add_argument("--verbose", "-v", action="store_true")
-    args = ap.parse_args(argv)
-
-    if args.all:
+    if all_sizes or not sizes:
         tags = list(ladder)
-    elif args.sizes:
-        tags = args.sizes
     else:
-        tags = ["1k"]
+        tags = sizes
 
     unknown = [t for t in tags if t not in ladder]
     if unknown:
-        raise SystemExit(f"Unknown size(s): {unknown}. Available: {', '.join(ladder)}")
+        raise PublishError(f"Unknown size(s): {unknown}. Available: {', '.join(ladder)}")
 
-    corpus_root = Path(args.corpus_root)
+    corpus_root = Path(corpus_root) if corpus_root else DEFAULT_CORPUS_ROOT
+    repo_id = repo_id or os.environ.get("CADQUARRY_HF_REPO") or default_repo
 
     # Resolve which content types to pack based on flags.
-    want_renders = not args.code_only and not args.no_renders
-    want_stl     = not args.code_only and not args.no_stl
-    want_step    = not args.code_only and not args.no_step
+    want_renders = not code_only and not no_renders
+    want_stl     = not code_only and not no_stl
+    want_step    = not code_only and not no_step
 
-    # Active variant set: code always, geometry variants only when wanted.
     active_variants = [
         (sfx, r, s, sp) for sfx, r, s, sp in VARIANTS
         if not (r and not want_renders)
@@ -673,34 +594,32 @@ def main(argv: list[str] | None = None) -> int:
 
     # Resolve repo namespace + token unless this is a pure local dry run.
     token = resolve_token()
-    repo_id = args.repo_id
     api = None
-    if not args.dry_run:
+    if not dry_run:
         try:
             from huggingface_hub import HfApi
-        except ImportError:
-            raise SystemExit(
+        except ImportError as exc:
+            raise PublishError(
                 "huggingface_hub is required to upload. Install it:\n"
-                "    pip install -e \".[publish]\"\n"
+                "    uv pip install -e \".[publish]\"\n"
                 "Or run with --dry-run to only build locally."
-            )
+            ) from exc
         if not token:
-            raise SystemExit(
+            raise PublishError(
                 "No HuggingFace token found. Set HF_TOKEN in your environment "
                 "(or run `huggingface-cli login`)."
             )
         api = HfApi(token=token)
-        whoami = api.whoami()
-        username = whoami.get("name")
+        username = api.whoami().get("name")
         if "/" not in repo_id:
             repo_id = f"{username}/{repo_id}"
         print(f"Authenticated as '{username}'. Target dataset repo: {repo_id}")
 
-    staging = Path(args.workdir)
-    upload_root = staging / "upload"
+    workdir = Path(workdir) if workdir else DEFAULT_WORKDIR
+    upload_root = workdir / "upload"
     upload_root.mkdir(parents=True, exist_ok=True)
 
-    # {tag: [(config_name, data_file, inc_r, inc_s, inc_sp), …]} — across all tags.
+    # {tag: [(config_name, data_file, inc_r, inc_s, inc_sp), …]}
     built: dict[str, list[tuple[str, str, bool, bool, bool]]] = {}
 
     for tag in sorted(tags, key=tag_to_int):
@@ -740,13 +659,13 @@ def main(argv: list[str] | None = None) -> int:
     readme = build_dataset_readme(repo_id, {t: v for t, v in built.items() if v}, ladder)
     (upload_root / "README.md").write_text(readme, encoding="utf-8")
 
-    if args.dry_run:
+    if dry_run:
         print(f"\n[dry-run] Packed {sorted(built)} under {upload_root}. Skipping upload.")
         return 0
 
     assert api is not None
     print(f"\nEnsuring dataset repo {repo_id} exists …")
-    api.create_repo(repo_id, repo_type="dataset", exist_ok=True, private=args.private)
+    api.create_repo(repo_id, repo_type="dataset", exist_ok=True, private=private)
 
     print("Uploading … (this can take a while for large sizes)")
     built_tags = [t for t, vs in built.items() if vs]
@@ -760,7 +679,3 @@ def main(argv: list[str] | None = None) -> int:
     )
     print(f"\nDone. https://huggingface.co/datasets/{repo_id}")
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

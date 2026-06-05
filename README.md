@@ -380,22 +380,20 @@ sample/demo-1k/
 └── preview.html         self-contained gallery (three.js, lazy-loaded geometry)
 ```
 
-It is corpus `demo-1k` from `seeds/v1.toml` (seed `1234`). Regenerate it:
+It is corpus `demo-1k` (seed `1234`) from the active seed list. Regenerate it —
+and everything else the GitHub Pages preview needs — with one command:
 
 ```bash
-# 1. Regenerate the part sources + params + meta (deterministic from seed 1234)
-.venv/bin/cadquarry generate --seed 1234 --count 1000 --out sample/demo-1k/
-
-# 2. Export geometry — STEP B-reps + the compact binary STL meshes the
-#    in-browser preview loads + the 8 perspective renders the preview's
-#    "Renders" tab shows. (Keep `stl` in the list: export drops the STL after
-#    rendering if you ask for `render` alone.)
-.venv/bin/cadquarry export sample/demo-1k/ --formats step,stl,render
+.venv/bin/cadquarry build_sample
 ```
 
-> The committed renders were produced straight from the existing STLs (no
-> CadQuery re-run) with [`scripts/render_sample.py`](scripts/render_sample.py):
-> `python scripts/render_sample.py sample/demo-1k/`.
+`build_sample` regenerates the part sources + params + meta deterministically
+from the `[[corpus]]` entry, then exports STEP B-reps, the compact binary STL
+meshes the in-browser preview loads, and the 8 perspective renders the preview's
+"Renders" tab shows — straight into `sample/demo-1k/`. GitHub Pages serves the
+repo as-is (`index.html` → `sample/demo-1k/preview.html`), so just commit the
+result to publish. Pass `--name <corpus>`, `--out <dir>`, or `--formats …` to
+rebuild a different committed sample.
 
 ---
 
@@ -474,6 +472,13 @@ uv pip install -e ".[mech,export,publish]"   # mech families, renders, uploader
 cadquarry build && cadquarry publish
 ```
 
+Commands can also be **chained** in a single invocation (each runs with its
+defaults), so a full refresh of both the GitHub Pages preview and the dataset is:
+
+```bash
+cadquarry build_sample build publish
+```
+
 - `cadquarry build` — generates **and** exports every size in the ladder into
   `datasets/<tag>/` with STEP + STL + renders. It uses the seed list matching
   the current generator version (`seeds/v2.toml`) and automatically regenerates
@@ -500,9 +505,6 @@ cadquarry publish --sizes 1k --dry-run
 # read pre-built corpora from a custom location
 cadquarry publish --sizes 1k --out /data/cadquarry
 ```
-
-(Both still work as the underlying script too:
-`python scripts/publish_to_hf.py --all`.)
 
 **Secrets.** Publishing reads your token from the `HF_TOKEN` environment
 variable (or a prior `huggingface-cli login`) and **never prints, logs, or
