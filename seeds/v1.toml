@@ -12,7 +12,7 @@
 # this file plus the generator is the actual deliverable.
 
 [meta]
-generator_version = "0.3.0"   # cadquarry.__version__ this list targets
+generator_version = "0.4.0"   # cadquarry.__version__ this list targets
 signature_version = 2         # geometry-signature definition (filter.SIGNATURE_VERSION)
 config            = "configs/default.toml"
 data_license      = "CC0-1.0"

@@ -12,14 +12,15 @@ timeout_seconds = 30
 # dropped, so adding a new family here before the code exists is safe.
 # ---------------------------------------------------------------------------
 [distribution.families]
-plate     = 0.22   # flat plates, brackets, flange plates
-revolved  = 0.18   # shafts, bushings, washers — rotational geometry
-block     = 0.15   # prismatic blocks / housings
-bracket   = 0.18   # angle brackets: L / C-channel / Z-offset + holes + optional gussets
-flanged   = 0.08   # revolved stub + bolt circle
-ribbed    = 0.07   # base + patterned ribs / webs
-enclosure = 0.07   # shelled box / enclosures
-profiled  = 0.05   # long constant cross-section extrusions
+plate     = 0.20   # flat plates with holes / fillets / pockets
+revolved  = 0.16   # shafts, bushings, washers — rotational geometry
+bracket   = 0.16   # angle brackets: L / C-channel / Z-offset + holes + optional gussets
+block     = 0.12   # prismatic blocks / housings
+compound  = 0.12   # multi-section assemblies (manifolds, stepped shafts, standoffs…)
+flanged   = 0.07   # revolved stub + bolt circle
+ribbed    = 0.06   # base + patterned ribs / webs
+enclosure = 0.06   # shelled box / enclosures
+profiled  = 0.05   # long constant cross-section extrusions (incl. polygon bars)
 
 # ---------------------------------------------------------------------------
 # Complexity tier weights (global; clamped per family by FAMILY_TIER_SPANS)
@@ -103,6 +104,18 @@ height_factor_min = 0.5   # height = width * U[hf_min, hf_max]
 height_factor_max = 2.0
 tier_min      = 1
 tier_max      = 3
+
+[families.compound]
+tier_min      = 1
+tier_max      = 3
+# Relative likelihood of each multi-section archetype. Need not sum to 1.0.
+#   manifold         — block + several bored side ports (round / hex fittings)
+#   stepped_shaft    — turned cylinder + step + optional polygon drive head
+#   polygon_standoff — polygon prism base + central bored column
+#   block_tube       — block + a single side spigot (round/polygon/slot/rect)
+#   pedestal         — flat base plate + a round/polygon column on top
+#   block_tab        — block + flat mounting tab with bolt holes
+archetype_weights = { manifold = 0.22, stepped_shaft = 0.20, polygon_standoff = 0.16, block_tube = 0.16, pedestal = 0.14, block_tab = 0.12 }
 
 [families.enclosure]
 width_min          = 30.0
