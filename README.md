@@ -347,8 +347,8 @@ with open("part.step", "wb") as f:
 
 ### Configs
 
-Each corpus size is published as **six** configs, so you fetch only what you
-need. Swap the `1k` prefix for any size in the ladder:
+Each corpus size is published as **six content configs**, so you fetch only what
+you need. Swap the `1k` prefix for any size in the ladder:
 
 | Config | Contents | Format |
 |---|---|---|
@@ -359,9 +359,15 @@ need. Swap the `1k` prefix for any size in the ladder:
 | `<tag>-geo` | + renders + STL | Parquet |
 | `<tag>-full` | + renders + STL + STEP | Parquet |
 
+Each content config is also published limited to **complexity tiers 0–2**
+(inclusive) under a `-t0-2` suffix — e.g. `<tag>-t0-2`, `<tag>-t0-2-renders`,
+`<tag>-t0-2-full` — for consumers who want to exclude the most complex (tier-3)
+parts. The unlabeled configs include all tiers (0–3).
+
 Available `<tag>` sizes (from [`seeds/v1.toml`](seeds/v1.toml)): `1k`, `2k`,
 `5k`, `10k`, `20k`, `50k`, `100k`, `200k`. For example,
-`load_dataset("jacobjennings/cadquarry", "50k-stl")`.
+`load_dataset("jacobjennings/cadquarry", "50k-stl")` or
+`load_dataset("jacobjennings/cadquarry", "50k-t0-2")`.
 
 Every part is reproducible bit-for-bit from its seed, so the published data is a
 **convenience artifact** — the generator plus `seeds/v1.toml` is the canonical
@@ -371,24 +377,41 @@ source.
 
 ## Publishing the full corpus to Hugging Face
 
-[`scripts/publish_to_hf.py`](scripts/publish_to_hf.py) builds the reproducible
-size ladder (1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k) and uploads each as a
-set of `load_dataset` configs of one HF dataset. The code-only variant is packed
-into a single `corpus.jsonl` with the parametric `source` and `params` inlined;
-the geometry variants (renders/STL/STEP) are packed into Snappy-compressed
-Parquet with typed binary columns.
+Publishing is **two separate steps**: first build the corpora (generate +
+render/export), then pack + upload them.
+
+**Step 1 — build the corpora** with `cadquarry build` (this is the slow part;
+200k generation + rendering takes a while). Each size lands in `datasets/<tag>/`:
+
+```bash
+.venv/bin/cadquarry build --sizes 1k 2k 5k --formats step,stl,render --out datasets/
+# …or the whole ladder:
+.venv/bin/cadquarry build --all --formats step,stl,render --out datasets/
+```
+
+**Step 2 — pack + upload** with [`scripts/publish_to_hf.py`](scripts/publish_to_hf.py).
+It does **not** generate or render anything — it only reads the pre-built
+`datasets/<tag>/` corpora and uploads each as a set of `load_dataset` configs of
+one HF dataset. The code-only variant is packed into a single `corpus.jsonl`
+with the parametric `source` and `params` inlined; the geometry variants
+(renders/STL/STEP) are packed into Snappy-compressed Parquet with typed binary
+columns. If a size hasn't been built yet, the script stops and tells you which
+`cadquarry build` command to run.
 
 ```bash
 uv pip install -e ".[publish]"          # adds huggingface_hub + pyarrow
 
-# Build + upload the small configs to your own repo
+# Pack + upload the small configs to your own repo
 .venv/bin/python scripts/publish_to_hf.py --sizes 1k 2k 5k --repo-id <user>/cadquarry
 
-# Build everything (large; 200k generation takes a while)
+# Pack + upload the whole ladder
 .venv/bin/python scripts/publish_to_hf.py --all
 
-# Generate + pack locally without uploading (inspect .hf_build/)
+# Pack locally without uploading (inspect .hf_build/)
 .venv/bin/python scripts/publish_to_hf.py --sizes 1k --dry-run
+
+# Read pre-built corpora from a custom location
+.venv/bin/python scripts/publish_to_hf.py --sizes 1k --corpus-root /data/cadquarry
 ```
 
 **Secrets.** The script reads your token from the `HF_TOKEN` environment
