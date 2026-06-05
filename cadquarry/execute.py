@@ -81,6 +81,7 @@ def _cq_run():
         _n_faces = len(_result.faces("").vals())
         _n_edges = len(_result.edges("").vals())
         _n_verts = len(_result.vertices("").vals())
+        _n_solids = len(_result.solids().vals())
 
         # Optional STL export
         if _stl_out:
@@ -96,6 +97,7 @@ def _cq_run():
             "n_faces": _n_faces,
             "n_edges": _n_edges,
             "n_vertices": _n_verts,
+            "n_solids": _n_solids,
         }))
     except Exception as _e:
         print(_cq_json.dumps({
@@ -120,6 +122,7 @@ class ExecuteResult:
     n_faces: int = 0
     n_edges: int = 0
     n_vertices: int = 0
+    n_solids: int = 1
     stl_path: Path | None = None
 
     @property
@@ -140,6 +143,7 @@ class ExecuteResult:
             n_faces=d.get("n_faces", 0),
             n_edges=d.get("n_edges", 0),
             n_vertices=d.get("n_vertices", 0),
+            n_solids=d.get("n_solids", 1),
         )
 
 

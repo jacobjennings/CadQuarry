@@ -665,9 +665,16 @@ class AttachOp(BaseModel):
     def to_code(self) -> list[str]:
         l = self.length.to_code()
         face = self.face
+        # Center each attachment on the selected face's bounding-box center.
+        # The default 'ProjectedOrigin' projects the *current* (drifted)
+        # workplane origin, so a second attachment on a different face would be
+        # placed using the previous attachment's coordinate system — landing it
+        # off-center and producing a disconnected lump.  CenterOfBoundBox is
+        # independent of that drift, so every attachment stays fused.
+        wp = "workplane(centerOption='CenterOfBoundBox')"
         lines = [
             f"    result = (",
-            f"        result.faces({face!r}).workplane()",
+            f"        result.faces({face!r}).{wp}",
             f"        {self.profile.to_code()}.extrude({l})",
             f"    )",
         ]
@@ -675,7 +682,7 @@ class AttachOp(BaseModel):
             bd = self.bore_d.to_code()
             lines += [
                 f"    result = (",
-                f"        result.faces({face!r}).workplane()",
+                f"        result.faces({face!r}).{wp}",
                 f"        .hole({bd})",
                 f"    )",
             ]

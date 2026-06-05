@@ -18,11 +18,11 @@ def build(p):
 
     result = (cq.Workplane('XY').circle(p["shaft_d"] / 2).extrude(p["shaft_len"]))
     result = (
-        result.faces('>Z').workplane()
+        result.faces('>Z').workplane(centerOption='CenterOfBoundBox')
         .circle(p["step_d"] / 2).extrude(p["step_len"])
     )
     result = (
-        result.faces('>Z').workplane()
+        result.faces('>Z').workplane(centerOption='CenterOfBoundBox')
         .polygon(p["head_sides"], p["head_r"] * 2).extrude(p["head_len"])
     )
     return result

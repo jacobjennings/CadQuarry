@@ -11,13 +11,19 @@ band of seeds, plus a mixed ``compose()`` sample that exercises the real
 config-driven weighted dispatch, executes every emitted program through the
 persistent CadQuery worker pool, and reports per-archetype acceptance yields.
 
+For every built part it also checks ``n_solids`` (now returned by the worker):
+a valid part must be a single connected solid, so any part that builds into
+>1 solid is flagged as *disconnected* — the failure mode the AttachOp
+``CenterOfBoundBox`` fix addressed for multi-port manifolds.
+
 Use it after changing any compound sampler (or the shared ``_sample_attach_section``
 / ``_maybe_bore`` helpers) to confirm:
 
   * every archetype still builds at a healthy rate (≈ all but tier-3
-    fillet/chamfer fragility, which is shared with plate/block), and
+    fillet/chamfer fragility, which is shared with plate/block),
   * no archetype has silently regressed to 0% (the failure mode the
-    ``stepped_shaft`` RevolveOp→ExtrudeOp fix addressed).
+    ``stepped_shaft`` RevolveOp→ExtrudeOp fix addressed), and
+  * no archetype produces disconnected (multi-solid) geometry.
 
 It imports CadQuery indirectly through the worker pool, so the first run pays
 the usual ~1-1.5s import cost. Nothing here is part of the shipped package.
@@ -87,25 +93,35 @@ def main(argv: list[str] | None = None) -> int:
 
     ok: Counter = Counter()
     tot: Counter = Counter()
+    disc: Counter = Counter()   # built but disconnected (>1 solid)
     fails: list[tuple] = []
     for key, res in results.items():
         bucket = key[0]
         tot[bucket] += 1
-        if res.get("success"):
-            ok[bucket] += 1
-        else:
+        if not res.get("success"):
             fails.append((key, meta[key], res.get("error", "")[:160]))
+            continue
+        n_solids = res.get("n_solids", 1)
+        if n_solids != 1:
+            disc[bucket] += 1
+            fails.append((key, meta[key], f"disconnected: {n_solids} solids"))
+            continue
+        ok[bucket] += 1
 
-    print("\n=== Per-archetype yields ===")
+    print("\n=== Per-archetype yields (single-solid builds) ===")
     for arch in arches:
-        print(f"  {arch:18s} {ok[arch]:3d}/{tot[arch]:<3d}")
-    print(f"  {'mixed(compose)':18s} {ok['mixed']:3d}/{tot['mixed']:<3d}")
+        extra = f"  [{disc[arch]} disconnected]" if disc[arch] else ""
+        print(f"  {arch:18s} {ok[arch]:3d}/{tot[arch]:<3d}{extra}")
+    mextra = f"  [{disc['mixed']} disconnected]" if disc["mixed"] else ""
+    print(f"  {'mixed(compose)':18s} {ok['mixed']:3d}/{tot['mixed']:<3d}{mextra}")
 
     total_ok, total = sum(ok.values()), sum(tot.values())
-    print(f"\nOverall: {total_ok}/{total} = {100 * total_ok / max(total, 1):.1f}%")
+    total_disc = sum(disc.values())
+    print(f"\nOverall single-solid: {total_ok}/{total} = "
+          f"{100 * total_ok / max(total, 1):.1f}%  (disconnected: {total_disc})")
 
     if fails:
-        print(f"\n=== {len(fails)} failures (first 25) ===")
+        print(f"\n=== {len(fails)} non-clean parts (first 25) ===")
         for key, (label, tier), err in fails[:25]:
             print(f"  {key} tier={tier} :: {err}")
 

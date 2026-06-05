@@ -133,6 +133,12 @@ def is_valid(result: ExecuteResult, cfg: QualityConfig | None = None) -> tuple[b
     if not result.success:
         return False, result.error or "execution failed"
 
+    # A valid part must be a single connected solid.  Multiple solids mean an
+    # attachment / union failed to fuse (a disconnected lump), which is never a
+    # legitimate single part.
+    if result.n_solids != 1:
+        return False, f"disconnected geometry: {result.n_solids} solids"
+
     if result.volume < cfg.min_volume_mm3:
         return False, f"volume {result.volume:.4f} < {cfg.min_volume_mm3}"
 

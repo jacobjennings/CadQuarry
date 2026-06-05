@@ -18,27 +18,27 @@ def build(p):
 
     result = cq.Workplane('XY').box(p["block_w"], p["block_d"], p["block_h"])
     result = (
-        result.faces('<X').workplane()
+        result.faces('<X').workplane(centerOption='CenterOfBoundBox')
         .circle(p["port_d"] / 2).extrude(p["port_len"])
     )
     result = (
-        result.faces('<X').workplane()
+        result.faces('<X').workplane(centerOption='CenterOfBoundBox')
         .hole(p["port_bore"])
     )
     result = (
-        result.faces('>Y').workplane()
+        result.faces('>Y').workplane(centerOption='CenterOfBoundBox')
         .circle(p["port_d"] / 2).extrude(p["port_len"])
     )
     result = (
-        result.faces('>Y').workplane()
+        result.faces('>Y').workplane(centerOption='CenterOfBoundBox')
         .hole(p["port_bore"])
     )
     result = (
-        result.faces('>X').workplane()
+        result.faces('>X').workplane(centerOption='CenterOfBoundBox')
         .circle(p["port_d"] / 2).extrude(p["port_len"])
     )
     result = (
-        result.faces('>X').workplane()
+        result.faces('>X').workplane(centerOption='CenterOfBoundBox')
         .hole(p["port_bore"])
     )
     result = (
