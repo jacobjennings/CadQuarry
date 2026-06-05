@@ -1038,6 +1038,41 @@ class GearOp(BaseModel):
             )
         return lines
 
+    def describe(self, params: dict[str, Any]) -> dict[str, Any]:
+        """
+        Structured, machine-readable design descriptor for dataset metadata —
+        resolves this gear's parameters (against the given param values, e.g.
+        the defaults) into concrete numbers so the gear's identity (kind,
+        module, teeth, pitch diameter, …) is queryable without parsing source.
+        """
+        module = self.module.evaluate(params)
+        teeth = int(self.teeth.evaluate(params))
+        d: dict[str, Any] = {
+            "family": "gear",
+            "kind": self.kind,
+            "module": module,
+            "teeth": teeth,
+            "face_width": self.width.evaluate(params),
+            "pitch_diameter": round(module * teeth, 4),
+            "pressure_angle_deg": 20.0,  # py_gearworks default, left unset
+        }
+        if self.kind == "helical":
+            if self.helix_angle is not None:
+                d["helix_angle_deg"] = self.helix_angle.evaluate(params)
+            d["herringbone"] = self.herringbone
+        elif self.kind == "bevel" and self.cone_angle is not None:
+            d["cone_angle_deg"] = self.cone_angle.evaluate(params)
+        if self.profile_shift is not None and self.kind != "cycloid":
+            d["profile_shift"] = self.profile_shift.evaluate(params)
+        if self.root_fillet is not None:
+            d["root_fillet"] = self.root_fillet.evaluate(params)
+        if self.bore_d is not None:
+            d["bore_d"] = self.bore_d.evaluate(params)
+        if self.hub_d is not None and self.hub_h is not None:
+            d["hub_d"] = self.hub_d.evaluate(params)
+            d["hub_h"] = self.hub_h.evaluate(params)
+        return d
+
 
 class ThreadedOp(BaseModel):
     """
@@ -1117,6 +1152,32 @@ class ThreadedOp(BaseModel):
             ]
         lines.append("    result = cq.Workplane('XY').add(cq.Solid(_part.wrapped))")
         return lines
+
+    def describe(self, params: dict[str, Any]) -> dict[str, Any]:
+        """
+        Structured, machine-readable design descriptor for dataset metadata —
+        resolves this thread's parameters into concrete numbers plus a standard
+        designation (e.g. ``M16x2.0``, ``ACME 1/2``, ``Tr 8x1.5``) so the
+        thread's identity is queryable without parsing source.
+        """
+        d: dict[str, Any] = {
+            "family": "threaded",
+            "standard": self.standard,
+            "external": self.external,
+            "length": self.length.evaluate(params),
+        }
+        if self.standard == "iso":
+            major = self.major_d.evaluate(params)
+            pitch = self.pitch.evaluate(params)
+            d["major_diameter"] = major
+            d["pitch"] = pitch
+            d["designation"] = f"M{major:g}x{pitch:g}"
+        else:
+            size = self.size.evaluate(params)
+            d["size"] = size
+            prefix = "ACME" if self.standard == "acme" else "Tr"
+            d["designation"] = f"{prefix} {size}"
+        return d
 
 
 Operation = Annotated[

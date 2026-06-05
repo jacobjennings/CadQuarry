@@ -118,6 +118,25 @@ def emit_params_json(part: PartIR) -> dict:
     }
 
 
+def _part_descriptor(part: PartIR) -> dict | None:
+    """
+    Build a structured, family-specific design descriptor for the metadata,
+    resolved against the part's default parameters.  An operation opts in by
+    defining ``describe(params) -> dict`` (currently the gear / threaded base
+    ops); this captures categorical design intent — gear kind, thread standard,
+    pitch, module, designation — that otherwise lives only in the emitted
+    source.  Returns ``None`` for families with no describable op.
+    """
+    defaults = part.default_params()
+    descriptor: dict = {}
+    for op in part.operations:
+        describe = getattr(op, "describe", None)
+        if describe is None:
+            continue
+        descriptor.update(describe(defaults))
+    return descriptor or None
+
+
 def emit_meta_json(part: PartIR, geometry_signature: dict | None = None) -> dict:
     """Return the .meta.json provenance record as a Python dict."""
     meta = {
@@ -132,6 +151,9 @@ def emit_meta_json(part: PartIR, geometry_signature: dict | None = None) -> dict
         "ir_hash": part.ir_hash(),
         "license": "CC0-1.0",
     }
+    descriptor = _part_descriptor(part)
+    if descriptor is not None:
+        meta["descriptor"] = descriptor
     if geometry_signature:
         meta["geometry_signature"] = geometry_signature
     return meta
