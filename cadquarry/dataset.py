@@ -140,10 +140,19 @@ def load_manifest(dataset_dir: Path) -> list[dict[str, Any]]:
     return records
 
 
+def _passes_tier(rec: dict[str, Any], tier_max: int | None) -> bool:
+    """Whether a record is within the requested inclusive complexity tier cap."""
+    if tier_max is None:
+        return True
+    tier = rec.get("tier")
+    return isinstance(tier, int) and tier <= tier_max
+
+
 def pack_corpus_jsonl(
     dataset_dir: Path,
     out_path: Path,
     include_source: bool = True,
+    tier_max: int | None = None,
 ) -> int:
     """
     Flatten a corpus directory into a single self-contained JSONL file.
@@ -156,6 +165,9 @@ def pack_corpus_jsonl(
     Columns: part_id, family, tier, seed, symmetry, op_count, ir_hash,
     generator_version, license, geometry_signature (struct), params (struct),
     and source (the full .py text, when ``include_source``).
+
+    ``tier_max`` (inclusive) drops any record whose complexity ``tier`` exceeds
+    it; ``None`` keeps every tier.
     """
     records = load_manifest(dataset_dir)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -164,6 +176,8 @@ def pack_corpus_jsonl(
         for rec in records:
             pid = rec.get("part_id")
             if not pid:
+                continue
+            if not _passes_tier(rec, tier_max):
                 continue
             row: dict[str, Any] = {
                 "part_id": pid,
@@ -224,9 +238,13 @@ def pack_corpus_parquet(
     include_renders: bool = False,
     include_stl: bool = False,
     include_step: bool = False,
+    tier_max: int | None = None,
 ) -> int:
     """
     Pack a corpus into a single Parquet file.
+
+    ``tier_max`` (inclusive) drops any record whose complexity ``tier`` exceeds
+    it; ``None`` keeps every tier.
 
     Binary geometry columns (render_*, stl_bytes, step_bytes) are stored as raw
     bytes so that HuggingFace ``datasets`` can decode them with the correct
@@ -287,6 +305,8 @@ def pack_corpus_parquet(
     for rec in records:
         pid = rec.get("part_id")
         if not pid:
+            continue
+        if not _passes_tier(rec, tier_max):
             continue
 
         row: dict[str, Any] = {
