@@ -15,5 +15,4 @@
 _minted*/
 __pycache__/
 
-# Keep the built PDF and generated figures tracked? Build them with `make`.
-main.pdf
+# The built PDF is tracked (committed alongside the source). Rebuild with `make`.
