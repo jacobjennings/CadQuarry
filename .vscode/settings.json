@@ -1,0 +1,31 @@
+{
+  // The paper (paper/main.tex) uses fontspec + minted, so it must build with
+  // LuaLaTeX and -shell-escape (and biber for biblatex). latexmk runs the biber
+  // pass automatically. This overrides LaTeX Workshop's default recipe, which
+  // calls pdflatex and fails on fontspec.
+  "latex-workshop.latex.tools": [
+    {
+      "name": "lualatexmk-shellescape",
+      "command": "latexmk",
+      "args": [
+        "-lualatex",
+        "-shell-escape",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "%DOC%"
+      ],
+      "env": {}
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "lualatex + biber (shell-escape)",
+      "tools": ["lualatexmk-shellescape"]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "first"
+  // Aux files (.aux/.fdb_latexmk/.synctex.gz/_minted*) are intentionally kept on
+  // disk for incremental builds and SyncTeX; they're git-ignored via
+  // paper/.gitignore. Clean them with the Makefile target `make clean` if needed.
+}
