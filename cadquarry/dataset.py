@@ -239,6 +239,7 @@ def pack_corpus_parquet(
     include_stl: bool = False,
     include_step: bool = False,
     tier_max: int | None = None,
+    batch_size: int = 512,
 ) -> int:
     """
     Pack a corpus into a single Parquet file.
@@ -254,6 +255,10 @@ def pack_corpus_parquet(
     Renders are read from ``renders/{part_id}/{view}.png``.
     STL / STEP are read from ``geometry/{part_id}.stl`` / ``.step``.
     Missing files produce null values for that column.
+
+    ``batch_size`` rows are buffered and flushed as one Parquet row group, so
+    peak memory stays bounded regardless of corpus size (essential for large
+    geometry variants whose bytes would otherwise OOM the process).
 
     Returns the number of rows written.
     Raises ImportError if pyarrow is not installed.
@@ -299,7 +304,32 @@ def pack_corpus_parquet(
 
     col_names = [c[0] for c in base_cols]
     col_types = {c[0]: c[1] for c in base_cols}
+    schema = pa.schema([(cn, col_types[cn]) for cn in col_names])
     buffers: dict[str, list] = {n: [] for n in col_names}
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Stream in row-group batches via ParquetWriter. Materializing every row of
+    # every column up front holds the whole corpus (renders/STL/STEP bytes) in
+    # RAM twice — once as Python bytes, once when copied into Arrow — which OOMs
+    # on large geometry variants (a 200k -geo/-full run needs ~190+ GB). Writing
+    # one batch at a time bounds peak memory to ~batch_size rows and also keeps
+    # each binary column chunk well under Arrow's 2 GB per-chunk offset limit.
+    writer = None
+    batch_n = 0
+
+    def _flush() -> None:
+        nonlocal writer, batch_n
+        if batch_n == 0:
+            return
+        arrays = [pa.array(buffers[cn], type=col_types[cn]) for cn in col_names]
+        table = pa.table(dict(zip(col_names, arrays)), schema=schema)
+        if writer is None:
+            writer = pq.ParquetWriter(str(out_path), schema, compression="snappy")
+        writer.write_table(table)
+        for cn in col_names:
+            buffers[cn].clear()
+        batch_n = 0
 
     n = 0
     for rec in records:
@@ -357,16 +387,15 @@ def pack_corpus_parquet(
         for cn in col_names:
             buffers[cn].append(row.get(cn))
         n += 1
+        batch_n += 1
+        if batch_n >= batch_size:
+            _flush()
 
-    if n == 0:
+    _flush()
+
+    if writer is None:
+        # No rows matched (e.g. tier filter excluded everything): write nothing,
+        # matching the previous behaviour.
         return 0
-
-    arrays = [
-        pa.array(buffers[cn], type=col_types[cn])
-        for cn in col_names
-    ]
-    schema = pa.schema([(cn, col_types[cn]) for cn in col_names])
-    table = pa.table(dict(zip(col_names, arrays)), schema=schema)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(table, str(out_path), compression="snappy")
+    writer.close()
     return n

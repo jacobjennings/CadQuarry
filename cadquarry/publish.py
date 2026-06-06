@@ -217,6 +217,28 @@ def pack_variant(
     return config_name, data_file
 
 
+def discover_packed(
+    upload_root: Path,
+    tag: str,
+    active_variants: list[tuple[str, bool, bool, bool]],
+) -> list[tuple[str, str, bool, bool, bool]]:
+    """
+    Find already-packed variant files for ``tag`` under ``upload_root`` (for
+    ``upload_only`` resume). Returns the same (config_name, data_file, inc_r,
+    inc_s, inc_sp) tuples ``pack_variant`` would have produced, for every file
+    that exists. Filenames are deterministic, so this just mirrors the naming.
+    """
+    found: list[tuple[str, str, bool, bool, bool]] = []
+    for tier_subdir, tier_part, _tier_max in TIER_SLICES:
+        for sfx, inc_r, inc_s, inc_sp in active_variants:
+            fname = "corpus.jsonl" if not sfx else f"corpus{sfx}.parquet"
+            data_file = f"{tag}/{tier_subdir}/{fname}" if tier_subdir else f"{tag}/{fname}"
+            if (upload_root / data_file).exists():
+                config_name = f"{tag}{tier_part}{sfx}"
+                found.append((config_name, data_file, inc_r, inc_s, inc_sp))
+    return found
+
+
 # ── README / dataset card ─────────────────────────────────────────────────────
 
 def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool) -> str:
@@ -558,6 +580,7 @@ def publish(
     no_step: bool = False,
     private: bool = False,
     dry_run: bool = False,
+    upload_only: bool = False,
     verbose: bool = False,
 ) -> int:
     """
@@ -565,6 +588,10 @@ def publish(
 
     With neither ``sizes`` nor ``all_sizes`` given, publishes **all** sizes in
     the ladder (the natural pairing with a bare ``cadquarry build``).
+
+    ``upload_only`` skips packing entirely and uploads whatever is already in
+    the staging tree (``.hf_build/upload/``) — used to resume an interrupted
+    upload without re-packing the (large) Parquet variants.
     """
     default_repo, ladder = load_publish_ladder()
 
@@ -624,6 +651,20 @@ def publish(
 
     for tag in sorted(tags, key=tag_to_int):
         spec = ladder[tag]
+        if upload_only:
+            # Resume mode: don't re-pack — just register whatever variant files
+            # are already staged under upload_root/{tag}/.
+            found = discover_packed(upload_root, tag, active_variants)
+            built[tag] = found
+            if found:
+                print(f"\n=== {tag}: {len(found)} staged variant(s) to upload ===")
+                for cfg, data_file, *_ in found:
+                    mb = (upload_root / data_file).stat().st_size / 1e6
+                    print(f"  · {cfg}: {data_file} ({mb:.1f} MB)")
+            else:
+                print(f"\n=== {tag}: nothing staged under {upload_root / tag} — skipping ===")
+            continue
+
         print(f"\n=== {tag}: {spec['count']:,} parts (seed {spec['seed']}) ===")
         corpus_dir = resolve_corpus_dir(corpus_root, tag, spec["count"])
 
@@ -655,6 +696,12 @@ def publish(
     for ext_tag in existing:
         if ext_tag not in built:
             built[ext_tag] = []  # placeholder; no data_file known
+
+    if upload_only and not any(built.values()):
+        raise PublishError(
+            f"--upload-only: no packed files found under {upload_root}. "
+            f"Run a normal `cadquarry publish` (without --upload-only) first."
+        )
 
     readme = build_dataset_readme(repo_id, {t: v for t, v in built.items() if v}, ladder)
     (upload_root / "README.md").write_text(readme, encoding="utf-8")

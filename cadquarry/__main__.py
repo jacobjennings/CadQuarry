@@ -453,10 +453,15 @@ def cmd_publish(args: argparse.Namespace) -> int:
     """Pack the built corpora and upload them to HuggingFace (defaults to all sizes)."""
     from .publish import publish, PublishError
 
+    # Accept both space- and comma-separated sizes: --sizes 1k 2k or --sizes 1k,2k.
+    sizes = None
+    if args.sizes:
+        sizes = [s for tok in args.sizes for s in tok.split(",") if s]
+
     try:
         return publish(
-            sizes=args.sizes,
-            all_sizes=not args.sizes,  # bare `publish` -> every built size
+            sizes=sizes,
+            all_sizes=not sizes,  # bare `publish` -> every built size
             repo_id=args.repo_id,
             corpus_root=args.corpus_root,
             code_only=args.code_only,
@@ -465,6 +470,7 @@ def cmd_publish(args: argparse.Namespace) -> int:
             no_step=args.no_step,
             private=args.private,
             dry_run=args.dry_run,
+            upload_only=args.upload_only,
             verbose=args.verbose,
         )
     except PublishError as exc:
@@ -744,7 +750,7 @@ def build_parser() -> argparse.ArgumentParser:
         "publish",
         help="Pack and upload the built corpora to Hugging Face (defaults to all sizes)",
     )
-    pub.add_argument("--sizes", nargs="+", metavar="TAG", help="Subset of ladder tags to publish (default: all built sizes)")
+    pub.add_argument("--sizes", nargs="+", metavar="TAG", help="Subset of ladder tags to publish, space- or comma-separated (default: all built sizes)")
     pub.add_argument("--repo-id", default=None, metavar="REPO", help="HF dataset repo id (default: from the seed list / CADQUARRY_HF_REPO env)")
     pub.add_argument("--out", dest="corpus_root", default="datasets", metavar="DIR", help="Dir holding built corpora as <DIR>/<tag>/ (default: datasets)")
     pub.add_argument("--code-only", action="store_true", help="Publish only code+metadata (skip geometry variants)")
@@ -753,6 +759,7 @@ def build_parser() -> argparse.ArgumentParser:
     pub.add_argument("--no-step", action="store_true", help="Skip STEP variants")
     pub.add_argument("--private", action="store_true", help="Create the dataset repo as private")
     pub.add_argument("--dry-run", action="store_true", help="Pack locally without uploading")
+    pub.add_argument("--upload-only", action="store_true", help="Skip packing; upload the already-packed staging tree as-is (resume an interrupted upload)")
     pub.add_argument("--verbose", "-v", action="store_true")
 
     # run
