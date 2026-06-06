@@ -1,0 +1,19 @@
+# LaTeX build artifacts (kept on disk for incremental builds + SyncTeX)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+_minted*/
+__pycache__/
+
+# Keep the built PDF and generated figures tracked? Build them with `make`.
+main.pdf

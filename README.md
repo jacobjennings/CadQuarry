@@ -198,30 +198,42 @@ matters.
 
 ## Performance
 
-Generation validates every part by execution. The expensive step is importing
-CadQuery/OCP (~1–1.5s), so CadQuarry runs a pool of **persistent workers** that
-import CadQuery once and then build many parts each, fanning the work across
-cores. Sampling stays seeded per-part and the accept/dedup decision stays in
-strict attempt order, so output is **bit-for-bit identical regardless of worker
-count** — the same seed always yields the same corpus.
+Generation validates every part by execution. Importing CadQuery/OCP (~1–1.5s)
+is a fixed startup cost, amortized by a pool of **persistent workers** that
+import once and then build many parts each, fanning the work across cores. With
+the full default config the throughput floor is set by the solver-built
+**mechanical families** (`gear` + `threaded`, ~12% of the mix), which solve real
+involute/thread geometry and cost a meaningful fraction of a second each — so
+end-to-end generation runs at roughly **~9–10 validated parts/sec** rather than
+the hundreds/sec the millisecond-scale primitive families alone would sustain.
+Sampling stays seeded per-part and the accept/dedup decision stays in strict
+attempt order, so output is **bit-for-bit identical regardless of worker count**
+— the same seed always yields the same corpus.
 
 Measured on an **AMD Ryzen Threadripper 9960X (24C/48T)** with the default
-24-worker pool (`generate`, execution-validated, no geometry export):
+24-worker pool, full default config (mech families included), `generate` only
+(execution-validated, no geometry export):
 
-| Dataset size | Estimated time | Notes |
+| Dataset size | Wall-clock time | Throughput |
 |---|---|---|
-| 5,000   | ~20 s     | |
-| 10,000  | ~40 s     | |
-| 25,000  | ~1 m 45 s | |
-| 50,000  | ~3 m 25 s | |
-| 100,000 | ~6 m 50 s | |
-| 200,000 | ~13 m 30 s | |
+| 1,000   | ~2 m 10 s  | 7.5 part/s |
+| 2,000   | ~3 m 30 s  | 9.5 part/s |
+| 5,000   | ~9 m 30 s  | 8.7 part/s |
+| 10,000  | ~18 m 45 s | 8.9 part/s |
+| 20,000  | ~36 m 30 s | 9.1 part/s |
+| 50,000  | ~1 h 30 m  | 9.2 part/s |
+| 100,000 | ~2 h 50 m  | 9.8 part/s |
 
-Throughput is roughly **~250 accepted parts/sec** (sustained) after a ~2s
-worker warm-up. Anchored on real runs: 200 parts in **2.6s**, 2,000 in **9.9s**.
+Throughput climbs slightly with corpus size as the fixed worker warm-up
+amortizes. Dropping the `mech` families (or lowering their weight in
+`configs/default.toml`) pushes throughput up by more than an order of magnitude,
+since the remaining primitive families build in milliseconds.
 
-Tune the pool with `--workers N` (default: `min(cores, 24)`). Estimates scale
-roughly linearly with core count and exclude STEP/STL/point-cloud export
+Tune the pool with `--workers N` (default: `min(cores, 24)`). **The best worker
+count is system-dependent**: it scales with core count, but the solver-built
+families are memory-hungry, so on machines with less RAM you may need *fewer*
+workers than you have cores to avoid swapping (very large corpora at high worker
+counts can exhaust memory). Times exclude STEP/STL/render export
 (`cadquarry export`, which uses the same worker pool).
 
 ---
