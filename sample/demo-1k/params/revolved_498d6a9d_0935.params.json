@@ -1,0 +1,66 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "revolved_498d6a9d_0935",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 79.47,
+      "min": 6.0,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 298.0,
+      "min": 89.4,
+      "max": 320.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    },
+    "inner_d": {
+      "type": "float",
+      "default": 46.2,
+      "min": 2.0,
+      "max": 55.6,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Bore diameter (mm)"
+    },
+    "flange_d": {
+      "type": "float",
+      "default": 150.0,
+      "min": 95.4,
+      "max": 238.4,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Flange diameter (mm)"
+    },
+    "flange_h": {
+      "type": "float",
+      "default": 64.1,
+      "min": 19.2,
+      "max": 149.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Flange height (mm)"
+    },
+    "end_chamfer": {
+      "type": "float",
+      "default": 0.7,
+      "min": 0.1,
+      "max": 2.1,
+      "step": 0.1,
+      "group": "Body",
+      "label": "End chamfer (mm)"
+    },
+    "end_chamfered": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "End chamfers"
+    }
+  }
+}

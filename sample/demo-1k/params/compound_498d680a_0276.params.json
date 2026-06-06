@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "compound_498d680a_0276",
+  "params": {
+    "block_w": {
+      "type": "float",
+      "default": 45,
+      "min": 15.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block width (mm)"
+    },
+    "block_d": {
+      "type": "float",
+      "default": 58.0,
+      "min": 10.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block depth (mm)"
+    },
+    "block_h": {
+      "type": "float",
+      "default": 48.0,
+      "min": 10.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block height (mm)"
+    },
+    "spig_a": {
+      "type": "float",
+      "default": 16.6,
+      "min": 8.3,
+      "max": 31.5,
+      "step": 1.0,
+      "group": "Spigot",
+      "label": "Spigot width (mm)"
+    },
+    "spig_b": {
+      "type": "float",
+      "default": 11.5,
+      "min": 5.8,
+      "max": 31.5,
+      "step": 1.0,
+      "group": "Spigot",
+      "label": "Spigot depth (mm)"
+    },
+    "spig_len": {
+      "type": "float",
+      "default": 27.8,
+      "min": 3.4,
+      "max": 46.0,
+      "step": 1.0,
+      "group": "Spigot",
+      "label": "Spigot length (mm)"
+    }
+  }
+}

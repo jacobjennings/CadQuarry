@@ -1,0 +1,34 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "threaded_498d6ab7_0961",
+  "seed": 1234004663,
+  "generator_version": "0.5.0",
+  "family": "threaded",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "3c753188c62f37e9",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "threaded",
+    "standard": "iso",
+    "external": false,
+    "length": 12.0,
+    "major_diameter": 4.0,
+    "pitch": 0.7,
+    "designation": "M4x0.7"
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 366.0,
+    "surface_area": 545.0,
+    "principal_moments": [
+      2960.0,
+      5840.0,
+      5840.0
+    ],
+    "n_faces": 143,
+    "n_edges": 387,
+    "n_vertices": 246
+  }
+}

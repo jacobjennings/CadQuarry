@@ -1,0 +1,25 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "ribbed_498d69f1_0763",
+  "seed": 1234004465,
+  "generator_version": "0.5.0",
+  "family": "ribbed",
+  "tier": 1,
+  "symmetry": "mirror_x",
+  "op_count": 2,
+  "ir_hash": "407475aac901e001",
+  "license": "CC0-1.0",
+  "geometry_signature": {
+    "version": 2,
+    "volume": 47300.0,
+    "surface_area": 28100.0,
+    "principal_moments": [
+      30799999.999999996,
+      43200000.0,
+      71000000.0
+    ],
+    "n_faces": 21,
+    "n_edges": 48,
+    "n_vertices": 32
+  }
+}

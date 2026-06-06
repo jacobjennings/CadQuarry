@@ -1,0 +1,78 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "gear_498d6a2e_0824",
+  "params": {
+    "module": {
+      "type": "float",
+      "default": 1.0,
+      "min": 1.0,
+      "max": 6.0,
+      "step": 0.25,
+      "group": "Gear",
+      "label": "Module (mm)"
+    },
+    "teeth": {
+      "type": "int",
+      "default": 13,
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "group": "Gear",
+      "label": "Number of teeth"
+    },
+    "gear_w": {
+      "type": "float",
+      "default": 6.1,
+      "min": 2.4,
+      "max": 15.2,
+      "step": 1.0,
+      "group": "Gear",
+      "label": "Face width (mm)"
+    },
+    "profile_shift": {
+      "type": "float",
+      "default": 0.42,
+      "min": -0.5,
+      "max": 0.7,
+      "step": 0.05,
+      "group": "Gear",
+      "label": "Profile shift"
+    },
+    "root_fillet": {
+      "type": "float",
+      "default": 0.29,
+      "min": 0.0,
+      "max": 0.5,
+      "step": 0.05,
+      "group": "Gear",
+      "label": "Root fillet (mm)"
+    },
+    "bore_d": {
+      "type": "float",
+      "default": 3.0,
+      "min": 2.0,
+      "max": 6.3,
+      "step": 0.5,
+      "group": "Bore",
+      "label": "Bore diameter (mm)"
+    },
+    "hub_d": {
+      "type": "float",
+      "default": 5.4,
+      "min": 4.2,
+      "max": 6.5,
+      "step": 1.0,
+      "group": "Hub",
+      "label": "Hub diameter (mm)"
+    },
+    "hub_h": {
+      "type": "float",
+      "default": 4.2,
+      "min": 1.3,
+      "max": 8.4,
+      "step": 0.5,
+      "group": "Hub",
+      "label": "Hub height (mm)"
+    }
+  }
+}

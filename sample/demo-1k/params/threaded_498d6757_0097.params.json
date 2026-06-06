@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "threaded_498d6757_0097",
+  "params": {
+    "thread_size": {
+      "type": "enum",
+      "default": "3/4",
+      "choices": [
+        "1/4",
+        "5/16",
+        "3/8",
+        "1/2",
+        "5/8",
+        "3/4",
+        "7/8",
+        "1",
+        "1 1/4",
+        "1 1/2"
+      ],
+      "group": "Thread",
+      "label": "Size designation"
+    },
+    "thread_len": {
+      "type": "float",
+      "default": 49.1,
+      "min": 19.6,
+      "max": 98.2,
+      "step": 1.0,
+      "group": "Thread",
+      "label": "Thread length (mm)"
+    }
+  }
+}

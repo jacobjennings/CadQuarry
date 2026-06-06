@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "compound_498d677b_0133",
+  "params": {
+    "base_w": {
+      "type": "float",
+      "default": 95,
+      "min": 30.0,
+      "max": 160.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base width (mm)"
+    },
+    "base_d": {
+      "type": "float",
+      "default": 89.8,
+      "min": 25.0,
+      "max": 160.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base depth (mm)"
+    },
+    "base_h": {
+      "type": "float",
+      "default": 6.0,
+      "min": 3.0,
+      "max": 30.0,
+      "step": 0.5,
+      "group": "Base",
+      "label": "Base thickness (mm)"
+    },
+    "col_d": {
+      "type": "float",
+      "default": 20.8,
+      "min": 8.3,
+      "max": 44.9,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column diameter (mm)"
+    },
+    "col_h": {
+      "type": "float",
+      "default": 46.5,
+      "min": 13.9,
+      "max": 139.5,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column height (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 8.4,
+      "min": 2.0,
+      "max": 13.0,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    }
+  }
+}

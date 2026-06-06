@@ -1,0 +1,25 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "compound_498d69c3_0717",
+  "seed": 1234004419,
+  "generator_version": "0.5.0",
+  "family": "compound",
+  "tier": 3,
+  "symmetry": "mirror_x",
+  "op_count": 7,
+  "ir_hash": "709b262a1c46de6b",
+  "license": "CC0-1.0",
+  "geometry_signature": {
+    "version": 2,
+    "volume": 223000.0,
+    "surface_area": 28200.0,
+    "principal_moments": [
+      129000000.0,
+      134000000.0,
+      190000000.0
+    ],
+    "n_faces": 57,
+    "n_edges": 152,
+    "n_vertices": 99
+  }
+}

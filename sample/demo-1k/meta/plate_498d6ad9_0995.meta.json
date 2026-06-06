@@ -1,0 +1,25 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "plate_498d6ad9_0995",
+  "seed": 1234004697,
+  "generator_version": "0.5.0",
+  "family": "plate",
+  "tier": 2,
+  "symmetry": "mirror_xy",
+  "op_count": 3,
+  "ir_hash": "108214bf4999fcee",
+  "license": "CC0-1.0",
+  "geometry_signature": {
+    "version": 2,
+    "volume": 37400.0,
+    "surface_area": 12200.0,
+    "principal_moments": [
+      5470000.0,
+      40500000.0,
+      45599999.99999999
+    ],
+    "n_faces": 14,
+    "n_edges": 36,
+    "n_vertices": 24
+  }
+}

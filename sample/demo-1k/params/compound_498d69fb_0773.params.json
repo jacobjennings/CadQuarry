@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "compound_498d69fb_0773",
+  "params": {
+    "base_sides": {
+      "type": "int",
+      "default": 6,
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "group": "Base",
+      "label": "Base sides"
+    },
+    "base_r": {
+      "type": "float",
+      "default": 15,
+      "min": 9.0,
+      "max": 24.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base circumradius (mm)"
+    },
+    "base_h": {
+      "type": "float",
+      "default": 12.7,
+      "min": 5.1,
+      "max": 31.8,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base height (mm)"
+    },
+    "col_d": {
+      "type": "float",
+      "default": 12.8,
+      "min": 6.4,
+      "max": 20.8,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column diameter (mm)"
+    },
+    "col_h": {
+      "type": "float",
+      "default": 19.3,
+      "min": 5.8,
+      "max": 48.2,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column height (mm)"
+    },
+    "col_bore": {
+      "type": "float",
+      "default": 5.8,
+      "min": 2.0,
+      "max": 9.2,
+      "step": 0.5,
+      "group": "Column",
+      "label": "Column bore diameter (mm)"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "compound_498d6a5f_0873",
+  "params": {
+    "block_w": {
+      "type": "float",
+      "default": 35.62,
+      "min": 15.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block width (mm)"
+    },
+    "block_d": {
+      "type": "float",
+      "default": 46.4,
+      "min": 10.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block depth (mm)"
+    },
+    "block_h": {
+      "type": "float",
+      "default": 23.2,
+      "min": 10.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block height (mm)"
+    },
+    "spig_d": {
+      "type": "float",
+      "default": 10.6,
+      "min": 4.2,
+      "max": 16.2,
+      "step": 1.0,
+      "group": "Spigot",
+      "label": "Spigot diameter (mm)"
+    },
+    "spig_len": {
+      "type": "float",
+      "default": 9.4,
+      "min": 3.2,
+      "max": 42.4,
+      "step": 1.0,
+      "group": "Spigot",
+      "label": "Spigot length (mm)"
+    },
+    "spig_bore": {
+      "type": "float",
+      "default": 5.7,
+      "min": 2.0,
+      "max": 7.6,
+      "step": 0.5,
+      "group": "Spigot",
+      "label": "Bore diameter (mm)"
+    }
+  }
+}
