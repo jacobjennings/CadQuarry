@@ -1,0 +1,25 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "enclosure_498d6a38_0834",
+  "seed": 1234004536,
+  "generator_version": "0.5.0",
+  "family": "enclosure",
+  "tier": 2,
+  "symmetry": "mirror_xy",
+  "op_count": 3,
+  "ir_hash": "b269aec4b5ac9710",
+  "license": "CC0-1.0",
+  "geometry_signature": {
+    "version": 2,
+    "volume": 46900.0,
+    "surface_area": 35600.0,
+    "principal_moments": [
+      28899999.999999996,
+      48799999.99999999,
+      59699999.99999999
+    ],
+    "n_faces": 19,
+    "n_edges": 60,
+    "n_vertices": 40
+  }
+}

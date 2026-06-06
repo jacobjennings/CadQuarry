@@ -1,0 +1,25 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "revolved_498d69cb_0725",
+  "seed": 1234004427,
+  "generator_version": "0.5.0",
+  "family": "revolved",
+  "tier": 1,
+  "symmetry": "radial",
+  "op_count": 2,
+  "ir_hash": "acea9e833109897e",
+  "license": "CC0-1.0",
+  "geometry_signature": {
+    "version": 2,
+    "volume": 210000.0,
+    "surface_area": 34500.0,
+    "principal_moments": [
+      120000000.0,
+      292000000.0,
+      292000000.0
+    ],
+    "n_faces": 10,
+    "n_edges": 17,
+    "n_vertices": 10
+  }
+}

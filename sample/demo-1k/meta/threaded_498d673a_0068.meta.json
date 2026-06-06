@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "threaded_498d673a_0068",
+  "seed": 1234003770,
+  "generator_version": "0.5.0",
+  "family": "threaded",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "6bf2cba8abb3a845",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "threaded",
+    "standard": "trapezoidal",
+    "external": true,
+    "length": 51.5,
+    "size": "18x4",
+    "designation": "Tr 18x4"
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 10300.0,
+    "surface_area": 4750.0,
+    "principal_moments": [
+      347000.0,
+      2390000.0,
+      2390000.0
+    ],
+    "n_faces": 135,
+    "n_edges": 347,
+    "n_vertices": 214
+  }
+}

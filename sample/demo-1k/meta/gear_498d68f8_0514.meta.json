@@ -1,0 +1,36 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "gear_498d68f8_0514",
+  "seed": 1234004216,
+  "generator_version": "0.5.0",
+  "family": "gear",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "6e68991ec9c3cdf7",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "gear",
+    "kind": "ring",
+    "module": 6.0,
+    "teeth": 38,
+    "face_width": 26.1,
+    "pitch_diameter": 228.0,
+    "pressure_angle_deg": 20.0,
+    "profile_shift": -0.06,
+    "root_fillet": 1.13
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 259000.0,
+    "surface_area": 68300.0,
+    "principal_moments": [
+      1950000000.0,
+      1950000000.0,
+      3880000000.0
+    ],
+    "n_faces": 193,
+    "n_edges": 573,
+    "n_vertices": 382
+  }
+}

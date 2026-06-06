@@ -1,0 +1,78 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "flanged_498d6939_0579",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 26.88,
+      "min": 20.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 18.0,
+      "min": 5.4,
+      "max": 45.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    },
+    "inner_d": {
+      "type": "float",
+      "default": 14.6,
+      "min": 2.0,
+      "max": 18.8,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Bore diameter (mm)"
+    },
+    "flange_d": {
+      "type": "float",
+      "default": 48.1,
+      "min": 34.9,
+      "max": 80.6,
+      "step": 1.0,
+      "group": "Flange",
+      "label": "Flange diameter (mm)"
+    },
+    "flange_h": {
+      "type": "float",
+      "default": 4.3,
+      "min": 1.3,
+      "max": 7.2,
+      "step": 0.5,
+      "group": "Flange",
+      "label": "Flange height (mm)"
+    },
+    "bolt_d": {
+      "type": "float",
+      "default": 4.3,
+      "min": 3.0,
+      "max": 13.0,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Bolt hole diameter (mm)"
+    },
+    "bolt_r": {
+      "type": "float",
+      "default": 14.4,
+      "min": 9.6,
+      "max": 21.6,
+      "step": 1.0,
+      "group": "Holes",
+      "label": "Bolt circle radius (mm)"
+    },
+    "n_bolts": {
+      "type": "int",
+      "default": 8,
+      "min": 3,
+      "max": 12,
+      "step": 1,
+      "group": "Holes",
+      "label": "Number of bolts"
+    }
+  }
+}

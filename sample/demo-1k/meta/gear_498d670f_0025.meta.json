@@ -1,0 +1,39 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "gear_498d670f_0025",
+  "seed": 1234003727,
+  "generator_version": "0.5.0",
+  "family": "gear",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "9ab6c4907c35954e",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "gear",
+    "kind": "helical",
+    "module": 2.0,
+    "teeth": 25,
+    "face_width": 8.0,
+    "pitch_diameter": 50.0,
+    "pressure_angle_deg": 20.0,
+    "helix_angle_deg": 19.1,
+    "herringbone": false,
+    "profile_shift": 0.14,
+    "root_fillet": 0.35,
+    "bore_d": 9.8
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 17200.0,
+    "surface_area": 7120.0,
+    "principal_moments": [
+      3300000.0,
+      3300000.0,
+      6410000.0
+    ],
+    "n_faces": 153,
+    "n_edges": 453,
+    "n_vertices": 302
+  }
+}

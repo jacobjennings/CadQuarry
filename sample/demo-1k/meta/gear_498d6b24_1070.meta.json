@@ -1,0 +1,37 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "gear_498d6b24_1070",
+  "seed": 1234004772,
+  "generator_version": "0.5.0",
+  "family": "gear",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "226a0a02881349e0",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "gear",
+    "kind": "spur",
+    "module": 1.0,
+    "teeth": 19,
+    "face_width": 3.6,
+    "pitch_diameter": 19.0,
+    "pressure_angle_deg": 20.0,
+    "profile_shift": -0.26,
+    "root_fillet": 0.15,
+    "bore_d": 3.5
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 907.0,
+    "surface_area": 971.0,
+    "principal_moments": [
+      21400.0,
+      21400.0,
+      40800.0
+    ],
+    "n_faces": 155,
+    "n_edges": 459,
+    "n_vertices": 306
+  }
+}

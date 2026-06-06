@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "threaded_498d67d8_0226",
+  "params": {
+    "major_d": {
+      "type": "float",
+      "default": 16.0,
+      "min": 4.0,
+      "max": 24.0,
+      "step": 0.5,
+      "group": "Thread",
+      "label": "Major diameter (mm)"
+    },
+    "pitch": {
+      "type": "float",
+      "default": 2.0,
+      "min": 1.0,
+      "max": 4.0,
+      "step": 0.05,
+      "group": "Thread",
+      "label": "Pitch (mm)"
+    },
+    "thread_len": {
+      "type": "float",
+      "default": 36.2,
+      "min": 14.5,
+      "max": 72.4,
+      "step": 1.0,
+      "group": "Thread",
+      "label": "Thread length (mm)"
+    }
+  }
+}

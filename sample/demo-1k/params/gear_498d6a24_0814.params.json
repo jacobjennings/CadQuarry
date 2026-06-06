@@ -1,0 +1,69 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "gear_498d6a24_0814",
+  "params": {
+    "module": {
+      "type": "float",
+      "default": 1.0,
+      "min": 1.0,
+      "max": 6.0,
+      "step": 0.25,
+      "group": "Gear",
+      "label": "Module (mm)"
+    },
+    "teeth": {
+      "type": "int",
+      "default": 29,
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "group": "Gear",
+      "label": "Number of teeth"
+    },
+    "gear_w": {
+      "type": "float",
+      "default": 5.1,
+      "min": 2.0,
+      "max": 12.8,
+      "step": 1.0,
+      "group": "Gear",
+      "label": "Face width (mm)"
+    },
+    "helix_angle": {
+      "type": "float",
+      "default": 27.6,
+      "min": 5.0,
+      "max": 40.0,
+      "step": 1.0,
+      "group": "Gear",
+      "label": "Helix angle (deg)"
+    },
+    "profile_shift": {
+      "type": "float",
+      "default": -0.04,
+      "min": -0.5,
+      "max": 0.7,
+      "step": 0.05,
+      "group": "Gear",
+      "label": "Profile shift"
+    },
+    "root_fillet": {
+      "type": "float",
+      "default": 0.2,
+      "min": 0.0,
+      "max": 0.5,
+      "step": 0.05,
+      "group": "Gear",
+      "label": "Root fillet (mm)"
+    },
+    "bore_d": {
+      "type": "float",
+      "default": 4.7,
+      "min": 2.0,
+      "max": 15.9,
+      "step": 0.5,
+      "group": "Bore",
+      "label": "Bore diameter (mm)"
+    }
+  }
+}

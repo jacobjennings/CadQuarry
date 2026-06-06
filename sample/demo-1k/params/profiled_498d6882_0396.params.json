@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "profiled_498d6882_0396",
+  "params": {
+    "slot_len": {
+      "type": "float",
+      "default": 25,
+      "min": 12.5,
+      "max": 50.0,
+      "step": 1.0,
+      "group": "Profile",
+      "label": "Slot length (mm)"
+    },
+    "slot_w": {
+      "type": "float",
+      "default": 14.41,
+      "min": 7.2,
+      "max": 28.8,
+      "step": 0.5,
+      "group": "Profile",
+      "label": "Slot width (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 247.2,
+      "min": 74.2,
+      "max": 741.6,
+      "step": 5.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    }
+  }
+}

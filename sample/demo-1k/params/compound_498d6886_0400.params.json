@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "compound_498d6886_0400",
+  "params": {
+    "block_w": {
+      "type": "float",
+      "default": 54.12,
+      "min": 20.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Body width (mm)"
+    },
+    "block_d": {
+      "type": "float",
+      "default": 37.1,
+      "min": 15.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Body depth (mm)"
+    },
+    "block_h": {
+      "type": "float",
+      "default": 43.1,
+      "min": 15.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Body height (mm)"
+    },
+    "port_d": {
+      "type": "float",
+      "default": 12.3,
+      "min": 4.9,
+      "max": 16.7,
+      "step": 1.0,
+      "group": "Ports",
+      "label": "Ports diameter (mm)"
+    },
+    "port_len": {
+      "type": "float",
+      "default": 11.9,
+      "min": 3.1,
+      "max": 36.9,
+      "step": 1.0,
+      "group": "Ports",
+      "label": "Port boss length (mm)"
+    },
+    "port_bore": {
+      "type": "float",
+      "default": 5.9,
+      "min": 2.0,
+      "max": 8.9,
+      "step": 0.5,
+      "group": "Ports",
+      "label": "Port bore diameter (mm)"
+    }
+  }
+}

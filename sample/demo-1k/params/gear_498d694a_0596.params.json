@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "gear_498d694a_0596",
+  "params": {
+    "module": {
+      "type": "float",
+      "default": 4.0,
+      "min": 1.0,
+      "max": 6.0,
+      "step": 0.25,
+      "group": "Gear",
+      "label": "Module (mm)"
+    },
+    "teeth": {
+      "type": "int",
+      "default": 14,
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "group": "Gear",
+      "label": "Number of teeth"
+    },
+    "gear_w": {
+      "type": "float",
+      "default": 23.4,
+      "min": 9.4,
+      "max": 58.5,
+      "step": 1.0,
+      "group": "Gear",
+      "label": "Face width (mm)"
+    }
+  }
+}

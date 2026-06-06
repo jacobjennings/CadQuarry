@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.5.0",
+  "part_id": "revolved_498d6802_0268",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 66.19,
+      "min": 6.0,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 246.6,
+      "min": 74.0,
+      "max": 320.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    },
+    "inner_d": {
+      "type": "float",
+      "default": 25.9,
+      "min": 2.0,
+      "max": 46.3,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Bore diameter (mm)"
+    },
+    "groove_depth": {
+      "type": "float",
+      "default": 2.73,
+      "min": 1.09,
+      "max": 8.19,
+      "step": 0.1,
+      "group": "Body",
+      "label": "Groove depth (mm)"
+    },
+    "groove_w": {
+      "type": "float",
+      "default": 17.66,
+      "min": 7.06,
+      "max": 52.98,
+      "step": 0.2,
+      "group": "Body",
+      "label": "Groove width (mm)"
+    },
+    "groove_pos": {
+      "type": "float",
+      "default": 111.5,
+      "min": 37.0,
+      "max": 209.6,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Groove position (mm)"
+    }
+  }
+}
