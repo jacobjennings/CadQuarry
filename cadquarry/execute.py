@@ -257,13 +257,37 @@ def get_stl(path: Path, params: dict[str, Any] | None = None, timeout: float = 3
 # bounded by the same hard wall-clock timeout as before — on timeout the parent
 # SIGKILLs that worker and respawns a fresh one, losing only the single bad
 # job rather than the batch.
+#
+# Memory: OpenCASCADE/OCP retains a few MB per *distinct* part it processes
+# (BRep caches + an allocator that holds freed blocks in free-lists rather than
+# returning them to the OS), so a worker that lives for a whole corpus grows
+# without bound — at corpus scale, times the worker count, this is enough to
+# exhaust RAM and spill to swap.  To cap it, each worker is recycled (its
+# subprocess gracefully torn down and respawned) after a bounded number of
+# jobs.  Because a response is a pure function of the request, respawning
+# mid-corpus is bit-for-bit identical to never doing so — it only frees memory.
+
+# Recycle a worker subprocess after this many jobs to bound peak RSS.  Override
+# with CADQUARRY_MAX_JOBS_PER_WORKER (0 disables recycling).  The ~1-1.5s
+# respawn cost is amortised over the budget, so a few hundred keeps the import
+# overhead negligible while still releasing memory frequently.
+def _default_max_jobs_per_worker() -> int:
+    raw = os.environ.get("CADQUARRY_MAX_JOBS_PER_WORKER")
+    if raw is None:
+        return 256
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return 256
 
 
 class _Worker:
     """A single long-lived cadquery worker subprocess."""
 
-    def __init__(self, timeout: float) -> None:
+    def __init__(self, timeout: float, max_jobs: int = 0) -> None:
         self.timeout = timeout
+        self.max_jobs = max(0, int(max_jobs))
+        self._jobs_done = 0
         self.proc: subprocess.Popen | None = None
         self._r_fd: int = -1
         self._buf = b""
@@ -286,6 +310,7 @@ class _Worker:
         os.close(w_fd)  # only the child writes to it
         self._r_fd = r_fd
         self._buf = b""
+        self._jobs_done = 0
 
     def _readline(self, deadline: float) -> bytes | None:
         """Read one newline-terminated line, or None on timeout/EOF."""
@@ -320,10 +345,26 @@ class _Worker:
             self._kill_respawn()
             return {"success": False, "error": f"Execution timed out after {self.timeout}s"}
         try:
-            return json.loads(line.decode("utf-8"))
+            resp = json.loads(line.decode("utf-8"))
         except Exception as exc:  # malformed — treat as failure, recycle worker
             self._kill_respawn()
             return {"success": False, "error": f"malformed worker response: {exc}"}
+
+        # Bound peak RSS: OCP/OCC retains memory per distinct part, so recycle
+        # the subprocess once it has served its job budget.  (A respawn already
+        # happened above on timeout/crash, resetting the counter.)
+        self._jobs_done += 1
+        if self.max_jobs and self._jobs_done >= self.max_jobs:
+            self._recycle()
+        return resp
+
+    def _recycle(self) -> None:
+        """Gracefully tear down the worker subprocess and start a fresh one,
+        releasing all memory it accumulated.  Used to bound peak RSS over a
+        long batch; unlike ``_kill_respawn`` this is a clean shutdown, not a
+        reaction to a hung/broken worker."""
+        self.close()
+        self._spawn()
 
     def _kill_respawn(self) -> None:
         if self.proc is not None:
@@ -378,13 +419,28 @@ class WorkerPool:
     request is a dict understood by ``cadquarry._worker`` (op="analyze" or
     op="export").  Jobs run concurrently across workers; ordering of results
     is the caller's responsibility (keys are preserved).
+
+    Each worker subprocess is recycled after ``max_jobs_per_worker`` jobs to
+    keep OCC/OCP memory from accumulating across a whole corpus; since a
+    response is a pure function of its request, recycling never changes output.
     """
 
-    def __init__(self, n_workers: int, timeout: float = 30.0) -> None:
+    def __init__(
+        self, n_workers: int, timeout: float = 30.0, max_jobs_per_worker: int | None = None
+    ) -> None:
         self.n_workers = max(1, int(n_workers))
         self.timeout = timeout
+        # Recycle each worker after this many jobs to bound peak RSS (see the
+        # module note above).  ``None`` -> env-configurable default; 0 disables.
+        self.max_jobs_per_worker = (
+            _default_max_jobs_per_worker() if max_jobs_per_worker is None
+            else max(0, int(max_jobs_per_worker))
+        )
         self._job_q: queue.Queue = queue.Queue()
-        self._workers = [_Worker(timeout) for _ in range(self.n_workers)]
+        self._workers = [
+            _Worker(timeout, max_jobs=self.max_jobs_per_worker)
+            for _ in range(self.n_workers)
+        ]
         self._threads: list[threading.Thread] = []
         for w in self._workers:
             t = threading.Thread(target=self._worker_loop, args=(w,), daemon=True)
