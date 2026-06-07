@@ -9,6 +9,7 @@ Outputs into paper/figures/:
 """
 from __future__ import annotations
 
+import argparse
 import random
 from pathlib import Path
 
@@ -24,6 +25,9 @@ FAMILIES = [
     "plate", "bracket", "revolved", "block", "compound",
     "flanged", "ribbed", "enclosure", "profiled", "gear", "threaded",
 ]
+# Keyed by the figure's number in the compiled paper (Fig 2 = pipeline diagram
+# and Fig 5 = distribution chart are not built here, hence the gaps).
+FIGURES = {1: "teaser", 3: "families", 4: "eightview"}
 
 
 def part_dirs(family: str) -> list[Path]:
@@ -68,16 +72,15 @@ def grid(images: list[Image.Image], cols: int, cell: int, pad: int, bg=(255, 255
     return canvas
 
 
-def make_teaser(seed: int = 7):
-    rng = random.Random(seed)
+def make_teaser():
     # Proportional-ish sample across families; iso_fr reads well for most.
     picks: list[Path] = []
     per = {f: max(2, 4) for f in FAMILIES}
     for fam in FAMILIES:
         ds = part_dirs(fam)
-        rng.shuffle(ds)
+        random.shuffle(ds)
         picks.extend(ds[: per[fam]])
-    rng.shuffle(picks)
+    random.shuffle(picks)
     picks = picks[:48]
     imgs = []
     for d in picks:
@@ -89,42 +92,65 @@ def make_teaser(seed: int = 7):
     print("teaser:", out.size, len(imgs), "parts")
 
 
-# Hand-picked representatives that show each family clearly.
+# Hand-picked representatives that show each family clearly (None = pick at random).
 REPRESENTATIVES = {
     "plate": None, "bracket": None, "revolved": None, "block": None,
     "compound": None, "flanged": None, "ribbed": None, "enclosure": None,
     "profiled": None, "gear": None, "threaded": None,
 }
 
+# families.png montage geometry (shared by the full build and in-place re-rolls).
+FAM_CELL, FAM_PAD, FAM_LABEL_H, FAM_COLS = 230, 10, 30, 6
 
-def make_families(seed: int = 3):
-    rng = random.Random(seed)
-    cell, pad, label_h = 230, 10, 30
-    cols = 6
-    rows = (len(FAMILIES) + cols - 1) // cols
-    W = cols * cell + (cols + 1) * pad
-    H = rows * (cell + label_h) + (rows + 1) * pad
+
+def _family_part(fam: str) -> Path:
+    """The hand-picked representative for a family, or a fresh random one."""
+    chosen = REPRESENTATIVES.get(fam)
+    if chosen:
+        for d in part_dirs(fam):
+            if d.name == chosen:
+                return d
+    return random.choice(part_dirs(fam))
+
+
+def _draw_family_cell(canvas: Image.Image, draw: ImageDraw.ImageDraw, fnt, i: int, fam: str, d: Path):
+    im = flatten(load(d, "iso_fr") or load(d, "iso")).resize((FAM_CELL, FAM_CELL), Image.LANCZOS)
+    r, c = divmod(i, FAM_COLS)
+    x = FAM_PAD + c * (FAM_CELL + FAM_PAD)
+    y = FAM_PAD + r * (FAM_CELL + FAM_LABEL_H + FAM_PAD)
+    canvas.paste(im, (x, y))
+    tb = draw.textbbox((0, 0), fam, font=fnt)
+    draw.text((x + (FAM_CELL - (tb[2] - tb[0])) // 2, y + FAM_CELL + 4), fam, fill=(20, 20, 20), font=fnt)
+
+
+def make_families():
+    """Rebuild the whole grid with a fresh random representative per family."""
+    rows = (len(FAMILIES) + FAM_COLS - 1) // FAM_COLS
+    W = FAM_COLS * FAM_CELL + (FAM_COLS + 1) * FAM_PAD
+    H = rows * (FAM_CELL + FAM_LABEL_H) + (rows + 1) * FAM_PAD
     canvas = Image.new("RGB", (W, H), (255, 255, 255))
     draw = ImageDraw.Draw(canvas)
     fnt = font(20)
     for i, fam in enumerate(FAMILIES):
-        ds = part_dirs(fam)
-        chosen = REPRESENTATIVES.get(fam)
-        d = next((x for x in ds if x.name == chosen), None) if chosen else None
-        if d is None:
-            rng.shuffle(ds)
-            d = ds[0]
-        im = load(d, "iso_fr") or load(d, "iso")
-        im = flatten(im).resize((cell, cell), Image.LANCZOS)
-        r, c = divmod(i, cols)
-        x = pad + c * (cell + pad)
-        y = pad + r * (cell + label_h + pad)
-        canvas.paste(im, (x, y))
-        tb = draw.textbbox((0, 0), fam, font=fnt)
-        tw = tb[2] - tb[0]
-        draw.text((x + (cell - tw) // 2, y + cell + 4), fam, fill=(20, 20, 20), font=fnt)
+        _draw_family_cell(canvas, draw, fnt, i, fam, _family_part(fam))
     canvas.save(OUT / "families.png")
     print("families:", canvas.size)
+
+
+def reroll_families(families: set[str]):
+    """Re-pick only the named family cells, pasting onto the existing grid so
+    every other cell (and the rest of the figure) is left exactly as-is."""
+    path = OUT / "families.png"
+    if not path.exists():
+        make_families()  # nothing to paste onto yet
+        return
+    canvas = Image.open(path).convert("RGB")
+    draw = ImageDraw.Draw(canvas)
+    fnt = font(20)
+    for fam in families:
+        _draw_family_cell(canvas, draw, fnt, FAMILIES.index(fam), fam, _family_part(fam))
+    canvas.save(path)
+    print("families: re-rolled", ", ".join(sorted(families)))
 
 
 def make_eightview(part: str | None = None):
@@ -132,6 +158,7 @@ def make_eightview(part: str | None = None):
     # A compound part shows depth/AO from many angles well.
     if part is None:
         cands = part_dirs("compound") + part_dirs("gear")
+        random.shuffle(cands)
         part = next(d.name for d in cands if all((d / f"{v}.png").exists() for v in order))
     d = RENDERS / part
     cell, pad, label_h = 230, 8, 26
@@ -155,7 +182,63 @@ def make_eightview(part: str | None = None):
     print("eightview:", canvas.size, "part:", part)
 
 
+def main():
+    ap = argparse.ArgumentParser(
+        description="Shuffle the paper figure montages. With no arguments, "
+        "re-rolls all three; narrow it with --figure and/or --family."
+    )
+    ap.add_argument(
+        "--family",
+        action="append",
+        metavar="NAME",
+        help="Re-roll only these family cells in families.png (repeatable, or "
+        "comma-separated). Every other cell, and the rest of the figure, is left "
+        f"exactly as it is on disk. Choices: {', '.join(FAMILIES)}.",
+    )
+    ap.add_argument(
+        "--figure",
+        action="append",
+        metavar="N",
+        help="Limit work to these figures (repeatable, or comma-separated): "
+        + ", ".join(f"{n}={name}" for n, name in FIGURES.items())
+        + ". Default: all (or just families when --family is used).",
+    )
+    args = ap.parse_args()
+
+    families: set[str] = set()
+    for item in args.family or []:
+        for name in item.split(","):
+            name = name.strip()
+            if not name:
+                continue
+            if name not in FAMILIES:
+                ap.error(f"unknown family {name!r}; choose from {', '.join(FAMILIES)}")
+            families.add(name)
+
+    figs: set[int] = set()
+    for item in args.figure or []:
+        for tok in item.split(","):
+            tok = tok.strip()
+            if not tok:
+                continue
+            if not tok.isdigit() or int(tok) not in FIGURES:
+                choices = ", ".join(f"{n}={name}" for n, name in FIGURES.items())
+                ap.error(f"unknown figure {tok!r}; choose from {choices}")
+            figs.add(int(tok))
+    if not figs:
+        # Default: just families when re-rolling specific cells, else all three.
+        figs = {3} if families else set(FIGURES)
+    if families:
+        figs.add(3)  # --family always implies the families figure
+
+    if 1 in figs:
+        make_teaser()
+    if 3 in figs:
+        # Named cells re-roll in place; otherwise rebuild the whole grid.
+        reroll_families(families) if families else make_families()
+    if 4 in figs:
+        make_eightview()
+
+
 if __name__ == "__main__":
-    make_teaser()
-    make_families()
-    make_eightview()
+    main()
