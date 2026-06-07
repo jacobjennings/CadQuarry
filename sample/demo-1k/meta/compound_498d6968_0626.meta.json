@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "eb90393611874013",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 67.11 \u00d7 85.3 \u00d7 67.2 mm (W\u00d7D\u00d7H).",
+      "36.7 \u00d7 19.7 mm slot section attachment, 20.8 mm long, from front face."
+    ],
+    "text": "Rectangular body, 67.11 \u00d7 85.3 \u00d7 67.2 mm (W\u00d7D\u00d7H). 36.7 \u00d7 19.7 mm slot section attachment, 20.8 mm long, from front face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 398000.0,

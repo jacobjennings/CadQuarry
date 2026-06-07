@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "ba0492c3780c4dd8",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 100 \u00d7 68.5 \u00d7 98.5 mm (W\u00d7D\u00d7H).",
+      "Hollowed to 4.3 mm wall thickness, open at top face."
+    ],
+    "text": "Rectangular body, 100 \u00d7 68.5 \u00d7 98.5 mm (W\u00d7D\u00d7H). Hollowed to 4.3 mm wall thickness, open at top face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 159000.0,

@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "41c63888c08637e5",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 104.38 \u00d7 44.5 \u00d7 8 mm (W\u00d7D\u00d7H).",
+      "Six 8.1 \u00d7 4.3 mm slots in a 3\u00d72 grid, 41.8 \u00d7 35.6 mm pitch."
+    ],
+    "text": "Rectangular body, 104.38 \u00d7 44.5 \u00d7 8 mm (W\u00d7D\u00d7H). Six 8.1 \u00d7 4.3 mm slots in a 3\u00d72 grid, 41.8 \u00d7 35.6 mm pitch."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 35700.0,

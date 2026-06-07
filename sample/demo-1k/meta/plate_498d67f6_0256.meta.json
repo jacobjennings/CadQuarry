@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "7340a2b6263e981d",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 26.66 \u00d7 23.6 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "Four \u00d85.3 mm countersunk holes (82\u00b0) at the corners, 18.662 \u00d7 16.52 mm spacing.",
+      "Fillet radius 2.408 mm on vertical edges.",
+      "Chamfer 0.7 mm on top edges."
+    ],
+    "text": "Rectangular body, 26.66 \u00d7 23.6 \u00d7 6 mm (W\u00d7D\u00d7H). Four \u00d85.3 mm countersunk holes (82\u00b0) at the corners, 18.662 \u00d7 16.52 mm spacing. Fillet radius 2.408 mm on vertical edges. Chamfer 0.7 mm on top edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 2880.0,

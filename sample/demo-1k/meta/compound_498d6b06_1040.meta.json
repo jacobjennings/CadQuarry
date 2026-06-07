@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "d91f9800da680f52",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 70 \u00d7 58.7 \u00d7 72.5 mm (W\u00d7D\u00d7H).",
+      "8-sided polygon section, 18.8 mm across corners attachment, 23.1 mm long, from front face with a \u00d88.3 mm bore.",
+      "Four \u00d85.3 mm holes at the corners, 49 \u00d7 41.09 mm spacing."
+    ],
+    "text": "Rectangular body, 70 \u00d7 58.7 \u00d7 72.5 mm (W\u00d7D\u00d7H). 8-sided polygon section, 18.8 mm across corners attachment, 23.1 mm long, from front face with a \u00d88.3 mm bore. Four \u00d85.3 mm holes at the corners, 49 \u00d7 41.09 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 299000.0,

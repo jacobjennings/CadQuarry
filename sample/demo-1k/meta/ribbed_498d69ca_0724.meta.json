@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "f7cdbb85083fa2ec",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 83.31 \u00d7 66 \u00d7 5 mm (W\u00d7D\u00d7H).",
+      "Six ribs, 5.2 mm thick, 14.6 mm tall.",
+      "Four \u00d84.3 mm holes at the corners, 58.317 \u00d7 46.2 mm spacing."
+    ],
+    "text": "Rectangular body, 83.31 \u00d7 66 \u00d7 5 mm (W\u00d7D\u00d7H). Six ribs, 5.2 mm thick, 14.6 mm tall. Four \u00d84.3 mm holes at the corners, 58.317 \u00d7 46.2 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 57500.0,

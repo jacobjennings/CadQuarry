@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "ea02350a91823b3f",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 85.07 \u00d7 64.6 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Seven \u00d85.3 mm holes in two staggered rows, 21.3 \u00d7 17.5 mm pitch."
+    ],
+    "text": "Rectangular body, 85.07 \u00d7 64.6 \u00d7 100 mm (W\u00d7D\u00d7H). Seven \u00d85.3 mm holes in two staggered rows, 21.3 \u00d7 17.5 mm pitch."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 534000.0,

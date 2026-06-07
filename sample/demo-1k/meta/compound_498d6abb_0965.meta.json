@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "e6b03934940fe815",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "6-sided polygon section, 26.92 mm across corners, extruded 12.1 mm thick.",
+      "\u00d810.6 mm circular section attachment, 20.9 mm long, from top face with a \u00d85.3 mm bore.",
+      "Fillet radius 0.803 mm on vertical edges."
+    ],
+    "text": "6-sided polygon section, 26.92 mm across corners, extruded 12.1 mm thick. \u00d810.6 mm circular section attachment, 20.9 mm long, from top face with a \u00d85.3 mm bore. Fillet radius 0.803 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 6810.0,

@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "1a2610b8f5e08c15",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 50 \u00d7 20.4 \u00d7 8 mm (W\u00d7D\u00d7H).",
+      "Four \u00d84.3 mm holes at the corners, 35 \u00d7 14.28 mm spacing."
+    ],
+    "text": "Rectangular body, 50 \u00d7 20.4 \u00d7 8 mm (W\u00d7D\u00d7H). Four \u00d84.3 mm holes at the corners, 35 \u00d7 14.28 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 7700.0,

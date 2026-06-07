@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "7dc684a525514938",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "\u00d843.01 mm circular section, extruded 56.5 mm thick.",
+      "\u00d829.9 mm circular section attachment, 46.9 mm long, from top face with a \u00d817.5 mm bore."
+    ],
+    "text": "\u00d843.01 mm circular section, extruded 56.5 mm thick. \u00d829.9 mm circular section attachment, 46.9 mm long, from top face with a \u00d817.5 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 90100.0,

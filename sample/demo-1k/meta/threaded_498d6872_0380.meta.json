@@ -18,6 +18,12 @@
     "pitch": 2.5,
     "designation": "M20x2.5"
   },
+  "dimensions": {
+    "lines": [
+      "M20x2.5 external thread, 54.3 mm long."
+    ],
+    "text": "M20x2.5 external thread, 54.3 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 14500.0,

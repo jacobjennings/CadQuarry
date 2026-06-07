@@ -9,6 +9,16 @@
   "op_count": 5,
   "ir_hash": "fa2ed928f3758603",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 81.47 \u00d7 54.6 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Four \u00d810.5 mm holes at the corners, 57.029 \u00d7 38.22 mm spacing.",
+      "Boss \u00d818.6 mm \u00d7 6 mm tall on top face.",
+      "Fillet radius 5.346 mm on vertical edges.",
+      "\u00d811.2 mm circular section attachment, 21.5 mm long, from right face with a \u00d86.2 mm bore."
+    ],
+    "text": "Rectangular body, 81.47 \u00d7 54.6 \u00d7 100 mm (W\u00d7D\u00d7H). Four \u00d810.5 mm holes at the corners, 57.029 \u00d7 38.22 mm spacing. Boss \u00d818.6 mm \u00d7 6 mm tall on top face. Fillet radius 5.346 mm on vertical edges. \u00d811.2 mm circular section attachment, 21.5 mm long, from right face with a \u00d86.2 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 408000.0,

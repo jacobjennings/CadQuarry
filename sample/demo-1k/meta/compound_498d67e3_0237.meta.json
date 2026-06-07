@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "7ae09e13ebfbaaf6",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "\u00d828.87 mm circular section, extruded 33.6 mm thick.",
+      "\u00d813.1 mm circular section attachment, 26 mm long, from top face with a \u00d86.3 mm bore.",
+      "Chamfer 1.5 mm on bottom edges."
+    ],
+    "text": "\u00d828.87 mm circular section, extruded 33.6 mm thick. \u00d813.1 mm circular section attachment, 26 mm long, from top face with a \u00d86.3 mm bore. Chamfer 1.5 mm on bottom edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 23500.0,

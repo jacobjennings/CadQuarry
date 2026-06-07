@@ -9,6 +9,12 @@
   "op_count": 1,
   "ir_hash": "398534eb083890a7",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d850.07 mm \u00d7 80.2 mm tall."
+    ],
+    "text": "Revolved body, \u00d850.07 mm \u00d7 80.2 mm tall."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 105000.0,

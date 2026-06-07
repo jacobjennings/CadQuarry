@@ -17,6 +17,12 @@
     "size": "1 1/4",
     "designation": "ACME 1 1/4"
   },
+  "dimensions": {
+    "lines": [
+      "ACME 1 1/4 external thread, 32.6 mm long."
+    ],
+    "text": "ACME 1 1/4 external thread, 32.6 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 21500.0,

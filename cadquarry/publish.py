@@ -264,6 +264,8 @@ def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool)
         "    dtype: string",
         "  - name: geometry_signature",
         "    dtype: string",
+        "  - name: dimensions",
+        "    dtype: string",
         "  - name: source",
         "    dtype: string",
         "  - name: params",
@@ -503,6 +505,7 @@ with `tier == 3`. Data files live under `{{tag}}/` (all tiers) and
 | `generator_version` | string | CadQuarry version |
 | `license` | string | Always `CC0-1.0` |
 | `geometry_signature` | string (JSON) | Volume, surface area, face/edge/vertex counts |
+| `dimensions` | string | Procedural human-readable dimension summary (prompt-friendly) |
 | `source` | string | Full `.py` CadQuery program |
 | `params` | string (JSON) | Typed parameter schema with ranges and defaults |
 

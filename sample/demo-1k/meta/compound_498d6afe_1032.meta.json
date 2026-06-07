@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "a4352f8258356d56",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 110 \u00d7 74.8 \u00d7 12 mm (W\u00d7D\u00d7H).",
+      "8-sided polygon section, 23.4 mm across corners attachment, 75.7 mm long, from top face with a \u00d812.3 mm bore.",
+      "Four \u00d84.3 mm holes at the corners, 77 \u00d7 52.36 mm spacing.",
+      "Fillet radius 8.099 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 110 \u00d7 74.8 \u00d7 12 mm (W\u00d7D\u00d7H). 8-sided polygon section, 23.4 mm across corners attachment, 75.7 mm long, from top face with a \u00d812.3 mm bore. Four \u00d84.3 mm holes at the corners, 77 \u00d7 52.36 mm spacing. Fillet radius 8.099 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 115000.0,

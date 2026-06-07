@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "8f02a13570024886",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d819.32 mm \u00d7 42.4 mm tall with \u00d833.5 mm \u00d7 6.1 mm flange.",
+      "Chamfer 0.6 mm on the >Z or <Z edges."
+    ],
+    "text": "Revolved body, \u00d819.32 mm \u00d7 42.4 mm tall with \u00d833.5 mm \u00d7 6.1 mm flange. Chamfer 0.6 mm on the >Z or <Z edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 11900.0,

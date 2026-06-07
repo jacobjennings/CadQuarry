@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "7eacffc0b92ef2e9",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 90 \u00d7 55.9 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "Eight \u00d83.2 mm holes on a \u00d854 mm bolt circle."
+    ],
+    "text": "Rectangular body, 90 \u00d7 55.9 \u00d7 6 mm (W\u00d7D\u00d7H). Eight \u00d83.2 mm holes on a \u00d854 mm bolt circle."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 29800.0,

@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "4c1c9cd7fed13b18",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "\u00d835 mm circular section, extruded 73.1 mm thick.",
+      "\u00d824.6 mm circular section attachment, 59 mm long, from top face.",
+      "6-sided polygon section, 21.4 mm across corners attachment, 13.1 mm long, from top face.",
+      "Chamfer 1.4 mm on bottom edges."
+    ],
+    "text": "\u00d835 mm circular section, extruded 73.1 mm thick. \u00d824.6 mm circular section attachment, 59 mm long, from top face. 6-sided polygon section, 21.4 mm across corners attachment, 13.1 mm long, from top face. Chamfer 1.4 mm on bottom edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 102000.0,

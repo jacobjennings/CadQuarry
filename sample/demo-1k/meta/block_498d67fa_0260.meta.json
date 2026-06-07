@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "ff226e32a7ae7c87",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 78.59 \u00d7 38.6 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Nine \u00d83.2 mm holes in two staggered rows, 14.7 \u00d7 13.7 mm pitch.",
+      "Boss \u00d815.2 mm \u00d7 6 mm tall on top face with a \u00d85.3 mm bore.",
+      "Fillet radius 1.922 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 78.59 \u00d7 38.6 \u00d7 100 mm (W\u00d7D\u00d7H). Nine \u00d83.2 mm holes in two staggered rows, 14.7 \u00d7 13.7 mm pitch. Boss \u00d815.2 mm \u00d7 6 mm tall on top face with a \u00d85.3 mm bore. Fillet radius 1.922 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 295000.0,

@@ -18,6 +18,12 @@
     "pitch": 0.8,
     "designation": "M5x0.8"
   },
+  "dimensions": {
+    "lines": [
+      "M5x0.8 external thread, 13.6 mm long."
+    ],
+    "text": "M5x0.8 external thread, 13.6 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 217.0,

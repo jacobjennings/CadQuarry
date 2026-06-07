@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "31c7b919b19bb6f0",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 60 \u00d7 27.8 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Seven \u00d82.2 mm holes in two staggered rows, 15 \u00d7 17.8 mm pitch.",
+      "Boss \u00d822.5 mm \u00d7 10 mm tall on top face with a \u00d85.3 mm bore."
+    ],
+    "text": "Rectangular body, 60 \u00d7 27.8 \u00d7 100 mm (W\u00d7D\u00d7H). Seven \u00d82.2 mm holes in two staggered rows, 15 \u00d7 17.8 mm pitch. Boss \u00d822.5 mm \u00d7 10 mm tall on top face with a \u00d85.3 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 166000.0,

@@ -9,6 +9,12 @@
   "op_count": 1,
   "ir_hash": "a23fcdc5f85b00f4",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "8-sided polygon section, 20 mm across corners, extruded 102 mm thick."
+    ],
+    "text": "8-sided polygon section, 20 mm across corners, extruded 102 mm thick."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 28800.0,

@@ -9,6 +9,12 @@
   "op_count": 1,
   "ir_hash": "ca0f348a19cca3d5",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Z-bracket: base leg 30 mm, vertical leg 25.9 mm, top leg 25 mm, 37.6 mm wide, 3 mm thick; 1 \u00d7 \u00d83.2 mm hole per leg."
+    ],
+    "text": "Z-bracket: base leg 30 mm, vertical leg 25.9 mm, top leg 25 mm, 37.6 mm wide, 3 mm thick; 1 \u00d7 \u00d83.2 mm hole per leg."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 8400.0,

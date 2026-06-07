@@ -18,6 +18,12 @@
     "pitch": 3.0,
     "designation": "M24x3"
   },
+  "dimensions": {
+    "lines": [
+      "M24x3 internal thread, 59.7 mm long."
+    ],
+    "text": "M24x3 internal thread, 59.7 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 64200.0,

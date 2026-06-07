@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "5a46411f636830bc",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d898.8 mm \u00d7 139.8 mm tall with \u00d837.3 mm bore, \u00d8209.9 mm \u00d7 8.8 mm flange.",
+      "Eight \u00d86.4 mm holes on a \u00d8126 mm bolt circle."
+    ],
+    "text": "Revolved body, \u00d898.8 mm \u00d7 139.8 mm tall with \u00d837.3 mm bore, \u00d8209.9 mm \u00d7 8.8 mm flange. Eight \u00d86.4 mm holes on a \u00d8126 mm bolt circle."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 1150000.0,

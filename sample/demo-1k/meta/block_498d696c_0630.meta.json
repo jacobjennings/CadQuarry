@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "b858598c9c0fc2da",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 40 \u00d7 24.5 \u00d7 76 mm (W\u00d7D\u00d7H).",
+      "Four 6.4 mm square holes at the corners, 28 \u00d7 17.15 mm spacing.",
+      "Fillet radius 2.548 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 40 \u00d7 24.5 \u00d7 76 mm (W\u00d7D\u00d7H). Four 6.4 mm square holes at the corners, 28 \u00d7 17.15 mm spacing. Fillet radius 2.548 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 63300.0,

@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "e772191f633bc834",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 63.67 \u00d7 55.3 \u00d7 92.8 mm (W\u00d7D\u00d7H).",
+      "Eight \u00d83.2 mm holes on a \u00d838.2 mm bolt circle.",
+      "Pocket 38.7 \u00d7 34 mm, 32.1 mm deep, in top face."
+    ],
+    "text": "Rectangular body, 63.67 \u00d7 55.3 \u00d7 92.8 mm (W\u00d7D\u00d7H). Eight \u00d83.2 mm holes on a \u00d838.2 mm bolt circle. Pocket 38.7 \u00d7 34 mm, 32.1 mm deep, in top face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 280000.0,

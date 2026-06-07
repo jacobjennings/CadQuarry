@@ -1,0 +1,1 @@
+Rectangular body, 65.04 × 34.6 × 5 mm (W×D×H). Twelve Ø3.2 mm holes in a 4×3 grid, 17.3 × 13.8 mm pitch. Fillet radius 1.903 mm on vertical edges.

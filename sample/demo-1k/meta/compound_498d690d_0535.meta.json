@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "afe36bfc93751889",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "\u00d813.35 mm circular section, extruded 25.6 mm thick.",
+      "\u00d88.7 mm circular section attachment, 10.5 mm long, from top face.",
+      "6-sided polygon section, 6.2 mm across corners attachment, 4.9 mm long, from top face with a \u00d83 mm bore."
+    ],
+    "text": "\u00d813.35 mm circular section, extruded 25.6 mm thick. \u00d88.7 mm circular section attachment, 10.5 mm long, from top face. 6-sided polygon section, 6.2 mm across corners attachment, 4.9 mm long, from top face with a \u00d83 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 4040.0,

@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "4f3ef531363fc5e8",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 30.46 \u00d7 32.5 \u00d7 32.4 mm (W\u00d7D\u00d7H).",
+      "\u00d811.2 mm circular section attachment, 26.1 mm long, from left face.",
+      "Four \u00d83.2 mm holes at the corners, 21.322 \u00d7 22.75 mm spacing."
+    ],
+    "text": "Rectangular body, 30.46 \u00d7 32.5 \u00d7 32.4 mm (W\u00d7D\u00d7H). \u00d811.2 mm circular section attachment, 26.1 mm long, from left face. Four \u00d83.2 mm holes at the corners, 21.322 \u00d7 22.75 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 34100.0,

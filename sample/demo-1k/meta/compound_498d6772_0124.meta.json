@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "a63ad0c8edca3f31",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "8-sided polygon section, 20 mm across corners, extruded 11.7 mm thick.",
+      "\u00d811.8 mm circular section attachment, 22.1 mm long, from top face.",
+      "Fillet radius 1.066 mm on vertical edges."
+    ],
+    "text": "8-sided polygon section, 20 mm across corners, extruded 11.7 mm thick. \u00d811.8 mm circular section attachment, 22.1 mm long, from top face. Fillet radius 1.066 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 5720.0,

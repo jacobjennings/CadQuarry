@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "06424266b862a1e7",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 34.66 \u00d7 42.1 \u00d7 37.2 mm (W\u00d7D\u00d7H).",
+      "\u00d88.9 mm circular section attachment, 21.2 mm long, from back face with a \u00d83.9 mm bore.",
+      "Four \u00d85.3 mm holes at the corners, 24.262 \u00d7 29.47 mm spacing.",
+      "Fillet radius 3.843 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 34.66 \u00d7 42.1 \u00d7 37.2 mm (W\u00d7D\u00d7H). \u00d88.9 mm circular section attachment, 21.2 mm long, from back face with a \u00d83.9 mm bore. Four \u00d85.3 mm holes at the corners, 24.262 \u00d7 29.47 mm spacing. Fillet radius 3.843 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 54400.0,

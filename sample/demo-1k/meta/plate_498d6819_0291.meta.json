@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "ab7c34b81919a436",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 55 \u00d7 36.2 \u00d7 3 mm (W\u00d7D\u00d7H).",
+      "Four \u00d85.3 mm holes at the corners, 38.5 \u00d7 25.34 mm spacing.",
+      "Fillet radius 3.823 mm on vertical edges.",
+      "Pocket 35.9 \u00d7 23.8 mm, 1.1 mm deep, in top face."
+    ],
+    "text": "Rectangular body, 55 \u00d7 36.2 \u00d7 3 mm (W\u00d7D\u00d7H). Four \u00d85.3 mm holes at the corners, 38.5 \u00d7 25.34 mm spacing. Fillet radius 3.823 mm on vertical edges. Pocket 35.9 \u00d7 23.8 mm, 1.1 mm deep, in top face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 4740.0,

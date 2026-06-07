@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "c6e7fe973bd4e381",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 115 \u00d7 70.8 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "Four \u00d810.5 mm holes at the corners, 80.5 \u00d7 49.56 mm spacing.",
+      "Fillet radius 4.715 mm on vertical edges.",
+      "Chamfer 1.4 mm on top edges."
+    ],
+    "text": "Rectangular body, 115 \u00d7 70.8 \u00d7 6 mm (W\u00d7D\u00d7H). Four \u00d810.5 mm holes at the corners, 80.5 \u00d7 49.56 mm spacing. Fillet radius 4.715 mm on vertical edges. Chamfer 1.4 mm on top edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 46200.0,

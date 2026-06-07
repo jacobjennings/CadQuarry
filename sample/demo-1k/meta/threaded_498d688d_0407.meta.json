@@ -18,6 +18,12 @@
     "pitch": 1.0,
     "designation": "M6x1"
   },
+  "dimensions": {
+    "lines": [
+      "M6x1 external thread, 30.5 mm long."
+    ],
+    "text": "M6x1 external thread, 30.5 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 697.0,
