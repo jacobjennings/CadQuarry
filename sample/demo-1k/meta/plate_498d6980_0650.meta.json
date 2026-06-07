@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "24d56b264de5b89a",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 60 \u00d7 34.5 \u00d7 2 mm (W\u00d7D\u00d7H).",
+      "Four \u00d83.2 mm countersunk holes (82\u00b0) at the corners, 42 \u00d7 24.15 mm spacing.",
+      "Fillet radius 3.026 mm on vertical edges.",
+      "Boss \u00d810.1 mm \u00d7 5.8 mm tall on top face."
+    ],
+    "text": "Rectangular body, 60 \u00d7 34.5 \u00d7 2 mm (W\u00d7D\u00d7H). Four \u00d83.2 mm countersunk holes (82\u00b0) at the corners, 42 \u00d7 24.15 mm spacing. Fillet radius 3.026 mm on vertical edges. Boss \u00d810.1 mm \u00d7 5.8 mm tall on top face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 4450.0,

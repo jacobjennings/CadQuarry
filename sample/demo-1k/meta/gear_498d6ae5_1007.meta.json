@@ -23,6 +23,12 @@
     "root_fillet": 0.33,
     "bore_d": 19.9
   },
+  "dimensions": {
+    "lines": [
+      "Helical gear, module 3 mm, 38 teeth (pitch \u00d8114 mm), face width 13.9 mm, 17.1\u00b0 helix (herringbone), \u00d819.9 mm bore."
+    ],
+    "text": "Helical gear, module 3 mm, 38 teeth (pitch \u00d8114 mm), face width 13.9 mm, 17.1\u00b0 helix (herringbone), \u00d819.9 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 148000.0,

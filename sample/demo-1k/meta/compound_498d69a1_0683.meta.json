@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "65b66eb87479d842",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 74.43 \u00d7 83.6 \u00d7 57.5 mm (W\u00d7D\u00d7H).",
+      "15.3 \u00d7 8.6 mm rectangular section attachment, 9.6 mm long, from front face with a \u00d84.9 mm bore."
+    ],
+    "text": "Rectangular body, 74.43 \u00d7 83.6 \u00d7 57.5 mm (W\u00d7D\u00d7H). 15.3 \u00d7 8.6 mm rectangular section attachment, 9.6 mm long, from front face with a \u00d84.9 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 357000.0,

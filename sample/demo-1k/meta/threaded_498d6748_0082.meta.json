@@ -17,6 +17,12 @@
     "size": "10x2",
     "designation": "Tr 10x2"
   },
+  "dimensions": {
+    "lines": [
+      "Tr 10x2 external thread, 51.3 mm long."
+    ],
+    "text": "Tr 10x2 external thread, 51.3 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 3280.0,

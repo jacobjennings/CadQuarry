@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "5c908fd2f3553591",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 95 \u00d7 38.4 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "Six \u00d88.4 mm holes on a \u00d857 mm bolt circle.",
+      "Fillet radius 2.235 mm on vertical edges.",
+      "Boss \u00d813.6 mm \u00d7 5 mm tall on top face with a \u00d84.3 mm bore."
+    ],
+    "text": "Rectangular body, 95 \u00d7 38.4 \u00d7 6 mm (W\u00d7D\u00d7H). Six \u00d88.4 mm holes on a \u00d857 mm bolt circle. Fillet radius 2.235 mm on vertical edges. Boss \u00d813.6 mm \u00d7 5 mm tall on top face with a \u00d84.3 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 21800.0,

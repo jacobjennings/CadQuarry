@@ -1,0 +1,1 @@
+Rectangular body, 26.66 × 23.6 × 6 mm (W×D×H). Four Ø5.3 mm countersunk holes (82°) at the corners, 18.662 × 16.52 mm spacing. Fillet radius 2.408 mm on vertical edges. Chamfer 0.7 mm on top edges.

@@ -18,6 +18,12 @@
     "pitch": 1.75,
     "designation": "M12x1.75"
   },
+  "dimensions": {
+    "lines": [
+      "M12x1.75 internal thread, 54.3 mm long."
+    ],
+    "text": "M12x1.75 internal thread, 54.3 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 14800.0,

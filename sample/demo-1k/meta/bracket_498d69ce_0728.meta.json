@@ -9,6 +9,12 @@
   "op_count": 1,
   "ir_hash": "9b62d685c36a6f36",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "C-channel bracket: base leg 65 mm, vertical leg 45.2 mm, 35 mm wide, 3 mm thick; 1 \u00d7 \u00d85.3 mm hole per leg; 3.5 mm corner gusset."
+    ],
+    "text": "C-channel bracket: base leg 65 mm, vertical leg 45.2 mm, 35 mm wide, 3 mm thick; 1 \u00d7 \u00d85.3 mm hole per leg; 3.5 mm corner gusset."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 16300.0,

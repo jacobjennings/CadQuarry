@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "5c55f38f93f948ef",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 104.94 \u00d7 64.1 \u00d7 54.1 mm (W\u00d7D\u00d7H).",
+      "Hollowed to 5.1 mm wall thickness, open at top face.",
+      "Four \u00d84.3 mm holes at the corners, 73.458 \u00d7 44.87 mm spacing.",
+      "Fillet radius 3.543 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 104.94 \u00d7 64.1 \u00d7 54.1 mm (W\u00d7D\u00d7H). Hollowed to 5.1 mm wall thickness, open at top face. Four \u00d84.3 mm holes at the corners, 73.458 \u00d7 44.87 mm spacing. Fillet radius 3.543 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 113000.0,

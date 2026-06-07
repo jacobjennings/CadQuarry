@@ -18,6 +18,12 @@
     "pitch": 0.7,
     "designation": "M4x0.7"
   },
+  "dimensions": {
+    "lines": [
+      "M4x0.7 external thread, 12 mm long."
+    ],
+    "text": "M4x0.7 external thread, 12 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 120.0,

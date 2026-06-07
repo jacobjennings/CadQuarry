@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "74327d8848eed057",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 50 \u00d7 22.5 \u00d7 61.9 mm (W\u00d7D\u00d7H).",
+      "Five \u00d82.1 mm holes in two staggered rows, 18.8 \u00d7 17.7 mm pitch."
+    ],
+    "text": "Rectangular body, 50 \u00d7 22.5 \u00d7 61.9 mm (W\u00d7D\u00d7H). Five \u00d82.1 mm holes in two staggered rows, 18.8 \u00d7 17.7 mm pitch."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 68600.0,

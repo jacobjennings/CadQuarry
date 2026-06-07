@@ -20,6 +20,12 @@
     "profile_shift": 0.15,
     "root_fillet": 0.57
   },
+  "dimensions": {
+    "lines": [
+      "Ring gear, module 2 mm, 39 teeth (pitch \u00d878 mm), face width 13.3 mm."
+    ],
+    "text": "Ring gear, module 2 mm, 39 teeth (pitch \u00d878 mm), face width 13.3 mm."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 16000.0,

@@ -18,6 +18,12 @@
     "pitch": 2.0,
     "designation": "M16x2"
   },
+  "dimensions": {
+    "lines": [
+      "M16x2 internal thread, 47.4 mm long."
+    ],
+    "text": "M16x2 internal thread, 47.4 mm long."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 22700.0,

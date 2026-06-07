@@ -9,6 +9,12 @@
   "op_count": 1,
   "ir_hash": "d2a451737fae9556",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "25 \u00d7 20.15 mm slot section, extruded 238.4 mm thick."
+    ],
+    "text": "25 \u00d7 20.15 mm slot section, extruded 238.4 mm thick."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 99300.0,

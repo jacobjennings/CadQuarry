@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "9b76696174172388",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 100 \u00d7 104.5 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "6-sided polygon section, 24.2 mm across corners attachment, 71.4 mm long, from top face.",
+      "Four \u00d88.4 mm holes at the corners, 70 \u00d7 73.15 mm spacing."
+    ],
+    "text": "Rectangular body, 100 \u00d7 104.5 \u00d7 6 mm (W\u00d7D\u00d7H). 6-sided polygon section, 24.2 mm across corners attachment, 71.4 mm long, from top face. Four \u00d88.4 mm holes at the corners, 70 \u00d7 73.15 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 88500.0,

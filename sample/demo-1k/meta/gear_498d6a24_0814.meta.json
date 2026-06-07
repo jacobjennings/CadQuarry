@@ -23,6 +23,12 @@
     "root_fillet": 0.2,
     "bore_d": 4.7
   },
+  "dimensions": {
+    "lines": [
+      "Helical gear, module 1 mm, 29 teeth (pitch \u00d829 mm), face width 5.1 mm, 27.6\u00b0 helix, \u00d84.7 mm bore."
+    ],
+    "text": "Helical gear, module 1 mm, 29 teeth (pitch \u00d829 mm), face width 5.1 mm, 27.6\u00b0 helix, \u00d84.7 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 4150.0,

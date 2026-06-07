@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "4d3f352a015c5ce3",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d865.5 mm \u00d7 24.6 mm tall with 2.37 mm-wide groove 3.44 mm deep.",
+      "Chamfer 0.6 mm on the >Z or <Z edges."
+    ],
+    "text": "Revolved body, \u00d865.5 mm \u00d7 24.6 mm tall with 2.37 mm-wide groove 3.44 mm deep. Chamfer 0.6 mm on the >Z or <Z edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 53600.0,

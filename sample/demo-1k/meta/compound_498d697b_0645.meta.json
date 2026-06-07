@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "41ff43f527c4797e",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "5-sided polygon section, 50 mm across corners, extruded 17.6 mm thick.",
+      "\u00d820.2 mm circular section attachment, 38 mm long, from top face."
+    ],
+    "text": "5-sided polygon section, 50 mm across corners, extruded 17.6 mm thick. \u00d820.2 mm circular section attachment, 38 mm long, from top face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 38300.0,

@@ -18,6 +18,12 @@
     "pitch_diameter": 80.0,
     "pressure_angle_deg": 20.0
   },
+  "dimensions": {
+    "lines": [
+      "Spur gear, module 2 mm, 40 teeth (pitch \u00d880 mm), face width 6.7 mm."
+    ],
+    "text": "Spur gear, module 2 mm, 40 teeth (pitch \u00d880 mm), face width 6.7 mm."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 33400.0,

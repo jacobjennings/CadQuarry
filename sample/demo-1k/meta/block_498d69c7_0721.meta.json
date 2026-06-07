@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "594c464c02466d3a",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 20.95 \u00d7 9.3 \u00d7 38 mm (W\u00d7D\u00d7H).",
+      "Four \u00d82 mm holes at the corners, 14.665 \u00d7 6.51 mm spacing.",
+      "Pocket 10.5 \u00d7 5.6 mm, 11.9 mm deep, in top face."
+    ],
+    "text": "Rectangular body, 20.95 \u00d7 9.3 \u00d7 38 mm (W\u00d7D\u00d7H). Four \u00d82 mm holes at the corners, 14.665 \u00d7 6.51 mm spacing. Pocket 10.5 \u00d7 5.6 mm, 11.9 mm deep, in top face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 6230.0,

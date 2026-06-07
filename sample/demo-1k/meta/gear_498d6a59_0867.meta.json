@@ -21,6 +21,12 @@
     "hub_d": 28.3,
     "hub_h": 5.7
   },
+  "dimensions": {
+    "lines": [
+      "Cycloid gear, module 2 mm, 37 teeth (pitch \u00d874 mm), face width 8.1 mm, \u00d815.7 mm bore, \u00d828.3 mm \u00d7 5.7 mm hub."
+    ],
+    "text": "Cycloid gear, module 2 mm, 37 teeth (pitch \u00d874 mm), face width 8.1 mm, \u00d815.7 mm bore, \u00d828.3 mm \u00d7 5.7 mm hub."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 35200.0,

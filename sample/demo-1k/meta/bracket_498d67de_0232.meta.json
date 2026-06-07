@@ -9,6 +9,12 @@
   "op_count": 1,
   "ir_hash": "a3cc359e15304082",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "L-bracket: base leg 72.51 mm, vertical leg 83.9 mm, 29.82 mm wide, 3 mm thick; 1 \u00d7 \u00d83.2 mm hole per leg; 3.9 mm corner gusset."
+    ],
+    "text": "L-bracket: base leg 72.51 mm, vertical leg 83.9 mm, 29.82 mm wide, 3 mm thick; 1 \u00d7 \u00d83.2 mm hole per leg; 3.9 mm corner gusset."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 16300.0,

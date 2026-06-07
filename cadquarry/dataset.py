@@ -190,6 +190,7 @@ def pack_corpus_jsonl(
                 "generator_version": rec.get("generator_version") or rec.get("cadquarry_version"),
                 "license": rec.get("license", "CC0-1.0"),
                 "geometry_signature": rec.get("geometry_signature"),
+                "dimensions": rec.get("dimensions"),
             }
             params_rel = rec.get("paths", {}).get("params")
             if params_rel:
@@ -288,6 +289,7 @@ def pack_corpus_parquet(
         ("generator_version", pa.string()),
         ("license", pa.string()),
         ("geometry_signature", pa.string()),
+        ("dimensions", pa.string()),
     ]
     if include_source:
         base_cols += [
@@ -350,6 +352,7 @@ def pack_corpus_parquet(
             "generator_version": rec.get("generator_version") or rec.get("cadquarry_version"),
             "license": rec.get("license", "CC0-1.0"),
             "geometry_signature": json.dumps(rec.get("geometry_signature")),
+            "dimensions": (rec.get("dimensions") or {}).get("text"),
         }
 
         if include_source:

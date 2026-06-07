@@ -19,6 +19,12 @@
     "pressure_angle_deg": 20.0,
     "bore_d": 5.7
   },
+  "dimensions": {
+    "lines": [
+      "Spur gear, module 1.25 mm, 26 teeth (pitch \u00d832.5 mm), face width 8.3 mm, \u00d85.7 mm bore."
+    ],
+    "text": "Spur gear, module 1.25 mm, 26 teeth (pitch \u00d832.5 mm), face width 8.3 mm, \u00d85.7 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 6590.0,

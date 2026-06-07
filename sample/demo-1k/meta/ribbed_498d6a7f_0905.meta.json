@@ -9,6 +9,13 @@
   "op_count": 2,
   "ir_hash": "28fe8aaf8f4d80f8",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 55 \u00d7 41.4 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "Four ribs, 5.8 mm thick, 11.6 mm tall."
+    ],
+    "text": "Rectangular body, 55 \u00d7 41.4 \u00d7 6 mm (W\u00d7D\u00d7H). Four ribs, 5.8 mm thick, 11.6 mm tall."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 25500.0,

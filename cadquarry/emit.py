@@ -13,6 +13,7 @@ import textwrap
 from pathlib import Path
 
 from . import __version__
+from .describe import describe_dimensions
 from .ir import PartIR
 
 _HEADER = """\
@@ -154,6 +155,8 @@ def emit_meta_json(part: PartIR, geometry_signature: dict | None = None) -> dict
     descriptor = _part_descriptor(part)
     if descriptor is not None:
         meta["descriptor"] = descriptor
+    # Procedural, prompt-friendly dimension summary (no AI; pure IR walk).
+    meta["dimensions"] = describe_dimensions(part)
     if geometry_signature:
         meta["geometry_signature"] = geometry_signature
     return meta
@@ -171,21 +174,23 @@ def write_part(
     parts_dir = out_dir / "parts"
     params_dir = out_dir / "params"
     meta_dir = out_dir / "meta"
-    for d in (parts_dir, params_dir, meta_dir):
+    dims_dir = out_dir / "dims"
+    for d in (parts_dir, params_dir, meta_dir, dims_dir):
         d.mkdir(parents=True, exist_ok=True)
 
     pid = part.id
     py_path = parts_dir / f"{pid}.py"
     params_path = params_dir / f"{pid}.params.json"
     meta_path = meta_dir / f"{pid}.meta.json"
+    dims_path = dims_dir / f"{pid}.txt"
+
+    meta = emit_meta_json(part, geometry_signature)
 
     py_path.write_text(emit_source(part), encoding="utf-8")
     params_path.write_text(
         json.dumps(emit_params_json(part), indent=2), encoding="utf-8"
     )
-    meta_path.write_text(
-        json.dumps(emit_meta_json(part, geometry_signature), indent=2),
-        encoding="utf-8",
-    )
+    meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    dims_path.write_text(meta["dimensions"]["text"] + "\n", encoding="utf-8")
 
-    return {"py": py_path, "params": params_path, "meta": meta_path}
+    return {"py": py_path, "params": params_path, "meta": meta_path, "dims": dims_path}

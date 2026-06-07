@@ -1,0 +1,1 @@
+Rectangular body, 73.4 × 73.8 × 5 mm (W×D×H). 6-sided polygon section, 22.4 mm across corners attachment, 100.5 mm long, from top face. Four Ø5.3 mm holes at the corners, 51.38 × 51.66 mm spacing. Fillet radius 5.696 mm on vertical edges.

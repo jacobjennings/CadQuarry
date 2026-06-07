@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "2a5db645364a6fc8",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 20 \u00d7 8.3 \u00d7 26.3 mm (W\u00d7D\u00d7H).",
+      "Four \u00d82 mm holes at the corners, 14 \u00d7 5.81 mm spacing.",
+      "Boss \u00d89.5 mm \u00d7 9.7 mm tall on top face with a \u00d85.3 mm bore."
+    ],
+    "text": "Rectangular body, 20 \u00d7 8.3 \u00d7 26.3 mm (W\u00d7D\u00d7H). Four \u00d82 mm holes at the corners, 14 \u00d7 5.81 mm spacing. Boss \u00d89.5 mm \u00d7 9.7 mm tall on top face with a \u00d85.3 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 3930.0,

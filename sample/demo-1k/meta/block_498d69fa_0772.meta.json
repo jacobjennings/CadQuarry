@@ -9,6 +9,16 @@
   "op_count": 5,
   "ir_hash": "a467ef80d91d8ad7",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 70.38 \u00d7 36.7 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Four \u00d86.4 mm holes on a \u00d842.2 mm bolt circle.",
+      "Pocket 32.2 \u00d7 23.4 mm, 49.4 mm deep, in top face.",
+      "Fillet radius 4.256 mm on vertical edges.",
+      "\u00d810.4 mm circular section attachment, 9.6 mm long, from left face."
+    ],
+    "text": "Rectangular body, 70.38 \u00d7 36.7 \u00d7 100 mm (W\u00d7D\u00d7H). Four \u00d86.4 mm holes on a \u00d842.2 mm bolt circle. Pocket 32.2 \u00d7 23.4 mm, 49.4 mm deep, in top face. Fillet radius 4.256 mm on vertical edges. \u00d810.4 mm circular section attachment, 9.6 mm long, from left face."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 214000.0,

@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "7530edd9869a7b96",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 112.55 \u00d7 90.2 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "Eight \u00d86.4 mm holes on a \u00d867.6 mm bolt circle.",
+      "Fillet radius 7.213 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 112.55 \u00d7 90.2 \u00d7 6 mm (W\u00d7D\u00d7H). Eight \u00d86.4 mm holes on a \u00d867.6 mm bolt circle. Fillet radius 7.213 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 59100.0,

@@ -9,6 +9,12 @@
   "op_count": 1,
   "ir_hash": "b4087b613c81388f",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 94.19 \u00d7 82.9 \u00d7 5 mm (W\u00d7D\u00d7H)."
+    ],
+    "text": "Rectangular body, 94.19 \u00d7 82.9 \u00d7 5 mm (W\u00d7D\u00d7H)."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 39000.0,

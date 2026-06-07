@@ -9,6 +9,15 @@
   "op_count": 4,
   "ir_hash": "1933cf56735efea6",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 50 \u00d7 18.6 \u00d7 4 mm (W\u00d7D\u00d7H).",
+      "Six \u00d86.4 mm holes on a \u00d830 mm bolt circle.",
+      "Fillet radius 0.905 mm on vertical edges.",
+      "Chamfer 2.1 mm on top edges."
+    ],
+    "text": "Rectangular body, 50 \u00d7 18.6 \u00d7 4 mm (W\u00d7D\u00d7H). Six \u00d86.4 mm holes on a \u00d830 mm bolt circle. Fillet radius 0.905 mm on vertical edges. Chamfer 2.1 mm on top edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 3210.0,

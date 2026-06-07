@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "0d907e52e49d8ad2",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 85.72 \u00d7 43.3 \u00d7 5 mm (W\u00d7D\u00d7H).",
+      "Nine \u00d84.3 mm holes in two staggered rows, 16.1 \u00d7 16.7 mm pitch.",
+      "Fillet radius 3.084 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 85.72 \u00d7 43.3 \u00d7 5 mm (W\u00d7D\u00d7H). Nine \u00d84.3 mm holes in two staggered rows, 16.1 \u00d7 16.7 mm pitch. Fillet radius 3.084 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 17900.0,

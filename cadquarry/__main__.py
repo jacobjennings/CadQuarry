@@ -8,6 +8,7 @@ CadQuarry CLI
   cadquarry run          — execute a single part with optional param overrides
   cadquarry serve        — launch live customizer for a part (or gallery for corpus)
   cadquarry export       — export geometry artifacts for an existing corpus
+  cadquarry annotate     — add procedural dimension metadata to an existing corpus
   cadquarry verify       — re-execute corpus and check validity + signatures
   cadquarry info         — print part metadata / parameter schema
 
@@ -600,6 +601,163 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# annotate — supplement an existing corpus with dimension metadata
+# ---------------------------------------------------------------------------
+
+def cmd_annotate(args: argparse.Namespace) -> int:
+    """
+    Supplement an existing corpus with the procedural dimension metadata
+    *in place* — and upgrade it to the current generator version — without
+    re-running any geometry export (STEP / STL / renders / point clouds).
+
+    Each part is recomposed deterministically from its stored seed + index
+    (composition is a pure function of seed + config), so no CAD execution is
+    needed.  For every part we re-emit the cheap text artifacts — parts/*.py,
+    params/*.params.json, meta/*.meta.json (now carrying a ``dimensions`` block)
+    and a new dims/*.txt sidecar — while preserving the geometry artifacts and
+    their manifest paths untouched.
+
+    The corpus must be annotated with the same --config it was generated with.
+    Re-composition is validated against the stored ir_hash (ignoring the
+    generator-version field, which the upgrade is expected to change); a part
+    whose geometry-relevant IR diverges is left as-is and reported, so a wrong
+    --config can never overwrite good source with mismatched dimensions.
+    """
+    import json as _json
+
+    from .compose import compose
+    from .dataset import load_manifest
+    from .emit import emit_meta_json, emit_params_json, emit_source
+    from .progress import progress_bar
+
+    dataset_dir = Path(args.dataset)
+    if not dataset_dir.exists():
+        print(f"error: {dataset_dir} not found", file=sys.stderr)
+        return 1
+
+    records = load_manifest(dataset_dir)
+    if not records:
+        print(f"error: no manifest.jsonl records in {dataset_dir}", file=sys.stderr)
+        return 1
+
+    config = _load_config(args.config)
+    for sub in ("parts", "params", "meta", "dims"):
+        (dataset_dir / sub).mkdir(parents=True, exist_ok=True)
+    # Geometry path keys are preserved verbatim; the text artifacts are re-emitted.
+    _TEXT_KEYS = ("py", "params", "meta", "dims")
+
+    print(
+        f"CadQuarry v{__version__} — annotating {len(records)} parts in "
+        f"{dataset_dir} with dimension metadata (no geometry re-export)"
+    )
+
+    annotated = 0
+    mismatched = 0
+    skipped = 0
+    new_records: list[dict] = []
+    pbar = progress_bar(total=len(records), desc="  annotate", unit="part")
+
+    for rec in records:
+        pid = rec.get("part_id")
+        seed = rec.get("seed")
+        if not pid or seed is None:
+            skipped += 1
+            new_records.append(rec)
+            pbar.update(1)
+            continue
+
+        try:
+            index = int(str(pid).rsplit("_", 1)[1])
+        except (IndexError, ValueError):
+            index = 0
+
+        try:
+            part = compose(int(seed), index=index, config=config)
+        except Exception as exc:
+            if args.verbose:
+                pbar.write(f"  SKIP {pid}: recompose failed ({exc})")
+            skipped += 1
+            new_records.append(rec)
+            pbar.update(1)
+            continue
+
+        # Guard: a divergent ir_hash means we recomposed a different part than
+        # what is on disk (usually the wrong --config), so the dims would lie.
+        # ir_hash includes generator_version, which legitimately changes across a
+        # version bump even though the geometry IR is identical — so compare
+        # against the stored version label to isolate a true geometry divergence.
+        stored_hash = rec.get("ir_hash")
+        stored_gv = rec.get("generator_version") or rec.get("cadquarry_version")
+        if stored_hash:
+            current_gv = part.metadata.generator_version
+            if stored_gv:
+                part.metadata.generator_version = stored_gv
+            geom_hash = part.ir_hash()
+            part.metadata.generator_version = current_gv
+            if geom_hash != stored_hash:
+                mismatched += 1
+                new_records.append(rec)
+                if args.verbose:
+                    pbar.write(f"  MISMATCH {pid}: ir_hash differs — left unannotated")
+                pbar.update(1)
+                continue
+
+        geo_sig = rec.get("geometry_signature")
+        meta = emit_meta_json(part, geo_sig)
+
+        # Re-emit the text artifacts in place (geometry exports are left alone).
+        (dataset_dir / "parts" / f"{pid}.py").write_text(
+            emit_source(part), encoding="utf-8"
+        )
+        (dataset_dir / "params" / f"{pid}.params.json").write_text(
+            _json.dumps(emit_params_json(part), indent=2), encoding="utf-8"
+        )
+        (dataset_dir / "meta" / f"{pid}.meta.json").write_text(
+            _json.dumps(meta, indent=2), encoding="utf-8"
+        )
+        (dataset_dir / "dims" / f"{pid}.txt").write_text(
+            meta["dimensions"]["text"] + "\n", encoding="utf-8"
+        )
+
+        # Rebuild the manifest record: recomposed meta + preserved geometry
+        # paths + refreshed text-artifact paths.
+        new_rec = dict(meta)
+        paths = {k: v for k, v in rec.get("paths", {}).items() if k not in _TEXT_KEYS}
+        paths["py"] = f"parts/{pid}.py"
+        paths["params"] = f"params/{pid}.params.json"
+        paths["meta"] = f"meta/{pid}.meta.json"
+        paths["dims"] = f"dims/{pid}.txt"
+        new_rec["paths"] = paths
+        new_records.append(new_rec)
+        annotated += 1
+        pbar.update(1)
+
+    pbar.close()
+
+    # Rewrite the manifest atomically (write then replace).
+    manifest_path = dataset_dir / "manifest.jsonl"
+    tmp = manifest_path.with_suffix(".jsonl.tmp")
+    with tmp.open("w", encoding="utf-8") as f:
+        for rec in new_records:
+            f.write(_json.dumps(rec) + "\n")
+    tmp.replace(manifest_path)
+
+    print(
+        f"\nDone. annotated={annotated}  skipped={skipped}  "
+        f"ir_hash mismatches={mismatched}\n"
+        f"  dims sidecars: {dataset_dir / 'dims'}/\n"
+        f"  manifest: {manifest_path}"
+    )
+    if mismatched:
+        print(
+            f"  note: {mismatched} parts were left unannotated because their "
+            f"recomposed (geometry) IR differed — re-run with the --config used "
+            f"to generate this corpus."
+        )
+    return 0 if mismatched == 0 else 1
+
+
+# ---------------------------------------------------------------------------
 # verify
 # ---------------------------------------------------------------------------
 
@@ -785,6 +943,15 @@ def build_parser() -> argparse.ArgumentParser:
     exp.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel export workers (0 = auto)")
     exp.add_argument("--verbose", "-v", action="store_true")
 
+    # annotate
+    ann = sub.add_parser(
+        "annotate",
+        help="Supplement an existing corpus with procedural dimension metadata (no geometry re-export)",
+    )
+    ann.add_argument("dataset", metavar="DIR")
+    ann.add_argument("--config", default=None, metavar="TOML", help="Config used to generate the corpus (default: configs/default.toml)")
+    ann.add_argument("--verbose", "-v", action="store_true")
+
     # verify
     ver = sub.add_parser("verify", help="Re-execute corpus and check validity + signatures")
     ver.add_argument("dataset", metavar="DIR")
@@ -805,6 +972,7 @@ HANDLERS = {
     "run": cmd_run,
     "serve": cmd_serve,
     "export": cmd_export,
+    "annotate": cmd_annotate,
     "verify": cmd_verify,
     "info": cmd_info,
 }

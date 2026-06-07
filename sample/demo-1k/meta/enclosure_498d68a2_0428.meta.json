@@ -9,6 +9,14 @@
   "op_count": 3,
   "ir_hash": "5409874300c41a7e",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 63.23 \u00d7 62.6 \u00d7 30.5 mm (W\u00d7D\u00d7H).",
+      "Hollowed to 2.2 mm wall thickness, open at top face.",
+      "Four \u00d83.2 mm holes at the corners, 44.261 \u00d7 43.82 mm spacing."
+    ],
+    "text": "Rectangular body, 63.23 \u00d7 62.6 \u00d7 30.5 mm (W\u00d7D\u00d7H). Hollowed to 2.2 mm wall thickness, open at top face. Four \u00d83.2 mm holes at the corners, 44.261 \u00d7 43.82 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 23800.0,

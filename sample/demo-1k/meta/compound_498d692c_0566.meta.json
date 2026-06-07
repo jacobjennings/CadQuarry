@@ -9,6 +9,18 @@
   "op_count": 7,
   "ir_hash": "7d5549d6cca4039f",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 89.25 \u00d7 54.5 \u00d7 75.4 mm (W\u00d7D\u00d7H).",
+      "\u00d813.8 mm circular section attachment, 7.2 mm long, from left face.",
+      "\u00d813.8 mm circular section attachment, 7.2 mm long, from right face.",
+      "\u00d813.8 mm circular section attachment, 7.2 mm long, from front face.",
+      "\u00d813.8 mm circular section attachment, 7.2 mm long, from back face.",
+      "Four \u00d84.3 mm holes at the corners, 62.475 \u00d7 38.15 mm spacing.",
+      "Fillet radius 3.754 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 89.25 \u00d7 54.5 \u00d7 75.4 mm (W\u00d7D\u00d7H). \u00d813.8 mm circular section attachment, 7.2 mm long, from left face. \u00d813.8 mm circular section attachment, 7.2 mm long, from right face. \u00d813.8 mm circular section attachment, 7.2 mm long, from front face. \u00d813.8 mm circular section attachment, 7.2 mm long, from back face. Four \u00d84.3 mm holes at the corners, 62.475 \u00d7 38.15 mm spacing. Fillet radius 3.754 mm on vertical edges."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 368000.0,

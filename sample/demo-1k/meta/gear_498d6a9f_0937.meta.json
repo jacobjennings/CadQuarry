@@ -21,6 +21,12 @@
     "root_fillet": 0.36,
     "bore_d": 3.3
   },
+  "dimensions": {
+    "lines": [
+      "Spur gear, module 1.5 mm, 17 teeth (pitch \u00d825.5 mm), face width 9.4 mm, \u00d83.3 mm bore."
+    ],
+    "text": "Spur gear, module 1.5 mm, 17 teeth (pitch \u00d825.5 mm), face width 9.4 mm, \u00d83.3 mm bore."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 4740.0,

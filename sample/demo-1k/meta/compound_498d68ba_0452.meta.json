@@ -9,6 +9,16 @@
   "op_count": 5,
   "ir_hash": "cad3befbd5828ea3",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 45 \u00d7 45.5 \u00d7 39.9 mm (W\u00d7D\u00d7H).",
+      "5-sided polygon section, 8 mm across corners attachment, 8 mm long, from front face with a \u00d83.7 mm bore.",
+      "5-sided polygon section, 8 mm across corners attachment, 8 mm long, from left face with a \u00d83.7 mm bore.",
+      "5-sided polygon section, 8 mm across corners attachment, 8 mm long, from back face with a \u00d83.7 mm bore.",
+      "Four \u00d86.4 mm holes at the corners, 31.5 \u00d7 31.85 mm spacing."
+    ],
+    "text": "Rectangular body, 45 \u00d7 45.5 \u00d7 39.9 mm (W\u00d7D\u00d7H). 5-sided polygon section, 8 mm across corners attachment, 8 mm long, from front face with a \u00d83.7 mm bore. 5-sided polygon section, 8 mm across corners attachment, 8 mm long, from left face with a \u00d83.7 mm bore. 5-sided polygon section, 8 mm across corners attachment, 8 mm long, from back face with a \u00d83.7 mm bore. Four \u00d86.4 mm holes at the corners, 31.5 \u00d7 31.85 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 78700.0,

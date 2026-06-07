@@ -9,6 +9,16 @@
   "op_count": 5,
   "ir_hash": "b61eddcd93721c86",
   "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 56.22 \u00d7 45.2 \u00d7 30.1 mm (W\u00d7D\u00d7H).",
+      "\u00d89.9 mm circular section attachment, 10.4 mm long, from left face with a \u00d85.3 mm bore.",
+      "\u00d89.9 mm circular section attachment, 10.4 mm long, from back face with a \u00d85.3 mm bore.",
+      "\u00d89.9 mm circular section attachment, 10.4 mm long, from right face with a \u00d85.3 mm bore.",
+      "Four \u00d88.4 mm holes at the corners, 39.354 \u00d7 31.64 mm spacing."
+    ],
+    "text": "Rectangular body, 56.22 \u00d7 45.2 \u00d7 30.1 mm (W\u00d7D\u00d7H). \u00d89.9 mm circular section attachment, 10.4 mm long, from left face with a \u00d85.3 mm bore. \u00d89.9 mm circular section attachment, 10.4 mm long, from back face with a \u00d85.3 mm bore. \u00d89.9 mm circular section attachment, 10.4 mm long, from right face with a \u00d85.3 mm bore. Four \u00d88.4 mm holes at the corners, 39.354 \u00d7 31.64 mm spacing."
+  },
   "geometry_signature": {
     "version": 2,
     "volume": 72700.0,
