@@ -383,7 +383,18 @@ research, parameter inference, and on-the-fly augmentation. A sidecar
 and---for families with categorical design intent---a machine-readable
 \code{descriptor} resolves the part's defining attributes (e.g.\ a thread's
 \code{M16x2} designation, a gear's module and tooth count) so they can be queried
-without parsing source.
+without parsing source. Every part additionally carries a procedurally-generated,
+plain-English \emph{dimension summary}---a short, prompt-friendly description of
+its overall size and each feature (holes, fillets, bores, pockets, brackets,
+gears, threads), resolved against the default parameters. Crucially this is
+\emph{not} AI-written text: it is a pure, deterministic walk of the IR (e.g.\
+\textit{``Rectangular body, 55\,$\times$\,23.5\,$\times$\,75.4\,mm (W$\times$D$\times$H).
+Four \O3.2\,mm holes at the corners, 38.5\,$\times$\,16.45\,mm spacing. Fillet
+radius 1.078\,mm on vertical edges.''}), so it is reproducible bit-for-bit and
+pairs with the renders (\cref{sec:render}) as a faithful text--image signal for
+captioning and program-recovery work. The summary is emitted as a
+\code{dimensions} field in the metadata, a \code{dims/} text sidecar, and a column
+of the published tables.
 
 \begin{figure}[h]
 \begin{minipage}[t]{0.585\linewidth}
@@ -706,9 +717,12 @@ the author, who is responsible for its content.
 % ===========================================================================
 \textbf{Intended uses.} Pre-training and evaluation for CAD code generation and
 program synthesis; point-cloud/mesh/multi-view $\rightarrow$ program recovery
-(à la CAD-Recode~\cite{cadrecode}); parameter inference and customizable-part
-research that exploits the \code{build(p)} interface; and geometry-quality
-studies using the structural metrics that recent work emphasizes~\cite{cadmium}.
+(à la CAD-Recode~\cite{cadrecode}); text-conditioned generation and captioning
+using the per-part plain-English dimension summaries (à
+la Text2CAD~\cite{text2cad}, but with deterministic, reproducible descriptions);
+parameter inference and customizable-part research that exploits the
+\code{build(p)} interface; and geometry-quality studies using the structural
+metrics that recent work emphasizes~\cite{cadmium}.
 The multi-format ladder supports both lightweight code-only and full-geometry
 workflows.
 
