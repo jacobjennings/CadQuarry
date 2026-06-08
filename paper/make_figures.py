@@ -74,6 +74,8 @@ def grid(images: list[Image.Image], cols: int, cell: int, pad: int, bg=(255, 255
 
 def make_teaser():
     # Proportional-ish sample across families; iso_fr reads well for most.
+    # 24 parts in an 8-wide grid = 3 rows, keeping the teaser compact enough
+    # that the abstract still lands on page 1.
     picks: list[Path] = []
     per = {f: max(2, 4) for f in FAMILIES}
     for fam in FAMILIES:
@@ -81,7 +83,7 @@ def make_teaser():
         random.shuffle(ds)
         picks.extend(ds[: per[fam]])
     random.shuffle(picks)
-    picks = picks[:48]
+    picks = picks[:24]
     imgs = []
     for d in picks:
         im = load(d, "iso_fr") or load(d, "iso")

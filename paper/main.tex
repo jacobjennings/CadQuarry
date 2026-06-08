@@ -70,11 +70,11 @@
 \newtcolorbox{keybox}[1][]{
   enhanced, breakable, colback=panel, colframe=accent,
   boxrule=0pt, leftrule=2.5pt, arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
-  fonttitle=\sffamily\bfseries\color{accentd}, title={#1} }
+  coltitle=white, fonttitle=\sffamily\bfseries, title={#1} }
 \newtcolorbox{warnbox}[1][]{
   enhanced, breakable, colback=panel2, colframe=accent2,
   boxrule=0pt, leftrule=2.5pt, arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
-  fonttitle=\sffamily\bfseries\color{accent2}, title={#1} }
+  coltitle=white, fonttitle=\sffamily\bfseries, title={#1} }
 
 % ---------------------------------------------------------------------------
 % Code listings (minted v3 + pygments)
@@ -148,7 +148,7 @@
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{figures/teaser.png}
-  \caption{A 48-part sample drawn across CadQuarry's eleven part families. Every
+  \caption{A 24-part sample drawn across CadQuarry's eleven part families. Every
   object is a deterministic function of a single integer seed, executes to a
   watertight solid, and ships as live-editable parametric CadQuery code under a
   \cc{} public-domain dedication. Images are CadQuarry's own headless GPU
@@ -175,12 +175,10 @@ and duplicates are removed by a rotation/translation-invariant geometry
 signature; across our largest corpus all 200{,}000 accepted parts are
 geometrically distinct. The data is published on the Hugging Face Hub as a size
 ladder (1k--200k) in six content configs---code-only JSONL plus Parquet with
-binary STEP, STL, and eight-view GPU renders---is reproducible bit-for-bit from a
-versioned seed list, and is browsable through a committed in-browser gallery.
-Generation sustains \mbox{$\sim$10} validated parts/s on a 24-core workstation,
-paced by the solver-built mechanical families.
-We position CadQuarry relative to existing CAD datasets, document the pipeline as
-a datasheet, and disclose our use of AI coding assistants in building the tool.
+binary STEP, STL, and eight-view GPU renders---and is browsable through a
+committed in-browser gallery, and any corpus can be regenerated from a versioned
+seed list. Generation sustains \mbox{$\sim$10} validated parts/s on a 24-core
+workstation, paced by the solver-built mechanical families.
 \end{tcolorbox}
 
 % ===========================================================================
@@ -196,9 +194,10 @@ corpora---ABC~\cite{abc} and the sketch-extrude sequences derived from it
 (DeepCAD~\cite{deepcad} and its text-augmented descendant
 Text2CAD~\cite{text2cad})---are parsed from Onshape public documents, so their
 geometry stays copyright its creators under those source terms; the
-human-authored Fusion~360 Gallery~\cite{fusion360}, and even the procedurally
-generated CAD-Recode~\cite{cadrecode}, are released for \emph{non-commercial} use
-(CC~BY-NC variants). Unrestricted---especially commercial---reuse is therefore a
+human-authored Fusion~360 Gallery~\cite{fusion360} ships under a custom Autodesk
+\emph{non-commercial} research license, and even the procedurally generated
+CAD-Recode~\cite{cadrecode} is released CC~BY-NC. Unrestricted---especially
+commercial---reuse is therefore a
 case-by-case legal question rather than a settled fact (\cref{tab:compare}).
 
 \textbf{Editability.} Most released CAD datasets are \emph{instances}: a fixed
@@ -227,15 +226,14 @@ while it does so.
         standards-based threads---bridged into a single CadQuery solid.
   \item \textbf{Validity by execution} and \textbf{geometry-signature dedup};
         empirically, 200{,}000/200{,}000 accepted parts are distinct.
-  \item \textbf{Reproducibility and throughput}: seed $+$ versioned generator
-        $\Rightarrow$ bit-identical corpus, produced by a persistent worker pool
-        at $\sim$10 validated parts/s (paced by the solver-built mechanical
-        families).
   \item \textbf{Developer experience}: a Hugging Face size ladder in Parquet/JSONL
         configs, \textbf{eight-view} GPU renders, and a no-install in-browser
         gallery and live customizer.
-  \item A \textbf{transparent disclosure} of generative-AI usage in the project
-        and this manuscript (\cref{sec:ai}).
+  \item \textbf{An extensible generator built for a community}: because every
+        corpus is a function of an \apache{} generator and a versioned seed list,
+        a new family or an improved sampler is just a new generator
+        version---inviting others to iterate on and grow the design space rather
+        than re-scrape it, with no proprietary pipeline in the loop.
 \end{enumerate}
 \end{keybox}
 
@@ -249,7 +247,8 @@ is organized as a datasheet---generation methodology, validity characterization,
 distribution statistics, intended uses, and licensing---rather than as a methods
 paper. CAD-Recode~\cite{cadrecode} and Fusion~360 Gallery~\cite{fusion360} are
 the closest references for framing generation and tasks; recent work such as
-CADmium~\cite{cadmium} motivates the geometric-quality metrics we report.
+CADmium~\cite{cadmium} illustrates the geometric-quality evaluation our data is
+meant to support.
 
 \begin{table}[h]
 \centering\small\setlength{\tabcolsep}{5pt}
@@ -343,7 +342,7 @@ dependency on CadQuery itself; only execution does.
 \end{tikzpicture}
 \caption{The generation pipeline. Sampling is seeded per part and the
 accept/reject decision is taken in strict attempt order, so the corpus is
-bit-for-bit identical regardless of how many workers run. Text artifacts (code,
+identical regardless of how many workers run. Text artifacts (code,
 params, meta) are produced by \code{generate}; geometry and renders are produced
 on demand by \code{export}.}
 \label{fig:pipeline}
@@ -378,7 +377,15 @@ range-bounded, UI-labeled \code{PARAMS} schema and a pure \code{build(p)} that i
 a function of those parameters (\cref{fig:param}). This is the property that turns
 a sample from a frozen instance into a \emph{design}---the same program yields a
 continuum of valid parts, which is what makes the data useful for customizable-part
-research, parameter inference, and on-the-fly augmentation. A sidecar
+research, parameter inference, and on-the-fly augmentation. To be precise about
+scope: each published record is one program materialized at its \emph{default}
+parameters---the geometry, eight-view renders, and dimension summary all describe
+the part \code{build(p)} produces under those defaults. We deliberately do
+\emph{not} enumerate the combinatorial space of parameter settings into the
+corpus; doing so would bloat it with near-duplicates and defeat dedup. The point
+of shipping the \code{PARAMS} schema and the \code{build(p)} function is to invite
+models to \emph{generate} parametric programs, not to pre-render every output of
+one. A sidecar
 \code{.params.json} mirrors the schema for consumers that do not execute Python,
 and---for families with categorical design intent---a machine-readable
 \code{descriptor} resolves the part's defining attributes (e.g.\ a thread's
@@ -390,7 +397,7 @@ gears, threads), resolved against the default parameters. Crucially this is
 \emph{not} AI-written text: it is a pure, deterministic walk of the IR (e.g.\
 \textit{``Rectangular body, 55\,$\times$\,23.5\,$\times$\,75.4\,mm (W$\times$D$\times$H).
 Four \O3.2\,mm holes at the corners, 38.5\,$\times$\,16.45\,mm spacing. Fillet
-radius 1.078\,mm on vertical edges.''}), so it is reproducible bit-for-bit and
+radius 1.078\,mm on vertical edges.''}), so it is deterministic and
 pairs with the renders (\cref{sec:render}) as a faithful text--image signal for
 captioning and program-recovery work. The summary is emitted as a
 \code{dimensions} field in the metadata, a \code{dims/} text sidecar, and a column
@@ -445,7 +452,7 @@ re-runs \code{build} and updates all geometry; nothing is pre-baked.}
 \end{figure}
 
 % ===========================================================================
-\section{Validity and Deduplication}\label{sec:valid}
+\section{Validity, Deduplication, and Reproducibility}\label{sec:valid}
 % ===========================================================================
 \textbf{Validity by execution.} CadQuarry never ships a part it has not built. A
 candidate is accepted only if its program runs to completion and yields exactly
@@ -479,6 +486,13 @@ acts as a natural governor on families with a small design space: the
 the finite ISO/ACME standards space saturates and later collisions are dropped.
 \end{keybox}
 
+\textbf{Reproducibility.} A versioned seed list pins each published corpus to a
+tuple of \code{seed}, \code{count}, \code{config}, and generator version, so the
+published Parquet/JSONL is a \emph{convenience artifact}: the generator plus the
+seed list is the canonical source, and any corpus can be regenerated rather than
+relying on a hosted copy. The geometry signature is itself versioned, so the
+dedup rule travels with the seed list.
+
 \subsection{Mechanical families: gears and threads}\label{sec:mech}
 The \fm{gear} and \fm{threaded} families build real, standards-based geometry
 through the build123d~\cite{build123d} stack and bridge it back into CadQuery via
@@ -490,17 +504,9 @@ herringbone), bevel, cycloid, and inside-ring types on the ISO~54 module series,
 with optional profile shift, root fillets, bore, and hub. Threads (via
 bd\_warehouse~\cite{bdwarehouse}) cover ISO metric external and internal threads
 from the ISO~261/262 pitch tables, plus ACME and trapezoidal lead screws by
-standard designation.
-
-\begin{warnbox}[Reproducibility nuance for solver-built families]
-Geometry \emph{signatures} for gears and threads are stable to the dedup
-tolerance, so seeded \emph{selection} and dedup hold. Exact STEP/STL \emph{bytes},
-however, come from a numeric NURBS/thread solver and are not guaranteed
-bit-identical across platforms or library versions the way the primitive families
-are. The \code{mech}-stack versions are pinned in the seed list for byte-level
-reproduction. Consumers who only read the \code{source} text need nothing extra;
-only \emph{re-executing} these parts needs the \code{mech} dependencies.
-\end{warnbox}
+standard designation. Their seeded \emph{selection} and dedup are stable like any
+other family; only the exact solver output is platform-dependent
+(\cref{sec:uses}).
 
 % ===========================================================================
 \section{Eight-View Rendering}\label{sec:render}
@@ -533,8 +539,48 @@ stable regardless of order or parallelism. Rendering parallelizes across
 processes that share one GPU.
 
 % ===========================================================================
-\section{The Corpus: Distribution and Formats}\label{sec:corpus}
+\section{The Corpus: Records, Distribution, and Formats}\label{sec:corpus}
 % ===========================================================================
+
+\subsection{What each record contains}
+Every part is one record carrying four kinds of content: the parametric
+\emph{program}, a \emph{natural-language} description, optional \emph{geometry},
+and \emph{provenance} metadata (\cref{tab:fields}). The program and metadata are
+always present; geometry (STEP/STL/renders) is included only in the geometry
+configs (\cref{tab:configs}).
+
+\begin{table}[h]
+\centering\small\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+\textbf{Field} & \textbf{Contents}\\
+\midrule
+\multicolumn{2}{@{}l}{\textit{\color{accentd}Program \& parameters}}\\
+\code{source}      & The parametric CadQuery program---a typed \code{PARAMS} schema plus a pure \code{build(p)}.\\
+\code{params}      & The \code{PARAMS} schema itself: for each parameter a type, default, \code{min}/\code{max}/\code{step}, and UI group and label. Mirrored as a \code{.params.json} sidecar.\\
+\code{descriptor}  & Machine-readable categorical design intent, for the mechanical families: e.g.\ a gear's \code{kind}/\code{module}/\code{teeth}/\code{pitch\_diameter}, a thread's \code{M10x1.5} designation, pitch, and major diameter.\\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{\color{accentd}Natural-language description}}\\
+\code{dimensions}  & A deterministic, plain-English summary of overall size and each feature, as a \code{text} blob plus per-feature \code{lines} (\cref{fig:param}). Also a \code{dims/} sidecar.\\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{\color{accentd}Geometry} \;(geometry configs only)}\\
+\code{step\_bytes} & STEP B-rep solid.\\
+\code{stl\_bytes}  & Triangulated STL mesh.\\
+\code{render\_*}   & The eight fixed-viewpoint GPU renders (\cref{sec:render}).\\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{\color{accentd}Provenance \& structure}}\\
+\code{part\_id}, \code{family}, \code{tier} & Stable identifier, part family, and complexity tier.\\
+\code{seed}, \code{generator\_version}, \code{license} & The integer seed, generator version, and \cc{} grant that fix the part's origin.\\
+\code{symmetry}, \code{op\_count}, \code{ir\_hash} & IR-level structure: symmetry class, operation count, and a hash of the intermediate representation.\\
+\code{geometry\_signature} & The dedup key (\cref{sec:valid}): volume, surface area, sorted principal moments, and face/edge/vertex counts.\\
+\bottomrule
+\end{tabularx}
+\caption{The fields of a single CadQuarry record. Program, description, and
+provenance ship in every config; geometry fields appear only in the geometry
+configs of \cref{tab:configs}.}
+\label{tab:fields}
+\end{table}
 
 \begin{figure}[h]
 \centering
@@ -572,13 +618,15 @@ in \code{configs/default.toml}.}
 \label{fig:dist}
 \end{figure}
 
-\textbf{Distribution.} \Cref{fig:dist} shows the realized family mix; complexity
+\subsection{Distribution}
+\Cref{fig:dist} shows the realized family mix; complexity
 tiers on the same corpus land at \textbf{11.0\%}/\textbf{49.6\%}/\textbf{30.3\%}/%
 \textbf{9.0\%} for tiers 0--3, reflecting the per-family tier clamps that pull the
 bare-primitive share down from its nominal 25\%. These are characterization
 numbers, not targets; every knob is exposed in config.
 
-\textbf{Formats and the size ladder.} The corpus is published on the Hugging Face
+\subsection{Formats and the size ladder}
+The corpus is published on the Hugging Face
 Hub~\cite{huggingfacedatasets} as a size ladder---\code{1k}, \code{2k}, \code{5k},
 \code{10k}, \code{20k}, \code{50k}, \code{100k}, \code{200k}---each in six content
 configs (\cref{tab:configs}) so a consumer fetches only what they need, from a
@@ -612,19 +660,9 @@ code and metadata.}
 \end{table}
 
 % ===========================================================================
-\section{Reproducibility and Performance}\label{sec:perf}
+\section{Performance}\label{sec:perf}
 % ===========================================================================
-\textbf{Reproducibility.} A versioned seed list pins each published corpus to a
-tuple of \code{seed}, \code{count}, \code{config}, and generator version.
-Re-running the matching
-generator reproduces the \emph{same} \code{manifest.jsonl} and the same geometry
-signatures bit-for-bit. The published Parquet/JSONL is therefore a
-\emph{convenience artifact}: the generator plus the seed list is the canonical
-source, and the dataset can always be regenerated from scratch. A geometry
-signature is itself versioned---changing its definition would change which parts
-count as duplicates---so the dedup rule is part of the reproducibility contract.
-
-\textbf{Performance.} Generation validates every part by execution. Importing
+Generation validates every part by execution. Importing
 the CadQuery/OCP kernel ($\sim$1--1.5\,s) is a fixed startup cost that CadQuarry
 amortizes with a pool of \emph{persistent} workers that import once and then
 build many parts each, fanning work across cores while keeping the
@@ -655,10 +693,9 @@ parts/s and climbs slightly with corpus size as the worker warm-up amortizes.
 \end{tabular}
 \caption{Generation time on an AMD Ryzen Threadripper 9960X (24C/48T) with the
 default 24-worker pool, full default config (mech families included),
-execution-validated and geometry export excluded. Throughput is paced by the
-solver-built mechanical families; the optimal worker count is system-dependent
-and memory-bound at the largest sizes, so on machines with less RAM fewer
-workers than cores may be needed to avoid swapping.}
+execution-validated and geometry export excluded. The optimal worker count is
+system-dependent and memory-bound at the largest sizes, so on machines with less
+RAM fewer workers than cores may be needed to avoid swapping.}
 \label{tab:perf}
 \end{table}
 
@@ -692,7 +729,7 @@ loop. The generator is \apache{}; there is no proprietary pipeline to reverse.
 % ===========================================================================
 \section{Generative-AI Disclosure}\label{sec:ai}
 % ===========================================================================
-\begin{warnbox}[Disclosure of AI usage]
+\begin{warnbox}
 \textbf{The dataset is not AI-generated.} Every part is produced by deterministic
 procedural code and an exact geometry kernel; no language or diffusion model
 samples, edits, or selects any geometry. This is a defining difference from
