@@ -1,0 +1,41 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "gear_498d6759_0099",
+  "seed": 1234003801,
+  "generator_version": "0.6.0",
+  "family": "gear",
+  "tier": 1,
+  "symmetry": "mirror_xy",
+  "op_count": 1,
+  "ir_hash": "f7eee10e0f16ec24",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "gear",
+    "kind": "spur",
+    "module": 2.0,
+    "teeth": 27,
+    "face_width": 8.5,
+    "pitch_diameter": 54.0,
+    "pressure_angle_deg": 20.0,
+    "bore_d": 10.1
+  },
+  "dimensions": {
+    "lines": [
+      "Spur gear, module 2 mm, 27 teeth (pitch \u00d854 mm), face width 8.5 mm, \u00d810.1 mm bore."
+    ],
+    "text": "Spur gear, module 2 mm, 27 teeth (pitch \u00d854 mm), face width 8.5 mm, \u00d810.1 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 18600.0,
+    "surface_area": 7480.0,
+    "principal_moments": [
+      3640000.0,
+      3640000.0,
+      7050000.0
+    ],
+    "n_faces": 165,
+    "n_edges": 489,
+    "n_vertices": 326
+  }
+}

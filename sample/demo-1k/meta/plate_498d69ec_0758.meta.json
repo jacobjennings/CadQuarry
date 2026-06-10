@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d69ec_0758",
+  "seed": 1234004460,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "72ebed97d9b1e700",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 85 \u00d7 30.4 \u00d7 5 mm (W\u00d7D\u00d7H).",
+      "Four \u00d83.2 mm holes in a 2\u00d72 grid, 68 \u00d7 24.3 mm pitch."
+    ],
+    "text": "Rectangular body, 85 \u00d7 30.4 \u00d7 5 mm (W\u00d7D\u00d7H). Four \u00d83.2 mm holes in a 2\u00d72 grid, 68 \u00d7 24.3 mm pitch."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 12800.0,
+    "surface_area": 6460.0,
+    "principal_moments": [
+      998000.0,
+      7620000.0,
+      8560000.0
+    ],
+    "n_faces": 10,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}

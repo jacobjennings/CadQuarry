@@ -1,0 +1,1 @@
+6-sided polygon section, 20 mm across corners, extruded 5.4 mm thick. Ø9.5 mm circular section attachment, 10.6 mm long, from top face. Fillet radius 0.809 mm on vertical edges.

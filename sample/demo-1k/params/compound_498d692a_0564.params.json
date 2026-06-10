@@ -1,0 +1,78 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d692a_0564",
+  "params": {
+    "block_w": {
+      "type": "float",
+      "default": 62.6,
+      "min": 15.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block width (mm)"
+    },
+    "block_d": {
+      "type": "float",
+      "default": 80.8,
+      "min": 10.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block depth (mm)"
+    },
+    "block_h": {
+      "type": "float",
+      "default": 33.9,
+      "min": 10.0,
+      "max": 100.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Block height (mm)"
+    },
+    "tab_a": {
+      "type": "float",
+      "default": 80.5,
+      "min": 32.2,
+      "max": 128.8,
+      "step": 1.0,
+      "group": "Tab",
+      "label": "Tab width (mm)"
+    },
+    "tab_b": {
+      "type": "float",
+      "default": 26.5,
+      "min": 10.6,
+      "max": 42.4,
+      "step": 1.0,
+      "group": "Tab",
+      "label": "Tab height (mm)"
+    },
+    "tab_t": {
+      "type": "float",
+      "default": 3.0,
+      "min": 2.0,
+      "max": 15.0,
+      "step": 0.5,
+      "group": "Tab",
+      "label": "Tab thickness (mm)"
+    },
+    "tab_hole_d": {
+      "type": "float",
+      "default": 4.3,
+      "min": 2.0,
+      "max": 5.8,
+      "step": 0.1,
+      "group": "Tab",
+      "label": "Tab hole diameter (mm)"
+    },
+    "block_hole_d": {
+      "type": "float",
+      "default": 3.2,
+      "min": 2.0,
+      "max": 13.0,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    }
+  }
+}

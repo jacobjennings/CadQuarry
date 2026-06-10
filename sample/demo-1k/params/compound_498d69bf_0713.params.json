@@ -1,0 +1,84 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d69bf_0713",
+  "params": {
+    "base_w": {
+      "type": "float",
+      "default": 48.09,
+      "min": 30.0,
+      "max": 160.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base width (mm)"
+    },
+    "base_d": {
+      "type": "float",
+      "default": 38.3,
+      "min": 25.0,
+      "max": 160.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base depth (mm)"
+    },
+    "base_h": {
+      "type": "float",
+      "default": 5.0,
+      "min": 3.0,
+      "max": 30.0,
+      "step": 0.5,
+      "group": "Base",
+      "label": "Base thickness (mm)"
+    },
+    "col_sides": {
+      "type": "int",
+      "default": 6,
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "group": "Column",
+      "label": "Column sides"
+    },
+    "col_r": {
+      "type": "float",
+      "default": 4.0,
+      "min": 2.0,
+      "max": 9.6,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column circumradius (mm)"
+    },
+    "col_h": {
+      "type": "float",
+      "default": 27.3,
+      "min": 8.2,
+      "max": 81.9,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column height (mm)"
+    },
+    "col_bore": {
+      "type": "float",
+      "default": 3.2,
+      "min": 2.0,
+      "max": 5.0,
+      "step": 0.5,
+      "group": "Column",
+      "label": "Column bore diameter (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 8.4,
+      "min": 2.0,
+      "max": 8.6,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    },
+    "filleted": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Fillet corners"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "revolved_498d67ec_0246",
+  "seed": 1234003948,
+  "generator_version": "0.6.0",
+  "family": "revolved",
+  "tier": 1,
+  "symmetry": "mirror_xy",
+  "op_count": 1,
+  "ir_hash": "055ec3c6d1a94c47",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d840 mm \u00d7 139.5 mm tall with \u00d814.3 mm bore, \u00d877.4 mm \u00d7 38 mm flange."
+    ],
+    "text": "Revolved body, \u00d840 mm \u00d7 139.5 mm tall with \u00d814.3 mm bore, \u00d877.4 mm \u00d7 38 mm flange."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 284000.0,
+    "surface_area": 37400.0,
+    "principal_moments": [
+      159000000.0,
+      525000000.0,
+      525000000.0
+    ],
+    "n_faces": 6,
+    "n_edges": 9,
+    "n_vertices": 6
+  }
+}

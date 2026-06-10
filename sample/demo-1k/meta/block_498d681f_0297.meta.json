@@ -1,13 +1,13 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "block_498d681f_0297",
   "seed": 1234003999,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "block",
   "tier": 2,
   "symmetry": "none",
   "op_count": 3,
-  "ir_hash": "c04e6966e1b80b6a",
+  "ir_hash": "caa3ee7d8f8e473f",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [

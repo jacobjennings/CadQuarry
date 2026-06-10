@@ -1,13 +1,13 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "bracket_498d6709_0019",
   "seed": 1234003721,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "bracket",
   "tier": 3,
   "symmetry": "none",
   "op_count": 1,
-  "ir_hash": "a63b8666443eb449",
+  "ir_hash": "1e17ab1e63e0244a",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [

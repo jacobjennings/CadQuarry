@@ -1,33 +1,32 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d69b7_0705",
   "seed": 1234004407,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 2,
   "symmetry": "none",
-  "op_count": 3,
-  "ir_hash": "7af91466c16c3cb1",
+  "op_count": 2,
+  "ir_hash": "ad35542f13adb738",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 63.58 \u00d7 41.1 \u00d7 10 mm (W\u00d7D\u00d7H).",
-      "Four \u00d85.3 mm counterbored holes (\u00d810.6 mm \u00d7 4.2 mm counterbore) at the corners, 44.506 \u00d7 28.77 mm spacing.",
-      "Fillet radius 4.533 mm on vertical edges."
+      "Four \u00d85.3 mm counterbored holes (\u00d810.6 mm \u00d7 4.2 mm counterbore) at the corners, 44.506 \u00d7 28.77 mm spacing."
     ],
-    "text": "Rectangular body, 63.58 \u00d7 41.1 \u00d7 10 mm (W\u00d7D\u00d7H). Four \u00d85.3 mm counterbored holes (\u00d810.6 mm \u00d7 4.2 mm counterbore) at the corners, 44.506 \u00d7 28.77 mm spacing. Fillet radius 4.533 mm on vertical edges."
+    "text": "Rectangular body, 63.58 \u00d7 41.1 \u00d7 10 mm (W\u00d7D\u00d7H). Four \u00d85.3 mm counterbored holes (\u00d810.6 mm \u00d7 4.2 mm counterbore) at the corners, 44.506 \u00d7 28.77 mm spacing."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 24000.0,
-    "surface_area": 7980.0,
+    "volume": 24100.0,
+    "surface_area": 8090.0,
     "principal_moments": [
-      3380000.0,
-      7830000.0,
-      10800000.0
+      3450000.0,
+      8000000.0,
+      11100000.0
     ],
-    "n_faces": 22,
-    "n_edges": 48,
-    "n_vertices": 32
+    "n_faces": 18,
+    "n_edges": 36,
+    "n_vertices": 24
   }
 }

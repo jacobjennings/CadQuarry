@@ -1,37 +1,37 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "threaded_498d6865_0367",
   "seed": 1234004069,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "threaded",
   "tier": 1,
   "symmetry": "mirror_x",
   "op_count": 1,
-  "ir_hash": "ec4dc72422522786",
+  "ir_hash": "99007d894f7fd437",
   "license": "CC0-1.0",
   "descriptor": {
     "family": "threaded",
     "standard": "iso",
     "external": false,
-    "length": 29.9,
+    "length": 30.0,
     "major_diameter": 5.0,
     "pitch": 0.8,
     "designation": "M5x0.8"
   },
   "dimensions": {
     "lines": [
-      "M5x0.8 internal thread, 29.9 mm long."
+      "M5x0.8 internal thread, 30 mm long."
     ],
-    "text": "M5x0.8 internal thread, 29.9 mm long."
+    "text": "M5x0.8 internal thread, 30 mm long."
   },
   "geometry_signature": {
     "version": 2,
     "volume": 1420.0,
-    "surface_area": 1620.0,
+    "surface_area": 1630.0,
     "principal_moments": [
-      18000.0,
-      114000.0,
-      114000.0
+      18100.0,
+      115000.0,
+      115000.0
     ],
     "n_faces": 303,
     "n_edges": 827,

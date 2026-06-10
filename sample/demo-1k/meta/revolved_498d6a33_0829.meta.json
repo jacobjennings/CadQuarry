@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "revolved_498d6a33_0829",
+  "seed": 1234004531,
+  "generator_version": "0.6.0",
+  "family": "revolved",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "af45d8f7453f9c3d",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d870 mm \u00d7 243.3 mm tall with \u00d822.3 mm bore.",
+      "Chamfer 0.6 mm on the >Z or <Z edges."
+    ],
+    "text": "Revolved body, \u00d870 mm \u00d7 243.3 mm tall with \u00d822.3 mm bore. Chamfer 0.6 mm on the >Z or <Z edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 841000.0,
+    "surface_area": 77300.0,
+    "principal_moments": [
+      567000000.0,
+      4430000000.0,
+      4430000000.0
+    ],
+    "n_faces": 8,
+    "n_edges": 14,
+    "n_vertices": 8
+  }
+}

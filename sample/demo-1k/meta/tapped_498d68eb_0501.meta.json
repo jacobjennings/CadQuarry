@@ -1,0 +1,40 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "tapped_498d68eb_0501",
+  "seed": 1234004203,
+  "generator_version": "0.6.0",
+  "family": "tapped",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "d61d7407928ffebf",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "tapped",
+    "body": "box",
+    "standard": "iso",
+    "major_diameter": 8.0,
+    "pitch": 1.25,
+    "designation": "M8x1.25",
+    "hole_count": 4
+  },
+  "dimensions": {
+    "lines": [
+      "Four M8x1.25 tapped holes in a plate."
+    ],
+    "text": "Four M8x1.25 tapped holes in a plate."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 32200.0,
+    "surface_area": 9600.0,
+    "principal_moments": [
+      4590000.0,
+      7140000.0,
+      9320000.0
+    ],
+    "n_faces": 554,
+    "n_edges": 1520,
+    "n_vertices": 968
+  }
+}

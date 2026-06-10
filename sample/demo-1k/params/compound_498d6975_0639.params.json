@@ -1,0 +1,57 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6975_0639",
+  "params": {
+    "shaft_d": {
+      "type": "float",
+      "default": 45,
+      "min": 22.5,
+      "max": 81.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Shaft diameter (mm)"
+    },
+    "shaft_len": {
+      "type": "float",
+      "default": 88.4,
+      "min": 35.4,
+      "max": 176.8,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Shaft length (mm)"
+    },
+    "step_d": {
+      "type": "float",
+      "default": 23.0,
+      "min": 11.5,
+      "max": 40.5,
+      "step": 1.0,
+      "group": "Step",
+      "label": "Step diameter (mm)"
+    },
+    "step_len": {
+      "type": "float",
+      "default": 36.2,
+      "min": 10.9,
+      "max": 90.5,
+      "step": 1.0,
+      "group": "Step",
+      "label": "Step length (mm)"
+    },
+    "chamfer_d": {
+      "type": "float",
+      "default": 2.5,
+      "min": 0.5,
+      "max": 3.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Chamfer distance (mm)"
+    },
+    "chamfered": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Chamfer edges"
+    }
+  }
+}

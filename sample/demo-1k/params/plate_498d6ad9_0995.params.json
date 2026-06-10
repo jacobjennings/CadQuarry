@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6ad9_0995",
   "params": {
     "plate_w": {
@@ -38,11 +38,20 @@
       "group": "Holes",
       "label": "Hole diameter (mm)"
     },
-    "filleted": {
+    "chamfer_d": {
+      "type": "float",
+      "default": 1.8,
+      "min": 1.7,
+      "max": 3.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Chamfer distance (mm)"
+    },
+    "chamfered": {
       "type": "bool",
       "default": true,
       "group": "Body",
-      "label": "Fillet corners"
+      "label": "Chamfer edges"
     }
   }
 }

@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "profiled_498d6a08_0786",
+  "seed": 1234004488,
+  "generator_version": "0.6.0",
+  "family": "profiled",
+  "tier": 1,
+  "symmetry": "mirror_x",
+  "op_count": 1,
+  "ir_hash": "6a06d07fdf5ae530",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "8-sided polygon section, 13.08 mm across corners, extruded 31.4 mm thick."
+    ],
+    "text": "8-sided polygon section, 13.08 mm across corners, extruded 31.4 mm thick."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 3800.0,
+    "surface_area": 1500.0,
+    "principal_moments": [
+      73300.0,
+      349000.0,
+      349000.0
+    ],
+    "n_faces": 10,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "swept_498d6a09_0787",
+  "seed": 1234004489,
+  "generator_version": "0.6.0",
+  "family": "swept",
+  "tier": 2,
+  "symmetry": "mirror_xy",
+  "op_count": 1,
+  "ir_hash": "685374c6403bb1a5",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "\u00d88.4 mm circular section swept along a curved path, ~105 mm span."
+    ],
+    "text": "\u00d88.4 mm circular section swept along a curved path, ~105 mm span."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 5960.0,
+    "surface_area": 3330.0,
+    "principal_moments": [
+      68800.0,
+      8970000.0,
+      8980000.0
+    ],
+    "n_faces": 3,
+    "n_edges": 3,
+    "n_vertices": 2
+  }
+}

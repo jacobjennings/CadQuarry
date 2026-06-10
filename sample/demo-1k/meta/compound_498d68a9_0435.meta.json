@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d68a9_0435",
+  "seed": 1234004137,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "7c912f5f7fbba846",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "\u00d831.83 mm circular section, extruded 61 mm thick.",
+      "\u00d818.7 mm circular section attachment, 48.9 mm long, from top face."
+    ],
+    "text": "\u00d831.83 mm circular section, extruded 61 mm thick. \u00d818.7 mm circular section attachment, 48.9 mm long, from top face."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 62000.0,
+    "surface_area": 10600.0,
+    "principal_moments": [
+      6730000.0,
+      52899999.99999999,
+      52899999.99999999
+    ],
+    "n_faces": 5,
+    "n_edges": 6,
+    "n_vertices": 4
+  }
+}

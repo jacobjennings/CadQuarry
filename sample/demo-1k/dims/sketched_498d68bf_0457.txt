@@ -1,0 +1,1 @@
+freeform sketched section (7 segments: 5 straight, 1 arc, 1 curve), ~48.531 × 32.729 mm, extruded 20 mm thick. One Ø6.4 mm hole in a 1×1 grid, 10 × 10 mm pitch.

@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "lofted_498d696b_0629",
+  "params": {
+    "loft_base": {
+      "type": "float",
+      "default": 62.92,
+      "min": 31.5,
+      "max": 100.7,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Base size (mm)"
+    },
+    "loft_top": {
+      "type": "float",
+      "default": 49.1,
+      "min": 19.6,
+      "max": 75.5,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Top size (mm)"
+    },
+    "loft_h": {
+      "type": "float",
+      "default": 48.0,
+      "min": 19.2,
+      "max": 96.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Height (mm)"
+    }
+  }
+}

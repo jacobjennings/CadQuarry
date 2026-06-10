@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d682c_0310",
+  "seed": 1234004012,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 3,
+  "ir_hash": "87617fb53d50a6bb",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 103.25 \u00d7 80.2 \u00d7 8 mm (W\u00d7D\u00d7H).",
+      "Twelve 6.4 mm square holes in a 3\u00d74 grid, 41.3 \u00d7 21.4 mm pitch.",
+      "Chamfer 1.7 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 103.25 \u00d7 80.2 \u00d7 8 mm (W\u00d7D\u00d7H). Twelve 6.4 mm square holes in a 3\u00d74 grid, 41.3 \u00d7 21.4 mm pitch. Chamfer 1.7 mm on vertical edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 62800.0,
+    "surface_area": 20700.0,
+    "principal_moments": [
+      33800000.0,
+      55199999.99999999,
+      88400000.0
+    ],
+    "n_faces": 106,
+    "n_edges": 312,
+    "n_vertices": 208
+  }
+}

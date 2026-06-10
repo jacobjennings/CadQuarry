@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "profiled_498d6a51_0859",
+  "seed": 1234004561,
+  "generator_version": "0.6.0",
+  "family": "profiled",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "9a5faace97807ba9",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "freeform sketched section (6 segments: 4 straight, 1 arc, 1 curve), ~31.185 \u00d7 36.867 mm, extruded 109.4 mm thick."
+    ],
+    "text": "freeform sketched section (6 segments: 4 straight, 1 arc, 1 curve), ~31.185 \u00d7 36.867 mm, extruded 109.4 mm thick."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 97600.0,
+    "surface_area": 14100.0,
+    "principal_moments": [
+      14499999.999999998,
+      103000000.0,
+      106000000.0
+    ],
+    "n_faces": 8,
+    "n_edges": 18,
+    "n_vertices": 12
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "tapped_498d685f_0361",
+  "seed": 1234004063,
+  "generator_version": "0.6.0",
+  "family": "tapped",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "fea9f780be82a2ae",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "tapped",
+    "body": "box",
+    "standard": "iso",
+    "major_diameter": 6.0,
+    "pitch": 1.0,
+    "designation": "M6x1",
+    "hole_count": 4
+  },
+  "dimensions": {
+    "lines": [
+      "Four M6x1 tapped holes in a plate."
+    ],
+    "text": "Four M6x1 tapped holes in a plate."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 92700.0,
+    "surface_area": 16600.0,
+    "principal_moments": [
+      32899999.999999996,
+      41500000.0,
+      66899999.99999999
+    ],
+    "n_faces": 714,
+    "n_edges": 1960,
+    "n_vertices": 1248
+  }
+}

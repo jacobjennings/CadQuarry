@@ -1,1 +1,1 @@
-Rectangular body, 81.47 × 54.6 × 100 mm (W×D×H). Four Ø10.5 mm holes at the corners, 57.029 × 38.22 mm spacing. Boss Ø18.6 mm × 6 mm tall on top face. Fillet radius 5.346 mm on vertical edges. Ø11.2 mm circular section attachment, 21.5 mm long, from right face with a Ø6.2 mm bore.
+Rectangular body, 81.47 × 54.6 × 100 mm (W×D×H). Four Ø10.5 mm holes at the corners, 57.029 × 38.22 mm spacing. Boss Ø18.6 mm × 6 mm tall on top face. Fillet radius 5.346 mm on vertical edges (optional, off by default). One Ø3.2 mm hole in a 1×1 grid, 10 × 10 mm pitch, angled 14.5° on the >X face.

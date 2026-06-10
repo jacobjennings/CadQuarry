@@ -1,0 +1,34 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6897_0417",
+  "seed": 1234004119,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 4,
+  "ir_hash": "a8ae32447335a21a",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 70 \u00d7 33.8 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Nine \u00d83.2 mm holes in two staggered rows, 13.1 \u00d7 12.9 mm pitch.",
+      "Pocket 43.2 \u00d7 23.6 mm, 53.1 mm deep, in top face.",
+      "Fillet radius 2.524 mm on vertical edges (optional, off by default)."
+    ],
+    "text": "Rectangular body, 70 \u00d7 33.8 \u00d7 100 mm (W\u00d7D\u00d7H). Nine \u00d83.2 mm holes in two staggered rows, 13.1 \u00d7 12.9 mm pitch. Pocket 43.2 \u00d7 23.6 mm, 53.1 mm deep, in top face. Fillet radius 2.524 mm on vertical edges (optional, off by default)."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 178000.0,
+    "surface_area": 37800.0,
+    "principal_moments": [
+      106000000.0,
+      163000000.0,
+      230000000.0
+    ],
+    "n_faces": 20,
+    "n_edges": 51,
+    "n_vertices": 34
+  }
+}

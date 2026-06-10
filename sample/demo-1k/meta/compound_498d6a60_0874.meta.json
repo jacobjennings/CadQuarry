@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6a60_0874",
+  "seed": 1234004576,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 3,
+  "ir_hash": "4ed07fcb02d3e033",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "6-sided polygon section, 20 mm across corners, extruded 5.4 mm thick.",
+      "\u00d89.5 mm circular section attachment, 10.6 mm long, from top face.",
+      "Fillet radius 0.809 mm on vertical edges."
+    ],
+    "text": "6-sided polygon section, 20 mm across corners, extruded 5.4 mm thick. \u00d89.5 mm circular section attachment, 10.6 mm long, from top face. Fillet radius 0.809 mm on vertical edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 2150.0,
+    "surface_area": 1160.0,
+    "principal_moments": [
+      66800.0,
+      75200.0,
+      75200.0
+    ],
+    "n_faces": 16,
+    "n_edges": 39,
+    "n_vertices": 26
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6767_0113",
+  "seed": 1234003815,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 1,
+  "symmetry": "mirror_x",
+  "op_count": 2,
+  "ir_hash": "a04800f403615dc2",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "6-sided polygon section, 50 mm across corners, extruded 10.1 mm thick.",
+      "\u00d818.1 mm circular section attachment, 25.7 mm long, from top face with a \u00d810.8 mm bore."
+    ],
+    "text": "6-sided polygon section, 50 mm across corners, extruded 10.1 mm thick. \u00d818.1 mm circular section attachment, 25.7 mm long, from top face with a \u00d810.8 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 19700.0,
+    "surface_area": 7260.0,
+    "principal_moments": [
+      3680000.0,
+      3680000.0,
+      4490000.0
+    ],
+    "n_faces": 11,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}

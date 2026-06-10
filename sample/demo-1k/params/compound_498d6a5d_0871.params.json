@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6a5d_0871",
+  "params": {
+    "adapter_base": {
+      "type": "float",
+      "default": 49.89,
+      "min": 29.9,
+      "max": 74.8,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Base size (mm)"
+    },
+    "adapter_top": {
+      "type": "float",
+      "default": 32.9,
+      "min": 16.4,
+      "max": 49.9,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Top size (mm)"
+    },
+    "adapter_h": {
+      "type": "float",
+      "default": 40.4,
+      "min": 16.2,
+      "max": 80.8,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Transition height (mm)"
+    },
+    "neck_d": {
+      "type": "float",
+      "default": 20.3,
+      "min": 8.1,
+      "max": 32.9,
+      "step": 1.0,
+      "group": "Neck",
+      "label": "Neck diameter (mm)"
+    },
+    "neck_l": {
+      "type": "float",
+      "default": 28.6,
+      "min": 11.4,
+      "max": 71.5,
+      "step": 1.0,
+      "group": "Neck",
+      "label": "Neck length (mm)"
+    },
+    "neck_bore": {
+      "type": "float",
+      "default": 8.5,
+      "min": 2.0,
+      "max": 14.6,
+      "step": 0.5,
+      "group": "Neck",
+      "label": "Neck bore diameter (mm)"
+    }
+  }
+}

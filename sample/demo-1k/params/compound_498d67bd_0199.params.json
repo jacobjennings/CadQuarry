@@ -1,0 +1,93 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d67bd_0199",
+  "params": {
+    "adapter_base": {
+      "type": "float",
+      "default": 80.0,
+      "min": 48.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Base size (mm)"
+    },
+    "adapter_top": {
+      "type": "float",
+      "default": 48.3,
+      "min": 24.1,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Top size (mm)"
+    },
+    "adapter_h": {
+      "type": "float",
+      "default": 65.3,
+      "min": 26.1,
+      "max": 130.6,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Transition height (mm)"
+    },
+    "adapter_mid": {
+      "type": "float",
+      "default": 64.2,
+      "min": 24.1,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Mid size (mm)"
+    },
+    "neck_sides": {
+      "type": "int",
+      "default": 8,
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "group": "Neck",
+      "label": "Neck sides"
+    },
+    "neck_r": {
+      "type": "float",
+      "default": 17.6,
+      "min": 8.8,
+      "max": 24.1,
+      "step": 1.0,
+      "group": "Neck",
+      "label": "Neck circumradius (mm)"
+    },
+    "neck_l": {
+      "type": "float",
+      "default": 31.1,
+      "min": 12.4,
+      "max": 77.8,
+      "step": 1.0,
+      "group": "Neck",
+      "label": "Neck length (mm)"
+    },
+    "neck_bore": {
+      "type": "float",
+      "default": 14.3,
+      "min": 2.0,
+      "max": 23.4,
+      "step": 0.5,
+      "group": "Neck",
+      "label": "Neck bore diameter (mm)"
+    },
+    "chamfer_d": {
+      "type": "float",
+      "default": 1.2,
+      "min": 0.5,
+      "max": 3.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Chamfer distance (mm)"
+    },
+    "chamfered": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Chamfer edges"
+    }
+  }
+}

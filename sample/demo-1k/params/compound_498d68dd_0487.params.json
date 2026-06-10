@@ -1,0 +1,69 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d68dd_0487",
+  "params": {
+    "block_w": {
+      "type": "float",
+      "default": 84.73,
+      "min": 20.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Body width (mm)"
+    },
+    "block_d": {
+      "type": "float",
+      "default": 67.0,
+      "min": 15.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Body depth (mm)"
+    },
+    "block_h": {
+      "type": "float",
+      "default": 62.6,
+      "min": 15.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Body height (mm)"
+    },
+    "port_d": {
+      "type": "float",
+      "default": 19.2,
+      "min": 7.7,
+      "max": 28.2,
+      "step": 1.0,
+      "group": "Ports",
+      "label": "Ports diameter (mm)"
+    },
+    "port_len": {
+      "type": "float",
+      "default": 23.3,
+      "min": 4.8,
+      "max": 57.6,
+      "step": 1.0,
+      "group": "Ports",
+      "label": "Port boss length (mm)"
+    },
+    "port_bore": {
+      "type": "float",
+      "default": 10.1,
+      "min": 2.0,
+      "max": 13.8,
+      "step": 0.5,
+      "group": "Ports",
+      "label": "Port bore diameter (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 13.0,
+      "min": 2.0,
+      "max": 13.0,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    }
+  }
+}

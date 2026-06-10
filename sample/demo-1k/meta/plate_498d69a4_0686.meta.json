@@ -1,33 +1,32 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d69a4_0686",
   "seed": 1234004388,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 2,
   "symmetry": "mirror_x",
-  "op_count": 3,
-  "ir_hash": "5bffbea612c744e9",
+  "op_count": 2,
+  "ir_hash": "f3e633076aae4220",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 33.86 \u00d7 11.8 \u00d7 2 mm (W\u00d7D\u00d7H).",
-      "Four \u00d82.5 mm countersunk holes (82\u00b0) at the corners, 23.702 \u00d7 8.26 mm spacing.",
-      "Fillet radius 0.509 mm on vertical edges."
+      "Four \u00d82.5 mm countersunk holes (82\u00b0) at the corners, 23.702 \u00d7 8.26 mm spacing."
     ],
-    "text": "Rectangular body, 33.86 \u00d7 11.8 \u00d7 2 mm (W\u00d7D\u00d7H). Four \u00d82.5 mm countersunk holes (82\u00b0) at the corners, 23.702 \u00d7 8.26 mm spacing. Fillet radius 0.509 mm on vertical edges."
+    "text": "Rectangular body, 33.86 \u00d7 11.8 \u00d7 2 mm (W\u00d7D\u00d7H). Four \u00d82.5 mm countersunk holes (82\u00b0) at the corners, 23.702 \u00d7 8.26 mm spacing."
   },
   "geometry_signature": {
     "version": 2,
     "volume": 724.0,
-    "surface_area": 977.0,
+    "surface_area": 980.0,
     "principal_moments": [
-      8200.0,
-      65900.0,
-      73600.0
+      8210.0,
+      66000.0,
+      73800.0
     ],
-    "n_faces": 18,
-    "n_edges": 56,
-    "n_vertices": 36
+    "n_faces": 14,
+    "n_edges": 44,
+    "n_vertices": 28
   }
 }

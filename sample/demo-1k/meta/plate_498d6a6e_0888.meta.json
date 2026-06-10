@@ -1,0 +1,34 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d6a6e_0888",
+  "seed": 1234004590,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 4,
+  "ir_hash": "cecef4488d06dbc2",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 85 \u00d7 76 \u00d7 8 mm (W\u00d7D\u00d7H).",
+      "Nine \u00d83.2 mm holes in two staggered rows, 15.9 \u00d7 18.8 mm pitch.",
+      "Chamfer 5.3 mm on vertical edges.",
+      "Boss \u00d818.9 mm \u00d7 10.4 mm tall on top face with a \u00d83.2 mm bore."
+    ],
+    "text": "Rectangular body, 85 \u00d7 76 \u00d7 8 mm (W\u00d7D\u00d7H). Nine \u00d83.2 mm holes in two staggered rows, 15.9 \u00d7 18.8 mm pitch. Chamfer 5.3 mm on vertical edges. Boss \u00d818.9 mm \u00d7 10.4 mm tall on top face with a \u00d83.2 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 53400.0,
+    "surface_area": 16700.0,
+    "principal_moments": [
+      24799999.999999996,
+      30699999.999999996,
+      54499999.99999999
+    ],
+    "n_faces": 23,
+    "n_edges": 61,
+    "n_vertices": 40
+  }
+}

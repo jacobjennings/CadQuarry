@@ -1,1 +1,1 @@
-Rectangular body, 55 × 35.1 × 12 mm (W×D×H). Four Ø6.4 mm holes at the corners, 38.5 × 24.57 mm spacing. Fillet radius 3.373 mm on vertical edges.
+Rectangular body, 55 × 35.1 × 12 mm (W×D×H). Four Ø6.4 mm holes at the corners, 38.5 × 24.57 mm spacing. Chamfer 1.2 mm on vertical edges.

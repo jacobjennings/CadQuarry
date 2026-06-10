@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d67de_0232",
+  "seed": 1234003934,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 2,
+  "symmetry": "radial",
+  "op_count": 3,
+  "ir_hash": "8830f6a571569da0",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 65.71 \u00d7 31.6 \u00d7 55.8 mm (W\u00d7D\u00d7H).",
+      "Eight \u00d83.2 mm holes on a \u00d839.4 mm bolt circle.",
+      "Fillet radius 3.106 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 65.71 \u00d7 31.6 \u00d7 55.8 mm (W\u00d7D\u00d7H). Eight \u00d83.2 mm holes on a \u00d839.4 mm bolt circle. Fillet radius 3.106 mm on vertical edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 113000.0,
+    "surface_area": 18000.0,
+    "principal_moments": [
+      38400000.0,
+      49699999.99999999,
+      69800000.0
+    ],
+    "n_faces": 16,
+    "n_edges": 42,
+    "n_vertices": 28
+  }
+}

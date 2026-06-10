@@ -1,1 +1,0 @@
-Rectangular body, 104.94 × 64.1 × 54.1 mm (W×D×H). Hollowed to 5.1 mm wall thickness, open at top face. Four Ø4.3 mm holes at the corners, 73.458 × 44.87 mm spacing. Fillet radius 3.543 mm on vertical edges.

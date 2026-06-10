@@ -1,1 +1,0 @@
-Rectangular body, 80 × 51.8 × 100 mm (W×D×H). Four Ø8.4 mm holes at the corners, 56 × 36.26 mm spacing. Fillet radius 5.271 mm on vertical edges.

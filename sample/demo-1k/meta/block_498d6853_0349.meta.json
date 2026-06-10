@@ -1,35 +1,36 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "block_498d6853_0349",
   "seed": 1234004051,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "block",
   "tier": 3,
   "symmetry": "none",
-  "op_count": 5,
-  "ir_hash": "3ba882c81655ab75",
+  "op_count": 6,
+  "ir_hash": "c364694c0b1b8192",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 45 \u00d7 23.1 \u00d7 75 mm (W\u00d7D\u00d7H).",
       "Four \u00d83.2 mm holes at the corners, 31.5 \u00d7 16.17 mm spacing.",
       "Pocket 23.8 \u00d7 9.5 mm, 23.9 mm deep, in top face.",
-      "Fillet radius 1.789 mm on vertical edges.",
-      "\u00d812.8 mm circular section attachment, 13.9 mm long, from back face with a \u00d85.8 mm bore."
+      "Fillet radius 1.789 mm on vertical edges (optional, off by default).",
+      "One \u00d86.4 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch on the >Y face.",
+      "\u00d810.4 mm circular section attachment, 16.5 mm long, from back face with a \u00d85.5 mm bore."
     ],
-    "text": "Rectangular body, 45 \u00d7 23.1 \u00d7 75 mm (W\u00d7D\u00d7H). Four \u00d83.2 mm holes at the corners, 31.5 \u00d7 16.17 mm spacing. Pocket 23.8 \u00d7 9.5 mm, 23.9 mm deep, in top face. Fillet radius 1.789 mm on vertical edges. \u00d812.8 mm circular section attachment, 13.9 mm long, from back face with a \u00d85.8 mm bore."
+    "text": "Rectangular body, 45 \u00d7 23.1 \u00d7 75 mm (W\u00d7D\u00d7H). Four \u00d83.2 mm holes at the corners, 31.5 \u00d7 16.17 mm spacing. Pocket 23.8 \u00d7 9.5 mm, 23.9 mm deep, in top face. Fillet radius 1.789 mm on vertical edges (optional, off by default). One \u00d86.4 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch on the >Y face. \u00d810.4 mm circular section attachment, 16.5 mm long, from back face with a \u00d85.5 mm bore."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 70800.0,
-    "surface_area": 17700.0,
+    "volume": 70400.0,
+    "surface_area": 18000.0,
     "principal_moments": [
       15899999.999999998,
-      35000000.0,
-      43600000.0
+      34700000.0,
+      43400000.0
     ],
-    "n_faces": 26,
-    "n_edges": 66,
-    "n_vertices": 44
+    "n_faces": 21,
+    "n_edges": 54,
+    "n_vertices": 36
   }
 }

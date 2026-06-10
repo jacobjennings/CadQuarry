@@ -1,0 +1,40 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "tapped_498d6a0e_0792",
+  "seed": 1234004494,
+  "generator_version": "0.6.0",
+  "family": "tapped",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "956fd72868dfa739",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "tapped",
+    "body": "cylinder",
+    "standard": "iso",
+    "major_diameter": 10.0,
+    "pitch": 1.5,
+    "designation": "M10x1.5",
+    "hole_count": 1
+  },
+  "dimensions": {
+    "lines": [
+      "One M10x1.5 tapped hole in a cylinder."
+    ],
+    "text": "One M10x1.5 tapped hole in a cylinder."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 11000.0,
+    "surface_area": 3640.0,
+    "principal_moments": [
+      954000.0,
+      954000.0,
+      1440000.0
+    ],
+    "n_faces": 91,
+    "n_edges": 317,
+    "n_vertices": 228
+  }
+}

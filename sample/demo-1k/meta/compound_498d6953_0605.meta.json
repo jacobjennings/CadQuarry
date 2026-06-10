@@ -1,0 +1,34 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6953_0605",
+  "seed": 1234004307,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 2,
+  "symmetry": "mirror_xy",
+  "op_count": 4,
+  "ir_hash": "90e6dd3b8ee51670",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 45.43 \u00d7 39.2 \u00d7 12 mm (W\u00d7D\u00d7H).",
+      "6-sided polygon section, 8 mm across corners attachment, 58.4 mm long, from top face.",
+      "Four \u00d86.4 mm holes at the corners, 31.801 \u00d7 27.44 mm spacing.",
+      "Fillet radius 3.415 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 45.43 \u00d7 39.2 \u00d7 12 mm (W\u00d7D\u00d7H). 6-sided polygon section, 8 mm across corners attachment, 58.4 mm long, from top face. Four \u00d86.4 mm holes at the corners, 31.801 \u00d7 27.44 mm spacing. Fillet radius 3.415 mm on vertical edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 21900.0,
+    "surface_area": 7480.0,
+    "principal_moments": [
+      5640000.0,
+      5730000.0,
+      6550000.0
+    ],
+    "n_faces": 27,
+    "n_edges": 72,
+    "n_vertices": 48
+  }
+}

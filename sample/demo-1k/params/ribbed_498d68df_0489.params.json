@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "ribbed_498d68df_0489",
+  "params": {
+    "base_w": {
+      "type": "float",
+      "default": 38.67,
+      "min": 20.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base width (mm)"
+    },
+    "base_d": {
+      "type": "float",
+      "default": 30.0,
+      "min": 15.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base depth (mm)"
+    },
+    "base_t": {
+      "type": "float",
+      "default": 10.0,
+      "min": 2.0,
+      "max": 15.0,
+      "step": 0.5,
+      "group": "Base",
+      "label": "Base thickness (mm)"
+    },
+    "rib_count": {
+      "type": "int",
+      "default": 2,
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "group": "Ribs",
+      "label": "Rib count"
+    },
+    "rib_h": {
+      "type": "float",
+      "default": 14.8,
+      "min": 5.9,
+      "max": 29.6,
+      "step": 1.0,
+      "group": "Ribs",
+      "label": "Rib height (mm)"
+    },
+    "rib_t": {
+      "type": "float",
+      "default": 5.3,
+      "min": 1.0,
+      "max": 13.2,
+      "step": 0.5,
+      "group": "Ribs",
+      "label": "Rib thickness (mm)"
+    }
+  }
+}

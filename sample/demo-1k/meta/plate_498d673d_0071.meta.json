@@ -1,34 +1,34 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d673d_0071",
   "seed": 1234003773,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 3,
   "symmetry": "radial",
   "op_count": 4,
-  "ir_hash": "45920c4200bd0209",
+  "ir_hash": "5c13c7477aaefb27",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 40.55 \u00d7 19.4 \u00d7 12 mm (W\u00d7D\u00d7H).",
       "Eight \u00d84.3 mm holes on a \u00d824.4 mm bolt circle.",
-      "Fillet radius 2.214 mm on vertical edges.",
-      "Pocket 24.7 \u00d7 8.4 mm, 6.9 mm deep, in top face."
+      "Chamfer 1.2 mm on vertical edges.",
+      "Pocket 19.7 \u00d7 12.9 mm, 3.6 mm deep, in top face."
     ],
-    "text": "Rectangular body, 40.55 \u00d7 19.4 \u00d7 12 mm (W\u00d7D\u00d7H). Eight \u00d84.3 mm holes on a \u00d824.4 mm bolt circle. Fillet radius 2.214 mm on vertical edges. Pocket 24.7 \u00d7 8.4 mm, 6.9 mm deep, in top face."
+    "text": "Rectangular body, 40.55 \u00d7 19.4 \u00d7 12 mm (W\u00d7D\u00d7H). Eight \u00d84.3 mm holes on a \u00d824.4 mm bolt circle. Chamfer 1.2 mm on vertical edges. Pocket 19.7 \u00d7 12.9 mm, 3.6 mm deep, in top face."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 7070.0,
-    "surface_area": 3560.0,
+    "volume": 7520.0,
+    "surface_area": 3530.0,
     "principal_moments": [
-      322000.0,
-      1200000.0,
-      1350000.0
+      318000.0,
+      1230000.0,
+      1390000.0
     ],
-    "n_faces": 35,
-    "n_edges": 102,
-    "n_vertices": 68
+    "n_faces": 33,
+    "n_edges": 90,
+    "n_vertices": 60
   }
 }

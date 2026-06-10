@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "bracket_498d689d_0423",
+  "seed": 1234004125,
+  "generator_version": "0.6.0",
+  "family": "bracket",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "90a6156515dd48c0",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Z-bracket: base leg 33.68 mm, vertical leg 29 mm, top leg 35.2 mm, 30 mm wide, 8 mm thick; 1 \u00d7 \u00d84.3 mm hole per leg; 8.5 mm corner gusset."
+    ],
+    "text": "Z-bracket: base leg 33.68 mm, vertical leg 29 mm, top leg 35.2 mm, 30 mm wide, 8 mm thick; 1 \u00d7 \u00d84.3 mm hole per leg; 8.5 mm corner gusset."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 19400.0,
+    "surface_area": 6860.0,
+    "principal_moments": [
+      2090000.0,
+      6400000.0,
+      7260000.0
+    ],
+    "n_faces": 12,
+    "n_edges": 30,
+    "n_vertices": 20
+  }
+}

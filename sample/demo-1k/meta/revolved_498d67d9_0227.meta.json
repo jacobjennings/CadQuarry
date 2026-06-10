@@ -1,13 +1,13 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "revolved_498d67d9_0227",
   "seed": 1234003929,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "revolved",
   "tier": 1,
   "symmetry": "mirror_x",
   "op_count": 1,
-  "ir_hash": "aac25bddc21e55e6",
+  "ir_hash": "3d303543c5b86b08",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [

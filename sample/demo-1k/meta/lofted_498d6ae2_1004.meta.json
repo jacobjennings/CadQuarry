@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "lofted_498d6ae2_1004",
+  "seed": 1234004706,
+  "generator_version": "0.6.0",
+  "family": "lofted",
+  "tier": 2,
+  "symmetry": "mirror_x",
+  "op_count": 2,
+  "ir_hash": "bd3adc2f3c70015e",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Lofted body through 3 sections: 6-sided polygon section, 35 mm across corners \u2192 6-sided polygon section, 25.1 mm across corners \u2192 15.3 \u00d7 15.3 mm rectangular section.",
+      "One \u00d85.5 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch."
+    ],
+    "text": "Lofted body through 3 sections: 6-sided polygon section, 35 mm across corners \u2192 6-sided polygon section, 25.1 mm across corners \u2192 15.3 \u00d7 15.3 mm rectangular section. One \u00d85.5 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 11000.0,
+    "surface_area": 3540.0,
+    "principal_moments": [
+      932000.0,
+      1040000.0,
+      1040000.0
+    ],
+    "n_faces": 13,
+    "n_edges": 33,
+    "n_vertices": 22
+  }
+}

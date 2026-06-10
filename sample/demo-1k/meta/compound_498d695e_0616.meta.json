@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d695e_0616",
+  "seed": 1234004318,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 1,
+  "symmetry": "mirror_xy",
+  "op_count": 3,
+  "ir_hash": "a5a17a2c02793619",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 74.16 \u00d7 57.4 \u00d7 70.9 mm (W\u00d7D\u00d7H).",
+      "6-sided polygon section, 19.2 mm across corners attachment, 22.8 mm long, from left face with a \u00d810.2 mm bore.",
+      "6-sided polygon section, 19.2 mm across corners attachment, 22.8 mm long, from back face with a \u00d810.2 mm bore."
+    ],
+    "text": "Rectangular body, 74.16 \u00d7 57.4 \u00d7 70.9 mm (W\u00d7D\u00d7H). 6-sided polygon section, 19.2 mm across corners attachment, 22.8 mm long, from left face with a \u00d810.2 mm bore. 6-sided polygon section, 19.2 mm across corners attachment, 22.8 mm long, from back face with a \u00d810.2 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 299000.0,
+    "surface_area": 34700.0,
+    "principal_moments": [
+      214000000.0,
+      232000000.0,
+      271000000.0
+    ],
+    "n_faces": 24,
+    "n_edges": 63,
+    "n_vertices": 41
+  }
+}

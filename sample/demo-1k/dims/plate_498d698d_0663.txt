@@ -1,1 +1,1 @@
-Rectangular body, 73.01 × 25.8 × 6 mm (W×D×H). Six Ø8.4 mm holes on a Ø43.8 mm bolt circle. Fillet radius 1.619 mm on vertical edges.
+Rectangular body, 73.01 × 25.8 × 6 mm (W×D×H). Six Ø8.4 mm holes on a Ø43.8 mm bolt circle. Fillet radius 2.895 mm on vertical edges.

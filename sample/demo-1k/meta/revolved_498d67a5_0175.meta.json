@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "revolved_498d67a5_0175",
+  "seed": 1234003877,
+  "generator_version": "0.6.0",
+  "family": "revolved",
+  "tier": 0,
+  "symmetry": "radial",
+  "op_count": 1,
+  "ir_hash": "b2b3a60d6f6aba1c",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d862.68 mm \u00d7 157.2 mm tall."
+    ],
+    "text": "Revolved body, \u00d862.68 mm \u00d7 157.2 mm tall."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 323000.0,
+    "surface_area": 49800.0,
+    "principal_moments": [
+      191000000.0,
+      570000000.0,
+      570000000.0
+    ],
+    "n_faces": 3,
+    "n_edges": 4,
+    "n_vertices": 3
+  }
+}

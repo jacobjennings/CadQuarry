@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6797_0161",
+  "seed": 1234003863,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 3,
+  "ir_hash": "b741b7418e5b40f8",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 50 \u00d7 42.3 \u00d7 91.2 mm (W\u00d7D\u00d7H).",
+      "Four 6.4 mm square holes at the corners, 35 \u00d7 29.61 mm spacing.",
+      "Fillet radius 2.919 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 50 \u00d7 42.3 \u00d7 91.2 mm (W\u00d7D\u00d7H). Four 6.4 mm square holes at the corners, 35 \u00d7 29.61 mm spacing. Fillet radius 2.919 mm on vertical edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 180000.0,
+    "surface_area": 27800.0,
+    "principal_moments": [
+      61799999.99999999,
+      150000000.0,
+      161000000.0
+    ],
+    "n_faces": 42,
+    "n_edges": 120,
+    "n_vertices": 80
+  }
+}

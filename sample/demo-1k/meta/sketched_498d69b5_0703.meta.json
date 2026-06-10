@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "sketched_498d69b5_0703",
+  "seed": 1234004405,
+  "generator_version": "0.6.0",
+  "family": "sketched",
+  "tier": 1,
+  "symmetry": "mirror_x",
+  "op_count": 2,
+  "ir_hash": "1b1b883452709de9",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "freeform sketched section (6 segments: 3 straight, 1 arc, 2 curves), ~51.368 \u00d7 35.395 mm, extruded 30 mm thick.",
+      "One \u00d88.4 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch."
+    ],
+    "text": "freeform sketched section (6 segments: 3 straight, 1 arc, 2 curves), ~51.368 \u00d7 35.395 mm, extruded 30 mm thick. One \u00d88.4 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 37900.0,
+    "surface_area": 7400.0,
+    "principal_moments": [
+      5930000.0,
+      8540000.0,
+      8780000.0
+    ],
+    "n_faces": 9,
+    "n_edges": 21,
+    "n_vertices": 14
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "revolved_498d67f6_0256",
+  "params": {
+    "outer_d": {
+      "type": "float",
+      "default": 10.93,
+      "min": 6.0,
+      "max": 80.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Outer diameter (mm)"
+    },
+    "length": {
+      "type": "float",
+      "default": 4.9,
+      "min": 1.5,
+      "max": 14.7,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    }
+  }
+}

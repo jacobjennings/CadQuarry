@@ -1,0 +1,42 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "swept_498d67a9_0179",
+  "params": {
+    "path_w": {
+      "type": "float",
+      "default": 45,
+      "min": 22.5,
+      "max": 81.0,
+      "step": 1.0,
+      "group": "Path",
+      "label": "Path width (mm)"
+    },
+    "path_h": {
+      "type": "float",
+      "default": 42.57,
+      "min": 21.3,
+      "max": 76.6,
+      "step": 1.0,
+      "group": "Path",
+      "label": "Path length (mm)"
+    },
+    "sweep_a": {
+      "type": "float",
+      "default": 9.3,
+      "min": 4.7,
+      "max": 16.7,
+      "step": 1.0,
+      "group": "Section",
+      "label": "Section width (mm)"
+    },
+    "sweep_b": {
+      "type": "float",
+      "default": 6.9,
+      "min": 3.5,
+      "max": 12.4,
+      "step": 1.0,
+      "group": "Section",
+      "label": "Section depth (mm)"
+    }
+  }
+}

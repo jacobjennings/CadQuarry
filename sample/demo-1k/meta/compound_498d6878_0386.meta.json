@@ -1,0 +1,34 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6878_0386",
+  "seed": 1234004088,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 4,
+  "ir_hash": "d2e077590875df3e",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 35 \u00d7 37.6 \u00d7 42.1 mm (W\u00d7D\u00d7H).",
+      "27.9 \u00d7 24 mm rectangular section attachment, 10 mm long, from right face.",
+      "Four \u00d83.2 mm holes at the corners, 16.74 \u00d7 14.4 mm spacing on the >X face.",
+      "Four \u00d84.3 mm holes at the corners, 24.5 \u00d7 26.32 mm spacing."
+    ],
+    "text": "Rectangular body, 35 \u00d7 37.6 \u00d7 42.1 mm (W\u00d7D\u00d7H). 27.9 \u00d7 24 mm rectangular section attachment, 10 mm long, from right face. Four \u00d83.2 mm holes at the corners, 16.74 \u00d7 14.4 mm spacing on the >X face. Four \u00d84.3 mm holes at the corners, 24.5 \u00d7 26.32 mm spacing."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 59400.0,
+    "surface_area": 12600.0,
+    "principal_moments": [
+      14899999.999999998,
+      14899999.999999998,
+      16499999.999999998
+    ],
+    "n_faces": 17,
+    "n_edges": 42,
+    "n_vertices": 28
+  }
+}

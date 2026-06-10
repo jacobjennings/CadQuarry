@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d69a6_0688",
+  "seed": 1234004390,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 1,
+  "symmetry": "radial",
+  "op_count": 2,
+  "ir_hash": "a28c58c2cbe59579",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 95 \u00d7 51.3 \u00d7 6 mm (W\u00d7D\u00d7H).",
+      "Twelve \u00d84.3 mm holes on a \u00d857 mm bolt circle."
+    ],
+    "text": "Rectangular body, 95 \u00d7 51.3 \u00d7 6 mm (W\u00d7D\u00d7H). Twelve \u00d84.3 mm holes on a \u00d857 mm bolt circle."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 28400.0,
+    "surface_area": 11800.0,
+    "principal_moments": [
+      6270000.0,
+      21700000.0,
+      27799999.999999996
+    ],
+    "n_faces": 20,
+    "n_edges": 54,
+    "n_vertices": 36
+  }
+}

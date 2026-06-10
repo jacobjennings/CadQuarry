@@ -1,1 +1,1 @@
-Rectangular body, 40.55 × 19.4 × 12 mm (W×D×H). Eight Ø4.3 mm holes on a Ø24.4 mm bolt circle. Fillet radius 2.214 mm on vertical edges. Pocket 24.7 × 8.4 mm, 6.9 mm deep, in top face.
+Rectangular body, 40.55 × 19.4 × 12 mm (W×D×H). Eight Ø4.3 mm holes on a Ø24.4 mm bolt circle. Chamfer 1.2 mm on vertical edges. Pocket 19.7 × 12.9 mm, 3.6 mm deep, in top face.

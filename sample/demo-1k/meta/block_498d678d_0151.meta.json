@@ -1,35 +1,35 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "block_498d678d_0151",
   "seed": 1234003853,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "block",
   "tier": 3,
   "symmetry": "mirror_x",
   "op_count": 5,
-  "ir_hash": "fa2ed928f3758603",
+  "ir_hash": "c7025763e7c7c0ba",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 81.47 \u00d7 54.6 \u00d7 100 mm (W\u00d7D\u00d7H).",
       "Four \u00d810.5 mm holes at the corners, 57.029 \u00d7 38.22 mm spacing.",
       "Boss \u00d818.6 mm \u00d7 6 mm tall on top face.",
-      "Fillet radius 5.346 mm on vertical edges.",
-      "\u00d811.2 mm circular section attachment, 21.5 mm long, from right face with a \u00d86.2 mm bore."
+      "Fillet radius 5.346 mm on vertical edges (optional, off by default).",
+      "One \u00d83.2 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch, angled 14.5\u00b0 on the >X face."
     ],
-    "text": "Rectangular body, 81.47 \u00d7 54.6 \u00d7 100 mm (W\u00d7D\u00d7H). Four \u00d810.5 mm holes at the corners, 57.029 \u00d7 38.22 mm spacing. Boss \u00d818.6 mm \u00d7 6 mm tall on top face. Fillet radius 5.346 mm on vertical edges. \u00d811.2 mm circular section attachment, 21.5 mm long, from right face with a \u00d86.2 mm bore."
+    "text": "Rectangular body, 81.47 \u00d7 54.6 \u00d7 100 mm (W\u00d7D\u00d7H). Four \u00d810.5 mm holes at the corners, 57.029 \u00d7 38.22 mm spacing. Boss \u00d818.6 mm \u00d7 6 mm tall on top face. Fillet radius 5.346 mm on vertical edges (optional, off by default). One \u00d83.2 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch, angled 14.5\u00b0 on the >X face."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 408000.0,
-    "surface_area": 50700.0,
+    "volume": 412000.0,
+    "surface_area": 49000.0,
     "principal_moments": [
-      312000000.0,
-      440000000.0,
-      561000000.0
+      315000000.0,
+      444000000.0,
+      564000000.0
     ],
-    "n_faces": 19,
-    "n_edges": 45,
-    "n_vertices": 30
+    "n_faces": 14,
+    "n_edges": 31,
+    "n_vertices": 20
   }
 }

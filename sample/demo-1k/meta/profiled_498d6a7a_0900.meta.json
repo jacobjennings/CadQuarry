@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "profiled_498d6a7a_0900",
+  "seed": 1234004602,
+  "generator_version": "0.6.0",
+  "family": "profiled",
+  "tier": 2,
+  "symmetry": "mirror_x",
+  "op_count": 1,
+  "ir_hash": "bb5234cc0f229659",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "4-sided polygon section, 41.66 mm across corners, extruded 91 mm thick."
+    ],
+    "text": "4-sided polygon section, 41.66 mm across corners, extruded 91 mm thick."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 79000.0,
+    "surface_area": 12500.0,
+    "principal_moments": [
+      11399999.999999998,
+      60199999.99999999,
+      60199999.99999999
+    ],
+    "n_faces": 6,
+    "n_edges": 12,
+    "n_vertices": 8
+  }
+}

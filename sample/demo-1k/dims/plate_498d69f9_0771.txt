@@ -1,1 +1,1 @@
-Rectangular body, 55.92 × 42.5 × 5 mm (W×D×H). Five Ø3.2 mm holes in two staggered rows, 21 × 23.9 mm pitch. Fillet radius 4.033 mm on vertical edges.
+Rectangular body, 55.92 × 42.5 × 5 mm (W×D×H). Five Ø3.2 mm holes in two staggered rows, 21 × 23.9 mm pitch. Chamfer 2 mm on vertical edges.

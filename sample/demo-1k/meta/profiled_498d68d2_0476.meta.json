@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "profiled_498d68d2_0476",
+  "seed": 1234004178,
+  "generator_version": "0.6.0",
+  "family": "profiled",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "a9163d7119836eae",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "45 \u00d7 22.76 mm slot section, extruded 415.7 mm thick."
+    ],
+    "text": "45 \u00d7 22.76 mm slot section, extruded 415.7 mm thick."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 380000.0,
+    "surface_area": 50000.0,
+    "principal_moments": [
+      67800000.0,
+      5480000000.0,
+      5520000000.0
+    ],
+    "n_faces": 6,
+    "n_edges": 12,
+    "n_vertices": 8
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d68b9_0451",
+  "seed": 1234004153,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 2,
+  "symmetry": "mirror_xy",
+  "op_count": 3,
+  "ir_hash": "60675b678087621d",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 98.71 \u00d7 37.3 \u00d7 12 mm (W\u00d7D\u00d7H).",
+      "Four \u00d84.3 mm holes at the corners, 69.097 \u00d7 26.11 mm spacing.",
+      "Fillet radius 1.542 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 98.71 \u00d7 37.3 \u00d7 12 mm (W\u00d7D\u00d7H). Four \u00d84.3 mm holes at the corners, 69.097 \u00d7 26.11 mm spacing. Fillet radius 1.542 mm on vertical edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 43500.0,
+    "surface_area": 11100.0,
+    "principal_moments": [
+      5520000.0,
+      35500000.0,
+      40000000.0
+    ],
+    "n_faces": 14,
+    "n_edges": 36,
+    "n_vertices": 24
+  }
+}

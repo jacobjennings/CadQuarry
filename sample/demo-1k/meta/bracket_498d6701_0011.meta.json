@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "bracket_498d6701_0011",
+  "seed": 1234003713,
+  "generator_version": "0.6.0",
+  "family": "bracket",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "bf5db4d3fc64961c",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "L-bracket: base leg 65 mm, vertical leg 61.1 mm, 36.58 mm wide, 5 mm thick; 1 \u00d7 \u00d83.2 mm hole per leg."
+    ],
+    "text": "L-bracket: base leg 65 mm, vertical leg 61.1 mm, 36.58 mm wide, 5 mm thick; 1 \u00d7 \u00d83.2 mm hole per leg."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 22100.0,
+    "surface_area": 10500.0,
+    "principal_moments": [
+      5890000.0,
+      15999999.999999998,
+      17000000.0
+    ],
+    "n_faces": 10,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "tapped_498d67d7_0225",
+  "seed": 1234003927,
+  "generator_version": "0.6.0",
+  "family": "tapped",
+  "tier": 2,
+  "symmetry": "mirror_x",
+  "op_count": 1,
+  "ir_hash": "70f0d692b026e33e",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "tapped",
+    "body": "cylinder",
+    "standard": "iso",
+    "major_diameter": 16.0,
+    "pitch": 2.0,
+    "designation": "M16x2",
+    "hole_count": 1
+  },
+  "dimensions": {
+    "lines": [
+      "One M16x2 tapped hole in a cylinder."
+    ],
+    "text": "One M16x2 tapped hole in a cylinder."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 42100.0,
+    "surface_area": 9000.0,
+    "principal_moments": [
+      8960000.0,
+      8960000.0,
+      13299999.999999998
+    ],
+    "n_faces": 196,
+    "n_edges": 556,
+    "n_vertices": 362
+  }
+}

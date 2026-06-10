@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "flanged_498d6798_0162",
+  "seed": 1234003864,
+  "generator_version": "0.6.0",
+  "family": "flanged",
+  "tier": 1,
+  "symmetry": "mirror_x",
+  "op_count": 2,
+  "ir_hash": "6393fffc66879521",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved body, \u00d830 mm \u00d7 30.2 mm tall with \u00d812.6 mm bore, \u00d866.6 mm \u00d7 4 mm flange.",
+      "Twelve \u00d88.4 mm holes on a \u00d840 mm bolt circle."
+    ],
+    "text": "Revolved body, \u00d830 mm \u00d7 30.2 mm tall with \u00d812.6 mm bore, \u00d866.6 mm \u00d7 4 mm flange. Twelve \u00d88.4 mm holes on a \u00d840 mm bolt circle."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 26000.0,
+    "surface_area": 11200.0,
+    "principal_moments": [
+      6650000.0,
+      6650000.0,
+      8650000.0
+    ],
+    "n_faces": 18,
+    "n_edges": 45,
+    "n_vertices": 30
+  }
+}

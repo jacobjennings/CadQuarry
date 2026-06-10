@@ -1,33 +1,33 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6717_0033",
   "seed": 1234003735,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 2,
   "symmetry": "radial",
   "op_count": 3,
-  "ir_hash": "7530edd9869a7b96",
+  "ir_hash": "e18cebfac065e3a6",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
-      "Rectangular body, 112.55 \u00d7 90.2 \u00d7 6 mm (W\u00d7D\u00d7H).",
-      "Eight \u00d86.4 mm holes on a \u00d867.6 mm bolt circle.",
-      "Fillet radius 7.213 mm on vertical edges."
+      "Rectangular body, 112.55 \u00d7 90.2 \u00d7 12 mm (W\u00d7D\u00d7H).",
+      "Twelve \u00d86.4 mm holes on a \u00d867.6 mm bolt circle.",
+      "Chamfer 4.9 mm on vertical edges."
     ],
-    "text": "Rectangular body, 112.55 \u00d7 90.2 \u00d7 6 mm (W\u00d7D\u00d7H). Eight \u00d86.4 mm holes on a \u00d867.6 mm bolt circle. Fillet radius 7.213 mm on vertical edges."
+    "text": "Rectangular body, 112.55 \u00d7 90.2 \u00d7 12 mm (W\u00d7D\u00d7H). Twelve \u00d86.4 mm holes on a \u00d867.6 mm bolt circle. Chamfer 4.9 mm on vertical edges."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 59100.0,
-    "surface_area": 23000.0,
+    "volume": 117000.0,
+    "surface_area": 27100.0,
     "principal_moments": [
-      40100000.0,
-      62799999.99999999,
-      103000000.0
+      80200000.0,
+      126000000.0,
+      203000000.0
     ],
-    "n_faces": 18,
-    "n_edges": 48,
-    "n_vertices": 32
+    "n_faces": 22,
+    "n_edges": 60,
+    "n_vertices": 40
   }
 }

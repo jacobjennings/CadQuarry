@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d69b7_0705",
   "params": {
     "plate_w": {
@@ -55,12 +55,6 @@
       "step": 0.5,
       "group": "Holes",
       "label": "Counterbore depth (mm)"
-    },
-    "filleted": {
-      "type": "bool",
-      "default": true,
-      "group": "Body",
-      "label": "Fillet corners"
     }
   }
 }

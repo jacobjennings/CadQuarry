@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "sketched_498d6702_0012",
+  "seed": 1234003714,
+  "generator_version": "0.6.0",
+  "family": "sketched",
+  "tier": 2,
+  "symmetry": "mirror_x",
+  "op_count": 3,
+  "ir_hash": "3142bfcbce726001",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "freeform sketched section (5 segments: 2 straight, 3 curves), ~44.499 \u00d7 35.505 mm, extruded 15 mm thick.",
+      "One \u00d85.3 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch.",
+      "Boss \u00d813.9 mm \u00d7 7.5 mm tall on top face."
+    ],
+    "text": "freeform sketched section (5 segments: 2 straight, 3 curves), ~44.499 \u00d7 35.505 mm, extruded 15 mm thick. One \u00d85.3 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch. Boss \u00d813.9 mm \u00d7 7.5 mm tall on top face."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 18600.0,
+    "surface_area": 4890.0,
+    "principal_moments": [
+      1700000.0,
+      2870000.0,
+      3640000.0
+    ],
+    "n_faces": 11,
+    "n_edges": 21,
+    "n_vertices": 14
+  }
+}

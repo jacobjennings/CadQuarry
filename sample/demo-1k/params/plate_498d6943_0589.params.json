@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6943_0589",
   "params": {
     "plate_w": {
@@ -62,23 +62,32 @@
       "group": "Body",
       "label": "Fillet corners"
     },
-    "boss_d": {
+    "pocket_w": {
       "type": "float",
-      "default": 11.8,
-      "min": 5.9,
-      "max": 23.6,
+      "default": 31.8,
+      "min": 15.9,
+      "max": 44.5,
       "step": 1.0,
-      "group": "Boss",
-      "label": "Boss diameter (mm)"
+      "group": "Pocket",
+      "label": "Pocket width (mm)"
     },
-    "boss_h": {
+    "pocket_d": {
       "type": "float",
-      "default": 8.6,
-      "min": 3.4,
-      "max": 21.5,
+      "default": 20.6,
+      "min": 10.3,
+      "max": 27.9,
       "step": 1.0,
-      "group": "Boss",
-      "label": "Boss height (mm)"
+      "group": "Pocket",
+      "label": "Pocket depth (mm)"
+    },
+    "pocket_h": {
+      "type": "float",
+      "default": 5.5,
+      "min": 2.2,
+      "max": 10.2,
+      "step": 0.5,
+      "group": "Pocket",
+      "label": "Pocket height (mm)"
     }
   }
 }

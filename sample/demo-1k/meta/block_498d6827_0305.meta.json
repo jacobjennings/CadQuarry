@@ -1,0 +1,35 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6827_0305",
+  "seed": 1234004007,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 5,
+  "ir_hash": "5ec24489c0edcc63",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 39.8 \u00d7 18 \u00d7 68.2 mm (W\u00d7D\u00d7H).",
+      "Four 3.8 mm square holes at the corners, 27.86 \u00d7 12.6 mm spacing.",
+      "Pocket 17.3 \u00d7 10.8 mm, 23.1 mm deep, in top face.",
+      "Fillet radius 0.774 mm on vertical edges (optional, off by default).",
+      "\u00d89.8 mm circular section attachment, 10.6 mm long, from front face with a \u00d84.7 mm bore."
+    ],
+    "text": "Rectangular body, 39.8 \u00d7 18 \u00d7 68.2 mm (W\u00d7D\u00d7H). Four 3.8 mm square holes at the corners, 27.86 \u00d7 12.6 mm spacing. Pocket 17.3 \u00d7 10.8 mm, 23.1 mm deep, in top face. Fillet radius 0.774 mm on vertical edges (optional, off by default). \u00d89.8 mm circular section attachment, 10.6 mm long, from front face with a \u00d84.7 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 40900.0,
+    "surface_area": 15400.0,
+    "principal_moments": [
+      6810000.0,
+      15999999.999999998,
+      20400000.0
+    ],
+    "n_faces": 30,
+    "n_edges": 78,
+    "n_vertices": 52
+  }
+}

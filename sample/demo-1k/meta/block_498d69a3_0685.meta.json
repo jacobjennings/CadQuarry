@@ -1,0 +1,35 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d69a3_0685",
+  "seed": 1234004387,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 3,
+  "symmetry": "mirror_xy",
+  "op_count": 5,
+  "ir_hash": "4052e1e8af1e77cd",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 70 \u00d7 44.9 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Nine \u00d83.2 mm holes in two staggered rows, 13.1 \u00d7 12.9 mm pitch.",
+      "Boss \u00d817.4 mm \u00d7 8.2 mm tall on top face with a \u00d84.3 mm bore.",
+      "Fillet radius 5.097 mm on vertical edges (optional, off by default).",
+      "\u00d818.6 mm circular section attachment, 19.4 mm long, from right face with a \u00d811.2 mm bore."
+    ],
+    "text": "Rectangular body, 70 \u00d7 44.9 \u00d7 100 mm (W\u00d7D\u00d7H). Nine \u00d83.2 mm holes in two staggered rows, 13.1 \u00d7 12.9 mm pitch. Boss \u00d817.4 mm \u00d7 8.2 mm tall on top face with a \u00d84.3 mm bore. Fillet radius 5.097 mm on vertical edges (optional, off by default). \u00d818.6 mm circular section attachment, 19.4 mm long, from right face with a \u00d811.2 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 304000.0,
+    "surface_area": 43700.0,
+    "principal_moments": [
+      183000000.0,
+      313000000.0,
+      390000000.0
+    ],
+    "n_faces": 25,
+    "n_edges": 81,
+    "n_vertices": 54
+  }
+}

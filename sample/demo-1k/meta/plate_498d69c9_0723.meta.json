@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d69c9_0723",
+  "seed": 1234004425,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 1,
+  "symmetry": "mirror_xy",
+  "op_count": 2,
+  "ir_hash": "750cd5d7d886d038",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 120 \u00d7 47.8 \u00d7 12 mm (W\u00d7D\u00d7H).",
+      "Four \u00d83.2 mm holes at the corners, 84 \u00d7 33.46 mm spacing."
+    ],
+    "text": "Rectangular body, 120 \u00d7 47.8 \u00d7 12 mm (W\u00d7D\u00d7H). Four \u00d83.2 mm holes at the corners, 84 \u00d7 33.46 mm spacing."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 68400.0,
+    "surface_area": 15900.0,
+    "principal_moments": [
+      13799999.999999998,
+      82700000.0,
+      94899999.99999999
+    ],
+    "n_faces": 10,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}

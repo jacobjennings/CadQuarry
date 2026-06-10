@@ -1,0 +1,24 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "sketched_498d6899_0419",
+  "params": {
+    "sk_r": {
+      "type": "float",
+      "default": 39.16,
+      "min": 19.6,
+      "max": 70.5,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Max radius (mm)"
+    },
+    "sk_h": {
+      "type": "float",
+      "default": 40.32,
+      "min": 20.2,
+      "max": 72.6,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Height (mm)"
+    }
+  }
+}

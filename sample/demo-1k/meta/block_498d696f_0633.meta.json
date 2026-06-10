@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d696f_0633",
+  "seed": 1234004335,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "62a65310e4d70d8a",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 25 \u00d7 23.6 \u00d7 16.9 mm (W\u00d7D\u00d7H).",
+      "Four \u00d84.3 mm holes at the corners, 17.5 \u00d7 16.52 mm spacing."
+    ],
+    "text": "Rectangular body, 25 \u00d7 23.6 \u00d7 16.9 mm (W\u00d7D\u00d7H). Four \u00d84.3 mm holes at the corners, 17.5 \u00d7 16.52 mm spacing."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 8990.0,
+    "surface_area": 3620.0,
+    "principal_moments": [
+      609000.0,
+      657000.0,
+      838000.0
+    ],
+    "n_faces": 10,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}

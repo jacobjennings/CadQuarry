@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "ribbed_498d6a73_0893",
+  "seed": 1234004595,
+  "generator_version": "0.6.0",
+  "family": "ribbed",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "ecb07428a25273cf",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 35 \u00d7 24 \u00d7 3 mm (W\u00d7D\u00d7H).",
+      "Two ribs, 5.8 mm thick, 5.8 mm tall."
+    ],
+    "text": "Rectangular body, 35 \u00d7 24 \u00d7 3 mm (W\u00d7D\u00d7H). Two ribs, 5.8 mm thick, 5.8 mm tall."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 4400.0,
+    "surface_area": 2910.0,
+    "principal_moments": [
+      272000.0,
+      660000.0,
+      876000.0
+    ],
+    "n_faces": 22,
+    "n_edges": 52,
+    "n_vertices": 32
+  }
+}

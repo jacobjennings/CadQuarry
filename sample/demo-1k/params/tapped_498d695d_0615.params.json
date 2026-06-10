@@ -1,0 +1,51 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "tapped_498d695d_0615",
+  "params": {
+    "major_d": {
+      "type": "float",
+      "default": 8.0,
+      "min": 3.0,
+      "max": 24.0,
+      "step": 0.5,
+      "group": "Thread",
+      "label": "Thread major \u00d8 (mm)"
+    },
+    "pitch": {
+      "type": "float",
+      "default": 1.25,
+      "min": 0.35,
+      "max": 3.5,
+      "step": 0.05,
+      "group": "Thread",
+      "label": "Thread pitch (mm)"
+    },
+    "height": {
+      "type": "float",
+      "default": 15.1,
+      "min": 9.6,
+      "max": 27.2,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Thickness (mm)"
+    },
+    "plate_w": {
+      "type": "float",
+      "default": 28.2,
+      "min": 16.9,
+      "max": 45.1,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate width (mm)"
+    },
+    "plate_d": {
+      "type": "float",
+      "default": 28.2,
+      "min": 16.9,
+      "max": 45.1,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate depth (mm)"
+    }
+  }
+}

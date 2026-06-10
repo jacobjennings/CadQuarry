@@ -1,1 +1,1 @@
-Rectangular body, 55 × 36.2 × 3 mm (W×D×H). Four Ø5.3 mm holes at the corners, 38.5 × 25.34 mm spacing. Fillet radius 3.823 mm on vertical edges. Pocket 35.9 × 23.8 mm, 1.1 mm deep, in top face.
+Rectangular body, 55 × 36.2 × 4 mm (W×D×H). Eight Ø3.2 mm holes in a 2×4 grid, 44 × 9.7 mm pitch. Fillet radius 1.507 mm on vertical edges. Boss Ø10.7 mm × 11 mm tall on top face.

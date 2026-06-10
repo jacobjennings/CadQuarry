@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "sketched_498d6899_0419",
+  "seed": 1234004121,
+  "generator_version": "0.6.0",
+  "family": "sketched",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "1b998803c6fe3c4a",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Revolved organic body from a freeform sketched section (8 segments: 5 straight, 1 arc, 2 curves), ~36.869 \u00d7 40.32 mm half-silhouette."
+    ],
+    "text": "Revolved organic body from a freeform sketched section (8 segments: 5 straight, 1 arc, 2 curves), ~36.869 \u00d7 40.32 mm half-silhouette."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 51500.0,
+    "surface_area": 20000.0,
+    "principal_moments": [
+      13399999.999999998,
+      13399999.999999998,
+      14999999.999999998
+    ],
+    "n_faces": 8,
+    "n_edges": 13,
+    "n_vertices": 7
+  }
+}

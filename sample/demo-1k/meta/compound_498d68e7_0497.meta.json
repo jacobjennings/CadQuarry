@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d68e7_0497",
+  "seed": 1234004199,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "e88c3305f9ab75c1",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Lofted body through 2 sections: \u00d860 mm circular section \u2192 32.5 \u00d7 32.5 mm rectangular section.",
+      "\u00d820.2 mm circular section attachment, 29.2 mm long, from top face with a \u00d812 mm bore."
+    ],
+    "text": "Lofted body through 2 sections: \u00d860 mm circular section \u2192 32.5 \u00d7 32.5 mm rectangular section. \u00d820.2 mm circular section attachment, 29.2 mm long, from top face with a \u00d812 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 81700.0,
+    "surface_area": 15200.0,
+    "principal_moments": [
+      26399999.999999996,
+      33099999.999999996,
+      33099999.999999996
+    ],
+    "n_faces": 10,
+    "n_edges": 21,
+    "n_vertices": 14
+  }
+}

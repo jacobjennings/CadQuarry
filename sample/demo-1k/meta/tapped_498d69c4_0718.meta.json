@@ -1,0 +1,40 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "tapped_498d69c4_0718",
+  "seed": 1234004420,
+  "generator_version": "0.6.0",
+  "family": "tapped",
+  "tier": 0,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "b412c10c446ee7c8",
+  "license": "CC0-1.0",
+  "descriptor": {
+    "family": "tapped",
+    "body": "box",
+    "standard": "iso",
+    "major_diameter": 16.0,
+    "pitch": 2.0,
+    "designation": "M16x2",
+    "hole_count": 1
+  },
+  "dimensions": {
+    "lines": [
+      "One M16x2 tapped hole in a plate."
+    ],
+    "text": "One M16x2 tapped hole in a plate."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 68000.0,
+    "surface_area": 12600.0,
+    "principal_moments": [
+      20700000.0,
+      20700000.0,
+      34100000.0
+    ],
+    "n_faces": 199,
+    "n_edges": 565,
+    "n_vertices": 368
+  }
+}

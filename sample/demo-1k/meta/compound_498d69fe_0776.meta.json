@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d69fe_0776",
+  "seed": 1234004478,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "6f0cb1bd0f610aa1",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Lofted body through 3 sections: \u00d864.37 mm circular section \u2192 \u00d853 mm circular section \u2192 41.7 \u00d7 41.7 mm rectangular section.",
+      "8-sided polygon section, 23.6 mm across corners attachment, 18.3 mm long, from top face with a \u00d810 mm bore."
+    ],
+    "text": "Lofted body through 3 sections: \u00d864.37 mm circular section \u2192 \u00d853 mm circular section \u2192 41.7 \u00d7 41.7 mm rectangular section. 8-sided polygon section, 23.6 mm across corners attachment, 18.3 mm long, from top face with a \u00d810 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 116000.0,
+    "surface_area": 17000.0,
+    "principal_moments": [
+      43700000.0,
+      51699999.99999999,
+      51699999.99999999
+    ],
+    "n_faces": 17,
+    "n_edges": 42,
+    "n_vertices": 28
+  }
+}

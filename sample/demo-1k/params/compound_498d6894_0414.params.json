@@ -1,0 +1,42 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6894_0414",
+  "params": {
+    "shaft_d": {
+      "type": "float",
+      "default": 21.65,
+      "min": 10.8,
+      "max": 39.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Shaft diameter (mm)"
+    },
+    "shaft_len": {
+      "type": "float",
+      "default": 25.4,
+      "min": 10.2,
+      "max": 50.8,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Shaft length (mm)"
+    },
+    "step_d": {
+      "type": "float",
+      "default": 11.0,
+      "min": 5.5,
+      "max": 19.5,
+      "step": 1.0,
+      "group": "Step",
+      "label": "Step diameter (mm)"
+    },
+    "step_len": {
+      "type": "float",
+      "default": 22.5,
+      "min": 6.8,
+      "max": 56.2,
+      "step": 1.0,
+      "group": "Step",
+      "label": "Step length (mm)"
+    }
+  }
+}

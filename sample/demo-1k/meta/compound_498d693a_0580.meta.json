@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d693a_0580",
+  "seed": 1234004282,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 3,
+  "symmetry": "mirror_x",
+  "op_count": 2,
+  "ir_hash": "dabf2a5b72293d13",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "8-sided polygon section, 39.9 mm across corners, extruded 18.9 mm thick.",
+      "\u00d820.9 mm circular section attachment, 20.1 mm long, from top face with a \u00d811.3 mm bore."
+    ],
+    "text": "8-sided polygon section, 39.9 mm across corners, extruded 18.9 mm thick. \u00d820.9 mm circular section attachment, 20.1 mm long, from top face with a \u00d811.3 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 24300.0,
+    "surface_area": 7060.0,
+    "principal_moments": [
+      4130000.0,
+      4290000.0,
+      4290000.0
+    ],
+    "n_faces": 13,
+    "n_edges": 30,
+    "n_vertices": 20
+  }
+}

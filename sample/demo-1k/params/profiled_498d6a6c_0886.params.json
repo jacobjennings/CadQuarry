@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "profiled_498d6a6c_0886",
+  "params": {
+    "circ_r": {
+      "type": "float",
+      "default": 23.14,
+      "min": 11.6,
+      "max": 46.3,
+      "step": 1.0,
+      "group": "Profile",
+      "label": "Circumscribed radius (mm)"
+    },
+    "n_sides": {
+      "type": "int",
+      "default": 6,
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "group": "Profile",
+      "label": "Sides"
+    },
+    "length": {
+      "type": "float",
+      "default": 200.0,
+      "min": 60.0,
+      "max": 600.0,
+      "step": 5.0,
+      "group": "Body",
+      "label": "Length (mm)"
+    }
+  }
+}

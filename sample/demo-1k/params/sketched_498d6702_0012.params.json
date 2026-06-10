@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "sketched_498d6702_0012",
+  "params": {
+    "sk_w": {
+      "type": "float",
+      "default": 65,
+      "min": 32.5,
+      "max": 117.0,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Sketch width (mm)"
+    },
+    "sk_h": {
+      "type": "float",
+      "default": 46.43,
+      "min": 23.2,
+      "max": 83.6,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Sketch height (mm)"
+    },
+    "sk_t": {
+      "type": "float",
+      "default": 15,
+      "min": 6.0,
+      "max": 33.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Thickness (mm)"
+    },
+    "sk_hole_d": {
+      "type": "float",
+      "default": 5.3,
+      "min": 2.0,
+      "max": 10.6,
+      "step": 0.5,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    },
+    "boss_d": {
+      "type": "float",
+      "default": 13.9,
+      "min": 7.0,
+      "max": 27.8,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss diameter (mm)"
+    },
+    "boss_h": {
+      "type": "float",
+      "default": 7.5,
+      "min": 3.0,
+      "max": 18.8,
+      "step": 1.0,
+      "group": "Boss",
+      "label": "Boss height (mm)"
+    }
+  }
+}

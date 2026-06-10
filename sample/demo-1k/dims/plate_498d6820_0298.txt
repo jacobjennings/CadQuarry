@@ -1,1 +1,1 @@
-Rectangular body, 25 × 10 × 6 mm (W×D×H). Four Ø5.3 mm holes on a Ø15 mm bolt circle. Fillet radius 0.585 mm on vertical edges.
+Rectangular body, 25 × 10 × 6 mm (W×D×H). Four Ø5.3 mm holes on a Ø15 mm bolt circle. Fillet radius 0.77 mm on vertical edges.

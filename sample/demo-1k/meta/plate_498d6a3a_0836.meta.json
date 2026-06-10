@@ -1,34 +1,33 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6a3a_0836",
   "seed": 1234004538,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 3,
   "symmetry": "mirror_xy",
-  "op_count": 4,
-  "ir_hash": "fdfc99637a8c0f0c",
+  "op_count": 3,
+  "ir_hash": "e0ced827f02aa4e4",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 39.38 \u00d7 17.5 \u00d7 6 mm (W\u00d7D\u00d7H).",
       "Four 5.2 \u00d7 3.2 mm slots at the corners, 27.566 \u00d7 12.25 mm spacing.",
-      "Fillet radius 1.525 mm on vertical edges.",
-      "Boss \u00d816.2 mm \u00d7 4 mm tall on top face."
+      "Pocket 21 \u00d7 9.3 mm, 3.4 mm deep, in top face."
     ],
-    "text": "Rectangular body, 39.38 \u00d7 17.5 \u00d7 6 mm (W\u00d7D\u00d7H). Four 5.2 \u00d7 3.2 mm slots at the corners, 27.566 \u00d7 12.25 mm spacing. Fillet radius 1.525 mm on vertical edges. Boss \u00d816.2 mm \u00d7 4 mm tall on top face."
+    "text": "Rectangular body, 39.38 \u00d7 17.5 \u00d7 6 mm (W\u00d7D\u00d7H). Four 5.2 \u00d7 3.2 mm slots at the corners, 27.566 \u00d7 12.25 mm spacing. Pocket 21 \u00d7 9.3 mm, 3.4 mm deep, in top face."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 4600.0,
-    "surface_area": 2470.0,
+    "volume": 3120.0,
+    "surface_area": 2490.0,
     "principal_moments": [
-      134000.0,
-      506000.0,
-      582000.0
+      96800.0,
+      453000.0,
+      531000.0
     ],
-    "n_faces": 28,
-    "n_edges": 75,
-    "n_vertices": 50
+    "n_faces": 27,
+    "n_edges": 72,
+    "n_vertices": 48
   }
 }

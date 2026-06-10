@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d69a4_0686",
   "params": {
     "plate_w": {
@@ -46,12 +46,6 @@
       "step": 15.0,
       "group": "Holes",
       "label": "Countersink angle (\u00b0)"
-    },
-    "filleted": {
-      "type": "bool",
-      "default": true,
-      "group": "Body",
-      "label": "Fillet corners"
     }
   }
 }

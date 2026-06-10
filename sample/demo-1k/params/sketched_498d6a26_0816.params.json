@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "sketched_498d6a26_0816",
+  "params": {
+    "sk_w": {
+      "type": "float",
+      "default": 86.51,
+      "min": 43.3,
+      "max": 155.7,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Sketch width (mm)"
+    },
+    "sk_h": {
+      "type": "float",
+      "default": 54.06,
+      "min": 27.0,
+      "max": 97.3,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Sketch height (mm)"
+    },
+    "sk_t": {
+      "type": "float",
+      "default": 25.51,
+      "min": 10.2,
+      "max": 56.1,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Thickness (mm)"
+    }
+  }
+}

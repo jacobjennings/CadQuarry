@@ -1,0 +1,34 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "enclosure_498d68c3_0461",
+  "seed": 1234004163,
+  "generator_version": "0.6.0",
+  "family": "enclosure",
+  "tier": 2,
+  "symmetry": "mirror_x",
+  "op_count": 4,
+  "ir_hash": "dd7664824651dd23",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 110 \u00d7 51.1 \u00d7 71.6 mm (W\u00d7D\u00d7H).",
+      "Hollowed to 2.7 mm wall thickness, open at top face.",
+      "Four \u00d85.3 mm holes at the corners, 77 \u00d7 35.77 mm spacing.",
+      "Fillet radius 4.844 mm on vertical edges."
+    ],
+    "text": "Rectangular body, 110 \u00d7 51.1 \u00d7 71.6 mm (W\u00d7D\u00d7H). Hollowed to 2.7 mm wall thickness, open at top face. Four \u00d85.3 mm holes at the corners, 77 \u00d7 35.77 mm spacing. Fillet radius 4.844 mm on vertical edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 72800.0,
+    "surface_area": 53800.0,
+    "principal_moments": [
+      68100000.0,
+      135000000.0,
+      143000000.0
+    ],
+    "n_faces": 23,
+    "n_edges": 60,
+    "n_vertices": 40
+  }
+}

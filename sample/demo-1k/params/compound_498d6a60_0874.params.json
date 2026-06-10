@@ -1,0 +1,57 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6a60_0874",
+  "params": {
+    "base_sides": {
+      "type": "int",
+      "default": 6,
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "group": "Base",
+      "label": "Base sides"
+    },
+    "base_r": {
+      "type": "float",
+      "default": 10.0,
+      "min": 6.0,
+      "max": 16.0,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base circumradius (mm)"
+    },
+    "base_h": {
+      "type": "float",
+      "default": 5.4,
+      "min": 2.2,
+      "max": 13.5,
+      "step": 1.0,
+      "group": "Base",
+      "label": "Base height (mm)"
+    },
+    "col_d": {
+      "type": "float",
+      "default": 9.5,
+      "min": 4.8,
+      "max": 13.9,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column diameter (mm)"
+    },
+    "col_h": {
+      "type": "float",
+      "default": 10.6,
+      "min": 3.2,
+      "max": 26.5,
+      "step": 1.0,
+      "group": "Column",
+      "label": "Column height (mm)"
+    },
+    "filleted": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Fillet corners"
+    }
+  }
+}

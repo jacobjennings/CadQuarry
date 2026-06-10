@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6975_0639",
+  "seed": 1234004341,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 3,
+  "symmetry": "mirror_x",
+  "op_count": 3,
+  "ir_hash": "ee4d14b1dfe52134",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "\u00d845 mm circular section, extruded 88.4 mm thick.",
+      "\u00d823 mm circular section attachment, 36.2 mm long, from top face.",
+      "Chamfer 2.5 mm on bottom edges."
+    ],
+    "text": "\u00d845 mm circular section, extruded 88.4 mm thick. \u00d823 mm circular section attachment, 36.2 mm long, from top face. Chamfer 2.5 mm on bottom edges."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 155000.0,
+    "surface_area": 18100.0,
+    "principal_moments": [
+      36400000.0,
+      163000000.0,
+      163000000.0
+    ],
+    "n_faces": 6,
+    "n_edges": 8,
+    "n_vertices": 5
+  }
+}

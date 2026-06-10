@@ -1,33 +1,32 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d68cc_0470",
   "seed": 1234004172,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 2,
   "symmetry": "none",
-  "op_count": 3,
-  "ir_hash": "8bd144b0e270033d",
+  "op_count": 2,
+  "ir_hash": "d0454a7a6b7c3097",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
-      "Rectangular body, 40 \u00d7 25.3 \u00d7 2 mm (W\u00d7D\u00d7H).",
-      "Four 5.2 mm square holes at the corners, 28 \u00d7 17.71 mm spacing.",
-      "Fillet radius 2.381 mm on vertical edges."
+      "Rectangular body, 40 \u00d7 25.3 \u00d7 8 mm (W\u00d7D\u00d7H).",
+      "16 4.7 \u00d7 2.4 mm slots in a 4\u00d74 grid, 10.7 \u00d7 6.7 mm pitch."
     ],
-    "text": "Rectangular body, 40 \u00d7 25.3 \u00d7 2 mm (W\u00d7D\u00d7H). Four 5.2 mm square holes at the corners, 28 \u00d7 17.71 mm spacing. Fillet radius 2.381 mm on vertical edges."
+    "text": "Rectangular body, 40 \u00d7 25.3 \u00d7 8 mm (W\u00d7D\u00d7H). 16 4.7 \u00d7 2.4 mm slots in a 4\u00d74 grid, 10.7 \u00d7 6.7 mm pitch."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 1840.0,
-    "surface_area": 2220.0,
+    "volume": 6810.0,
+    "surface_area": 4300.0,
     "principal_moments": [
-      92900.0,
-      232000.0,
-      323000.0
+      395000.0,
+      930000.0,
+      1250000.0
     ],
-    "n_faces": 42,
-    "n_edges": 120,
-    "n_vertices": 80
+    "n_faces": 70,
+    "n_edges": 204,
+    "n_vertices": 136
   }
 }

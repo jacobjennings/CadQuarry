@@ -1,0 +1,60 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6a67_0881",
+  "params": {
+    "adapter_base": {
+      "type": "float",
+      "default": 43.06,
+      "min": 25.8,
+      "max": 64.6,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Base size (mm)"
+    },
+    "adapter_top": {
+      "type": "float",
+      "default": 19.2,
+      "min": 9.6,
+      "max": 43.1,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Top size (mm)"
+    },
+    "adapter_h": {
+      "type": "float",
+      "default": 36.0,
+      "min": 14.4,
+      "max": 72.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Transition height (mm)"
+    },
+    "adapter_mid": {
+      "type": "float",
+      "default": 31.1,
+      "min": 9.6,
+      "max": 43.1,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Mid size (mm)"
+    },
+    "neck_d": {
+      "type": "float",
+      "default": 16.2,
+      "min": 6.5,
+      "max": 19.2,
+      "step": 1.0,
+      "group": "Neck",
+      "label": "Neck diameter (mm)"
+    },
+    "neck_l": {
+      "type": "float",
+      "default": 12.2,
+      "min": 4.9,
+      "max": 30.5,
+      "step": 1.0,
+      "group": "Neck",
+      "label": "Neck length (mm)"
+    }
+  }
+}

@@ -1,34 +1,34 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6819_0291",
   "seed": 1234003993,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 3,
   "symmetry": "none",
   "op_count": 4,
-  "ir_hash": "ab7c34b81919a436",
+  "ir_hash": "5bc4e68a86844ec3",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
-      "Rectangular body, 55 \u00d7 36.2 \u00d7 3 mm (W\u00d7D\u00d7H).",
-      "Four \u00d85.3 mm holes at the corners, 38.5 \u00d7 25.34 mm spacing.",
-      "Fillet radius 3.823 mm on vertical edges.",
-      "Pocket 35.9 \u00d7 23.8 mm, 1.1 mm deep, in top face."
+      "Rectangular body, 55 \u00d7 36.2 \u00d7 4 mm (W\u00d7D\u00d7H).",
+      "Eight \u00d83.2 mm holes in a 2\u00d74 grid, 44 \u00d7 9.7 mm pitch.",
+      "Fillet radius 1.507 mm on vertical edges.",
+      "Boss \u00d810.7 mm \u00d7 11 mm tall on top face."
     ],
-    "text": "Rectangular body, 55 \u00d7 36.2 \u00d7 3 mm (W\u00d7D\u00d7H). Four \u00d85.3 mm holes at the corners, 38.5 \u00d7 25.34 mm spacing. Fillet radius 3.823 mm on vertical edges. Pocket 35.9 \u00d7 23.8 mm, 1.1 mm deep, in top face."
+    "text": "Rectangular body, 55 \u00d7 36.2 \u00d7 4 mm (W\u00d7D\u00d7H). Eight \u00d83.2 mm holes in a 2\u00d74 grid, 44 \u00d7 9.7 mm pitch. Fillet radius 1.507 mm on vertical edges. Boss \u00d810.7 mm \u00d7 11 mm tall on top face."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 4740.0,
-    "surface_area": 4620.0,
+    "volume": 8690.0,
+    "surface_area": 5260.0,
     "principal_moments": [
-      558000.0,
-      1280000.0,
-      1840000.0
+      913000.0,
+      1950000.0,
+      2730000.0
     ],
-    "n_faces": 19,
-    "n_edges": 60,
-    "n_vertices": 40
+    "n_faces": 20,
+    "n_edges": 51,
+    "n_vertices": 34
   }
 }

@@ -1,0 +1,36 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6713_0029",
+  "seed": 1234003731,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 6,
+  "ir_hash": "bb991c237e441a90",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 28.42 \u00d7 12.2 \u00d7 21 mm (W\u00d7D\u00d7H).",
+      "Four \u00d82.5 mm holes at the corners, 19.894 \u00d7 8.54 mm spacing.",
+      "Pocket 18.4 \u00d7 7.9 mm, 9.2 mm deep, in top face.",
+      "Fillet radius 1.158 mm on vertical edges (optional, off by default).",
+      "One \u00d84.3 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch on the <Y face.",
+      "\u00d84 mm circular section attachment, 4 mm long, from left face with a \u00d82 mm bore."
+    ],
+    "text": "Rectangular body, 28.42 \u00d7 12.2 \u00d7 21 mm (W\u00d7D\u00d7H). Four \u00d82.5 mm holes at the corners, 19.894 \u00d7 8.54 mm spacing. Pocket 18.4 \u00d7 7.9 mm, 9.2 mm deep, in top face. Fillet radius 1.158 mm on vertical edges (optional, off by default). One \u00d84.3 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch on the <Y face. \u00d84 mm circular section attachment, 4 mm long, from left face with a \u00d82 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 5460.0,
+    "surface_area": 3660.0,
+    "principal_moments": [
+      257000.0,
+      491000.0,
+      598000.0
+    ],
+    "n_faces": 21,
+    "n_edges": 66,
+    "n_vertices": 44
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "lofted_498d677e_0136",
+  "seed": 1234003838,
+  "generator_version": "0.6.0",
+  "family": "lofted",
+  "tier": 0,
+  "symmetry": "mirror_x",
+  "op_count": 1,
+  "ir_hash": "87602260d98f1d94",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Lofted body through 2 sections: 60 \u00d7 60 mm rectangular section \u2192 \u00d821.6 mm circular section."
+    ],
+    "text": "Lofted body through 2 sections: 60 \u00d7 60 mm rectangular section \u2192 \u00d821.6 mm circular section."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 122000.0,
+    "surface_area": 15300.0,
+    "principal_moments": [
+      45100000.0,
+      62499999.99999999,
+      62499999.99999999
+    ],
+    "n_faces": 7,
+    "n_edges": 15,
+    "n_vertices": 10
+  }
+}

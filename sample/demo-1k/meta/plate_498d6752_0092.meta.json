@@ -1,32 +1,32 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6752_0092",
   "seed": 1234003794,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 1,
   "symmetry": "none",
   "op_count": 2,
-  "ir_hash": "3d7fea27d873b2e4",
+  "ir_hash": "9d29b1401f51f6df",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
-      "Rectangular body, 55 \u00d7 41 \u00d7 3 mm (W\u00d7D\u00d7H).",
-      "Five \u00d83.2 mm holes in two staggered rows, 20.6 \u00d7 24.5 mm pitch."
+      "Rectangular body, 55 \u00d7 41 \u00d7 8 mm (W\u00d7D\u00d7H).",
+      "Four \u00d85.3 mm holes at the corners, 38.5 \u00d7 28.7 mm spacing."
     ],
-    "text": "Rectangular body, 55 \u00d7 41 \u00d7 3 mm (W\u00d7D\u00d7H). Five \u00d83.2 mm holes in two staggered rows, 20.6 \u00d7 24.5 mm pitch."
+    "text": "Rectangular body, 55 \u00d7 41 \u00d7 8 mm (W\u00d7D\u00d7H). Four \u00d85.3 mm holes at the corners, 38.5 \u00d7 28.7 mm spacing."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 6640.0,
-    "surface_area": 5160.0,
+    "volume": 17300.0,
+    "surface_area": 6400.0,
     "principal_moments": [
-      934000.0,
-      1680000.0,
-      2610000.0
+      2470000.0,
+      4380000.0,
+      6670000.0
     ],
-    "n_faces": 11,
-    "n_edges": 27,
-    "n_vertices": 18
+    "n_faces": 10,
+    "n_edges": 24,
+    "n_vertices": 16
   }
 }

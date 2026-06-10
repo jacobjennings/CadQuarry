@@ -1,30 +1,30 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6ac3_0973",
   "seed": 1234004675,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 2,
   "symmetry": "none",
   "op_count": 3,
-  "ir_hash": "f4aef21386dcb86b",
+  "ir_hash": "25bf5297b04dd130",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 85.81 \u00d7 75.3 \u00d7 12 mm (W\u00d7D\u00d7H).",
       "Seven \u00d83.2 mm holes in two staggered rows, 21.5 \u00d7 18.2 mm pitch.",
-      "Fillet radius 7.183 mm on vertical edges."
+      "Chamfer 5.3 mm on vertical edges."
     ],
-    "text": "Rectangular body, 85.81 \u00d7 75.3 \u00d7 12 mm (W\u00d7D\u00d7H). Seven \u00d83.2 mm holes in two staggered rows, 21.5 \u00d7 18.2 mm pitch. Fillet radius 7.183 mm on vertical edges."
+    "text": "Rectangular body, 85.81 \u00d7 75.3 \u00d7 12 mm (W\u00d7D\u00d7H). Seven \u00d83.2 mm holes in two staggered rows, 21.5 \u00d7 18.2 mm pitch. Chamfer 5.3 mm on vertical edges."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 76300.0,
+    "volume": 76200.0,
     "surface_area": 17300.0,
     "principal_moments": [
-      36800000.0,
-      47299999.99999999,
-      82200000.0
+      36600000.0,
+      46999999.99999999,
+      81800000.0
     ],
     "n_faces": 17,
     "n_edges": 45,

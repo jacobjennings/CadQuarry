@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "bracket_498d69a9_0691",
+  "seed": 1234004393,
+  "generator_version": "0.6.0",
+  "family": "bracket",
+  "tier": 3,
+  "symmetry": "none",
+  "op_count": 1,
+  "ir_hash": "1bd3ba163c44ef70",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "C-channel bracket: base leg 50 mm, vertical leg 32.7 mm, 41.88 mm wide, 3 mm thick; 2 \u00d7 \u00d83.2 mm holes per leg; 4.2 mm corner gusset."
+    ],
+    "text": "C-channel bracket: base leg 50 mm, vertical leg 32.7 mm, 41.88 mm wide, 3 mm thick; 2 \u00d7 \u00d83.2 mm holes per leg; 4.2 mm corner gusset."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 14100.0,
+    "surface_area": 10400.0,
+    "principal_moments": [
+      3460000.0,
+      6990000.0,
+      7540000.0
+    ],
+    "n_faces": 26,
+    "n_edges": 60,
+    "n_vertices": 40
+  }
+}

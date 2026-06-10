@@ -1,39 +1,39 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "threaded_498d6743_0077",
   "seed": 1234003779,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "threaded",
   "tier": 2,
   "symmetry": "none",
   "op_count": 1,
-  "ir_hash": "1c0ef7c82702267c",
+  "ir_hash": "9a5c131d825cf7a8",
   "license": "CC0-1.0",
   "descriptor": {
     "family": "threaded",
     "standard": "acme",
     "external": true,
-    "length": 44.4,
+    "length": 45.2,
     "size": "1/4",
     "designation": "ACME 1/4"
   },
   "dimensions": {
     "lines": [
-      "ACME 1/4 external thread, 44.4 mm long."
+      "ACME 1/4 external thread, 45.2 mm long."
     ],
-    "text": "ACME 1/4 external thread, 44.4 mm long."
+    "text": "ACME 1/4 external thread, 45.2 mm long."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 1090.0,
-    "surface_area": 1390.0,
+    "volume": 1110.0,
+    "surface_area": 1420.0,
     "principal_moments": [
-      4520.0,
-      178000.0,
-      178000.0
+      4600.0,
+      188000.0,
+      188000.0
     ],
-    "n_faces": 285,
-    "n_edges": 733,
-    "n_vertices": 450
+    "n_faces": 290,
+    "n_edges": 744,
+    "n_vertices": 456
   }
 }

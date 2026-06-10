@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6729_0051",
+  "seed": 1234003753,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 1,
+  "symmetry": "radial",
+  "op_count": 2,
+  "ir_hash": "128b04942de9c8ed",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 100 \u00d7 70.2 \u00d7 97.3 mm (W\u00d7D\u00d7H).",
+      "Six \u00d83.2 mm holes on a \u00d860 mm bolt circle."
+    ],
+    "text": "Rectangular body, 100 \u00d7 70.2 \u00d7 97.3 mm (W\u00d7D\u00d7H). Six \u00d83.2 mm holes on a \u00d860 mm bolt circle."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 678000.0,
+    "surface_area": 52900.0,
+    "principal_moments": [
+      814000000.0,
+      845000000.0,
+      1100000000.0
+    ],
+    "n_faces": 12,
+    "n_edges": 30,
+    "n_vertices": 20
+  }
+}

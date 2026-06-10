@@ -1,0 +1,35 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d6ac2_0972",
+  "seed": 1234004674,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 2,
+  "symmetry": "mirror_xy",
+  "op_count": 5,
+  "ir_hash": "6b5e106b4f4800d0",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 70 \u00d7 64 \u00d7 48.4 mm (W\u00d7D\u00d7H).",
+      "\u00d812.7 mm circular section attachment, 12.4 mm long, from back face with a \u00d86.1 mm bore.",
+      "\u00d812.7 mm circular section attachment, 12.4 mm long, from left face with a \u00d86.1 mm bore.",
+      "\u00d812.7 mm circular section attachment, 12.4 mm long, from right face with a \u00d86.1 mm bore.",
+      "Four \u00d84.3 mm holes at the corners, 49 \u00d7 44.8 mm spacing."
+    ],
+    "text": "Rectangular body, 70 \u00d7 64 \u00d7 48.4 mm (W\u00d7D\u00d7H). \u00d812.7 mm circular section attachment, 12.4 mm long, from back face with a \u00d86.1 mm bore. \u00d812.7 mm circular section attachment, 12.4 mm long, from left face with a \u00d86.1 mm bore. \u00d812.7 mm circular section attachment, 12.4 mm long, from right face with a \u00d86.1 mm bore. Four \u00d84.3 mm holes at the corners, 49 \u00d7 44.8 mm spacing."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 215000.0,
+    "surface_area": 27700.0,
+    "principal_moments": [
+      117000000.0,
+      133000000.0,
+      166000000.0
+    ],
+    "n_faces": 21,
+    "n_edges": 49,
+    "n_vertices": 31
+  }
+}

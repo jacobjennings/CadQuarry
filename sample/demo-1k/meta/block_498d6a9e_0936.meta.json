@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6a9e_0936",
+  "seed": 1234004638,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 2,
+  "symmetry": "none",
+  "op_count": 3,
+  "ir_hash": "20c55beb290ebb91",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 80 \u00d7 60.2 \u00d7 79.3 mm (W\u00d7D\u00d7H).",
+      "Four \u00d83.2 mm holes at the corners, 56 \u00d7 42.14 mm spacing.",
+      "Boss \u00d814.9 mm \u00d7 11.5 mm tall on top face with a \u00d85.3 mm bore."
+    ],
+    "text": "Rectangular body, 80 \u00d7 60.2 \u00d7 79.3 mm (W\u00d7D\u00d7H). Four \u00d83.2 mm holes at the corners, 56 \u00d7 42.14 mm spacing. Boss \u00d814.9 mm \u00d7 11.5 mm tall on top face with a \u00d85.3 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 379000.0,
+    "surface_area": 37000.0,
+    "principal_moments": [
+      316000000.0,
+      316000000.0,
+      403000000.0
+    ],
+    "n_faces": 13,
+    "n_edges": 30,
+    "n_vertices": 20
+  }
+}

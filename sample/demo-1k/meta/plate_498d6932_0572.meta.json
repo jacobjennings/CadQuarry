@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d6932_0572",
+  "seed": 1234004274,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "3749a4416edce0d3",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 73.28 \u00d7 68.3 \u00d7 10 mm (W\u00d7D\u00d7H).",
+      "Nine \u00d83.2 mm holes in two staggered rows, 13.7 \u00d7 13.9 mm pitch."
+    ],
+    "text": "Rectangular body, 73.28 \u00d7 68.3 \u00d7 10 mm (W\u00d7D\u00d7H). Nine \u00d83.2 mm holes in two staggered rows, 13.7 \u00d7 13.9 mm pitch."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 49300.0,
+    "surface_area": 13600.0,
+    "principal_moments": [
+      19800000.0,
+      22600000.0,
+      41600000.0
+    ],
+    "n_faces": 15,
+    "n_edges": 39,
+    "n_vertices": 26
+  }
+}

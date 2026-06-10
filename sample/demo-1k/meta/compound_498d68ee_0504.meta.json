@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "compound_498d68ee_0504",
+  "seed": 1234004206,
+  "generator_version": "0.6.0",
+  "family": "compound",
+  "tier": 1,
+  "symmetry": "mirror_xy",
+  "op_count": 3,
+  "ir_hash": "117618d0ff147ab9",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 60 \u00d7 51.1 \u00d7 10 mm (W\u00d7D\u00d7H).",
+      "\u00d810 mm circular section attachment, 30.1 mm long, from top face.",
+      "Four \u00d86.4 mm holes at the corners, 42 \u00d7 35.77 mm spacing."
+    ],
+    "text": "Rectangular body, 60 \u00d7 51.1 \u00d7 10 mm (W\u00d7D\u00d7H). \u00d810 mm circular section attachment, 30.1 mm long, from top face. Four \u00d86.4 mm holes at the corners, 42 \u00d7 35.77 mm spacing."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 31700.0,
+    "surface_area": 9850.0,
+    "principal_moments": [
+      7570000.0,
+      9940000.0,
+      14899999.999999998
+    ],
+    "n_faces": 12,
+    "n_edges": 27,
+    "n_vertices": 18
+  }
+}

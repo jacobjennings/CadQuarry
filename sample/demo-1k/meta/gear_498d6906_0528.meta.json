@@ -1,13 +1,13 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "gear_498d6906_0528",
   "seed": 1234004230,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "gear",
   "tier": 1,
   "symmetry": "mirror_xy",
   "op_count": 1,
-  "ir_hash": "07c5fe4f14555088",
+  "ir_hash": "9b2bf583ec4be0d0",
   "license": "CC0-1.0",
   "descriptor": {
     "family": "gear",

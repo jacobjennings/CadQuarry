@@ -1,0 +1,51 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "lofted_498d6787_0145",
+  "params": {
+    "loft_base": {
+      "type": "float",
+      "default": 58.8,
+      "min": 29.4,
+      "max": 94.1,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Base size (mm)"
+    },
+    "loft_top": {
+      "type": "float",
+      "default": 35.1,
+      "min": 14.0,
+      "max": 70.6,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Top size (mm)"
+    },
+    "loft_h": {
+      "type": "float",
+      "default": 63.3,
+      "min": 25.3,
+      "max": 126.6,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Height (mm)"
+    },
+    "loft_mid": {
+      "type": "float",
+      "default": 47.0,
+      "min": 17.6,
+      "max": 70.6,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Mid size (mm)"
+    },
+    "loft_bore_d": {
+      "type": "float",
+      "default": 14.7,
+      "min": 2.0,
+      "max": 28.1,
+      "step": 0.5,
+      "group": "Holes",
+      "label": "Bore diameter (mm)"
+    }
+  }
+}

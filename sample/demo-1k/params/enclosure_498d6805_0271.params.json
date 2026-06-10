@@ -1,0 +1,42 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "enclosure_498d6805_0271",
+  "params": {
+    "enc_w": {
+      "type": "float",
+      "default": 70.95,
+      "min": 30.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Enclosure width (mm)"
+    },
+    "enc_d": {
+      "type": "float",
+      "default": 51.2,
+      "min": 12.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Enclosure depth (mm)"
+    },
+    "enc_h": {
+      "type": "float",
+      "default": 51.5,
+      "min": 20.6,
+      "max": 103.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Enclosure height (mm)"
+    },
+    "wall_t": {
+      "type": "float",
+      "default": 4.9,
+      "min": 2.0,
+      "max": 6.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Wall thickness (mm)"
+    }
+  }
+}

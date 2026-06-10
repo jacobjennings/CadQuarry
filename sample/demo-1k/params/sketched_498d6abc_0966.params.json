@@ -1,0 +1,42 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "sketched_498d6abc_0966",
+  "params": {
+    "sk_w": {
+      "type": "float",
+      "default": 70,
+      "min": 35.0,
+      "max": 126.0,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Sketch width (mm)"
+    },
+    "sk_h": {
+      "type": "float",
+      "default": 81.81,
+      "min": 40.9,
+      "max": 147.3,
+      "step": 1.0,
+      "group": "Sketch",
+      "label": "Sketch height (mm)"
+    },
+    "sk_t": {
+      "type": "float",
+      "default": 11.19,
+      "min": 4.5,
+      "max": 24.6,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Thickness (mm)"
+    },
+    "sk_hole_d": {
+      "type": "float",
+      "default": 5.3,
+      "min": 2.0,
+      "max": 10.6,
+      "step": 0.5,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    }
+  }
+}

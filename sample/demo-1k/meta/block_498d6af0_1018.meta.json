@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6af0_1018",
+  "seed": 1234004720,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "a96224c319e74d26",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 95 \u00d7 42.3 \u00d7 100 mm (W\u00d7D\u00d7H).",
+      "Seven \u00d83.2 mm holes in two staggered rows, 23.8 \u00d7 26.4 mm pitch."
+    ],
+    "text": "Rectangular body, 95 \u00d7 42.3 \u00d7 100 mm (W\u00d7D\u00d7H). Seven \u00d83.2 mm holes in two staggered rows, 23.8 \u00d7 26.4 mm pitch."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 396000.0,
+    "surface_area": 42400.0,
+    "principal_moments": [
+      358000000.0,
+      389000000.0,
+      629000000.0
+    ],
+    "n_faces": 13,
+    "n_edges": 33,
+    "n_vertices": 22
+  }
+}

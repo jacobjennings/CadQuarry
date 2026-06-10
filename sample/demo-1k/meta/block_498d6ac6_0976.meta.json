@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d6ac6_0976",
+  "seed": 1234004678,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 2,
+  "symmetry": "radial",
+  "op_count": 3,
+  "ir_hash": "bddc1cc51be7a097",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 36.4 \u00d7 18.8 \u00d7 36 mm (W\u00d7D\u00d7H).",
+      "Six \u00d83.2 mm holes on a \u00d821.8 mm bolt circle.",
+      "Pocket 18.2 \u00d7 8.6 mm, 15.7 mm deep, in top face."
+    ],
+    "text": "Rectangular body, 36.4 \u00d7 18.8 \u00d7 36 mm (W\u00d7D\u00d7H). Six \u00d83.2 mm holes on a \u00d821.8 mm bolt circle. Pocket 18.2 \u00d7 8.6 mm, 15.7 mm deep, in top face."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 21000.0,
+    "surface_area": 7100.0,
+    "principal_moments": [
+      2870000.0,
+      3230000.0,
+      4770000.0
+    ],
+    "n_faces": 21,
+    "n_edges": 54,
+    "n_vertices": 36
+  }
+}

@@ -1,0 +1,1 @@
+Lofted body through 3 sections: Ø45 mm circular section → Ø39.3 mm circular section → 6-sided polygon section, 33.6 mm across corners. One Ø16.9 mm hole in a 1×1 grid, 10 × 10 mm pitch.

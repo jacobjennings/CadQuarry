@@ -1,0 +1,31 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d67dd_0231",
+  "seed": 1234003933,
+  "generator_version": "0.6.0",
+  "family": "plate",
+  "tier": 0,
+  "symmetry": "radial",
+  "op_count": 1,
+  "ir_hash": "fd90a1995af72344",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 100 \u00d7 53.8 \u00d7 12 mm (W\u00d7D\u00d7H)."
+    ],
+    "text": "Rectangular body, 100 \u00d7 53.8 \u00d7 12 mm (W\u00d7D\u00d7H)."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 64600.0,
+    "surface_area": 14500.0,
+    "principal_moments": [
+      16299999.999999998,
+      54599999.99999999,
+      69400000.0
+    ],
+    "n_faces": 6,
+    "n_edges": 12,
+    "n_vertices": 8
+  }
+}

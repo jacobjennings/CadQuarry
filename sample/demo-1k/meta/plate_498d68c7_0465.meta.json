@@ -1,28 +1,28 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d68c7_0465",
   "seed": 1234004167,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 0,
   "symmetry": "radial",
   "op_count": 1,
-  "ir_hash": "a2dc6435e2a627be",
+  "ir_hash": "8260a36806b00036",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
-      "Rectangular body, 60 \u00d7 26.2 \u00d7 3 mm (W\u00d7D\u00d7H)."
+      "Rectangular body, 60 \u00d7 26.2 \u00d7 6 mm (W\u00d7D\u00d7H)."
     ],
-    "text": "Rectangular body, 60 \u00d7 26.2 \u00d7 3 mm (W\u00d7D\u00d7H)."
+    "text": "Rectangular body, 60 \u00d7 26.2 \u00d7 6 mm (W\u00d7D\u00d7H)."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 4720.0,
-    "surface_area": 3660.0,
+    "volume": 9430.0,
+    "surface_area": 4180.0,
     "principal_moments": [
-      273000.0,
-      1420000.0,
-      1680000.0
+      568000.0,
+      2860000.0,
+      3370000.0
     ],
     "n_faces": 6,
     "n_edges": 12,

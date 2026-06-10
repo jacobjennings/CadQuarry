@@ -1,5 +1,5 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "threaded_498d678f_0153",
   "params": {
     "major_d": {
@@ -22,9 +22,9 @@
     },
     "thread_len": {
       "type": "float",
-      "default": 47.9,
+      "default": 48.1,
       "min": 19.2,
-      "max": 95.8,
+      "max": 96.2,
       "step": 1.0,
       "group": "Thread",
       "label": "Thread length (mm)"

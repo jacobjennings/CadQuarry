@@ -1,0 +1,66 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "plate_498d6ab6_0960",
+  "params": {
+    "plate_w": {
+      "type": "float",
+      "default": 115.94,
+      "min": 20.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate width (mm)"
+    },
+    "plate_d": {
+      "type": "float",
+      "default": 69.6,
+      "min": 8.0,
+      "max": 120.0,
+      "step": 1.0,
+      "group": "Body",
+      "label": "Plate depth (mm)"
+    },
+    "thickness": {
+      "type": "float",
+      "default": 10.0,
+      "min": 2.0,
+      "max": 12.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Thickness (mm)"
+    },
+    "hole_d": {
+      "type": "float",
+      "default": 6.4,
+      "min": 2.0,
+      "max": 13.0,
+      "step": 0.1,
+      "group": "Holes",
+      "label": "Hole diameter (mm)"
+    },
+    "cs_angle": {
+      "type": "float",
+      "default": 82.0,
+      "min": 60.0,
+      "max": 120.0,
+      "step": 15.0,
+      "group": "Holes",
+      "label": "Countersink angle (\u00b0)"
+    },
+    "chamfer_d": {
+      "type": "float",
+      "default": 3.0,
+      "min": 1.8,
+      "max": 3.0,
+      "step": 0.5,
+      "group": "Body",
+      "label": "Chamfer distance (mm)"
+    },
+    "chamfered": {
+      "type": "bool",
+      "default": true,
+      "group": "Body",
+      "label": "Chamfer edges"
+    }
+  }
+}

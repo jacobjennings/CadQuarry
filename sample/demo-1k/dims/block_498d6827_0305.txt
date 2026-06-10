@@ -1,0 +1,1 @@
+Rectangular body, 39.8 × 18 × 68.2 mm (W×D×H). Four 3.8 mm square holes at the corners, 27.86 × 12.6 mm spacing. Pocket 17.3 × 10.8 mm, 23.1 mm deep, in top face. Fillet radius 0.774 mm on vertical edges (optional, off by default). Ø9.8 mm circular section attachment, 10.6 mm long, from front face with a Ø4.7 mm bore.

@@ -1,0 +1,1 @@
+Rectangular body, 65 × 40.8 × 98.8 mm (W×D×H). Four 7.7 mm square holes at the corners, 45.5 × 28.56 mm spacing. Fillet radius 3.417 mm on vertical edges. Fillet radius 2.829 mm on vertical edges (optional, off by default). One Ø3.2 mm hole in a 1×1 grid, 10 × 10 mm pitch, angled 21.1° on the <X face.

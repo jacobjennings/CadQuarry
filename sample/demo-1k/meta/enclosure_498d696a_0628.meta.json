@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "enclosure_498d696a_0628",
+  "seed": 1234004330,
+  "generator_version": "0.6.0",
+  "family": "enclosure",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "bdcc997165e00bd8",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 110 \u00d7 56.2 \u00d7 52.3 mm (W\u00d7D\u00d7H).",
+      "Hollowed to 2.2 mm wall thickness, open at top face."
+    ],
+    "text": "Rectangular body, 110 \u00d7 56.2 \u00d7 52.3 mm (W\u00d7D\u00d7H). Hollowed to 2.2 mm wall thickness, open at top face."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 49300.0,
+    "surface_area": 45500.0,
+    "principal_moments": [
+      38000000.0,
+      85500000.0,
+      95199999.99999999
+    ],
+    "n_faces": 11,
+    "n_edges": 24,
+    "n_vertices": 16
+  }
+}

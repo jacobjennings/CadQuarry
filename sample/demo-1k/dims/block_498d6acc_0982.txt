@@ -1,0 +1,1 @@
+Rectangular body, 70.83 × 38.9 × 100 mm (W×D×H). Nine Ø3.2 mm holes in two staggered rows, 13.3 × 15.1 mm pitch. Pocket 28.5 × 25.1 mm, 50.2 mm deep, in top face. Fillet radius 3.38 mm on vertical edges (optional, off by default). One Ø6.4 mm hole in a 1×1 grid, 10 × 10 mm pitch on the <X face. Ø15.9 mm circular section attachment, 21.8 mm long, from left face.

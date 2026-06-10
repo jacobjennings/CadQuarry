@@ -1,0 +1,32 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "lofted_498d68d3_0477",
+  "seed": 1234004179,
+  "generator_version": "0.6.0",
+  "family": "lofted",
+  "tier": 1,
+  "symmetry": "none",
+  "op_count": 2,
+  "ir_hash": "d51be57f112404ea",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Lofted body through 2 sections: \u00d860 mm circular section \u2192 25.4 \u00d7 25.4 mm rectangular section.",
+      "One \u00d810.1 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch."
+    ],
+    "text": "Lofted body through 2 sections: \u00d860 mm circular section \u2192 25.4 \u00d7 25.4 mm rectangular section. One \u00d810.1 mm hole in a 1\u00d71 grid, 10 \u00d7 10 mm pitch."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 61900.0,
+    "surface_area": 10700.0,
+    "principal_moments": [
+      16900000.0,
+      16900000.0,
+      19300000.0
+    ],
+    "n_faces": 8,
+    "n_edges": 18,
+    "n_vertices": 12
+  }
+}

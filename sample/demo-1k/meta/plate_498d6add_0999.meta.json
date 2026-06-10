@@ -1,30 +1,30 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "plate_498d6add_0999",
   "seed": 1234004701,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "plate",
   "tier": 2,
   "symmetry": "radial",
   "op_count": 3,
-  "ir_hash": "88519e451c140a70",
+  "ir_hash": "8c9a22cb15e49524",
   "license": "CC0-1.0",
   "dimensions": {
     "lines": [
       "Rectangular body, 88.03 \u00d7 59.2 \u00d7 8 mm (W\u00d7D\u00d7H).",
       "Four \u00d86.4 mm holes on a \u00d852.8 mm bolt circle.",
-      "Fillet radius 2.371 mm on vertical edges."
+      "Fillet radius 5.96 mm on vertical edges."
     ],
-    "text": "Rectangular body, 88.03 \u00d7 59.2 \u00d7 8 mm (W\u00d7D\u00d7H). Four \u00d86.4 mm holes on a \u00d852.8 mm bolt circle. Fillet radius 2.371 mm on vertical edges."
+    "text": "Rectangular body, 88.03 \u00d7 59.2 \u00d7 8 mm (W\u00d7D\u00d7H). Four \u00d86.4 mm holes on a \u00d852.8 mm bolt circle. Fillet radius 5.96 mm on vertical edges."
   },
   "geometry_signature": {
     "version": 2,
-    "volume": 40600.0,
-    "surface_area": 13100.0,
+    "volume": 40400.0,
+    "surface_area": 13000.0,
     "principal_moments": [
-      11999999.999999998,
-      26699999.999999996,
-      38300000.0
+      11799999.999999998,
+      26299999.999999996,
+      37700000.0
     ],
     "n_faces": 18,
     "n_edges": 46,

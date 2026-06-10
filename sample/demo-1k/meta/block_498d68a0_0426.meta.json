@@ -1,0 +1,33 @@
+{
+  "cadquarry_version": "0.6.0",
+  "part_id": "block_498d68a0_0426",
+  "seed": 1234004128,
+  "generator_version": "0.6.0",
+  "family": "block",
+  "tier": 2,
+  "symmetry": "radial",
+  "op_count": 3,
+  "ir_hash": "7ffcdcc83ee59b15",
+  "license": "CC0-1.0",
+  "dimensions": {
+    "lines": [
+      "Rectangular body, 30.96 \u00d7 15 \u00d7 57 mm (W\u00d7D\u00d7H).",
+      "Twelve \u00d83.2 mm holes on a \u00d818.6 mm bolt circle.",
+      "Boss \u00d823.8 mm \u00d7 6.7 mm tall on top face with a \u00d810.5 mm bore."
+    ],
+    "text": "Rectangular body, 30.96 \u00d7 15 \u00d7 57 mm (W\u00d7D\u00d7H). Twelve \u00d83.2 mm holes on a \u00d818.6 mm bolt circle. Boss \u00d823.8 mm \u00d7 6.7 mm tall on top face with a \u00d810.5 mm bore."
+  },
+  "geometry_signature": {
+    "version": 2,
+    "volume": 20700.0,
+    "surface_area": 12500.0,
+    "principal_moments": [
+      2470000.0,
+      7600000.0,
+      9080000.0
+    ],
+    "n_faces": 32,
+    "n_edges": 68,
+    "n_vertices": 44
+  }
+}

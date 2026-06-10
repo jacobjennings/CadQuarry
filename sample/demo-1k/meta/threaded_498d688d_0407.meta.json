@@ -1,13 +1,13 @@
 {
-  "cadquarry_version": "0.5.0",
+  "cadquarry_version": "0.6.0",
   "part_id": "threaded_498d688d_0407",
   "seed": 1234004109,
-  "generator_version": "0.5.0",
+  "generator_version": "0.6.0",
   "family": "threaded",
   "tier": 0,
   "symmetry": "none",
   "op_count": 1,
-  "ir_hash": "34ad1ed7760f6d30",
+  "ir_hash": "d6c148d094b7ade2",
   "license": "CC0-1.0",
   "descriptor": {
     "family": "threaded",
