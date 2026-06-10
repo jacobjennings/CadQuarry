@@ -22,6 +22,7 @@ from .ir import (
     ChamferOp,
     CircleProfile,
     ExtrudeOp,
+    FilletOp,
     GearOp,
     HolesOp,
     LBracketOp,
@@ -32,6 +33,7 @@ from .ir import (
     PolygonProfile,
     RectProfile,
     RevolveOp,
+    SketchedRevolveOp,
     Operation,
     ParamSpec,
     ShellOp,
@@ -49,6 +51,8 @@ from .profiles import (
     sample_circle_profile,
     sample_polygon_profile,
     sample_slot_profile,
+    sample_sketched_profile,
+    sample_sketched_revolve_profile,
     ACME_THREAD_SIZES,
     METRIC_THREAD_PITCHES,
     METRIC_TRAP_THREAD_SIZES,
@@ -82,6 +86,7 @@ DEFAULT_FAMILY_WEIGHTS = {
     "ribbed":   0.05,
     "enclosure":0.05,
     "profiled": 0.04,
+    "sketched": 0.06,
     "gear":     0.06,
     "threaded": 0.06,
 }
@@ -100,6 +105,7 @@ FAMILY_TIER_SPANS = {
     "ribbed":    (1, 3),
     "enclosure": (1, 3),
     "profiled":  (0, 2),
+    "sketched":  (0, 3),
     "gear":      (0, 3),
     "threaded":  (0, 3),
 }
@@ -927,7 +933,31 @@ def sample_profiled(rng: Random, tier: int, config: dict, seed: int, index: int)
     """
     Long constant cross-section extrusion (structural profile, rod, tube).
     """
-    profile_kind = rng.choice(["circle", "polygon", "slot"])
+    profile_kind = rng.choice(["circle", "polygon", "slot", "sketched"])
+
+    if profile_kind == "sketched":
+        # Freeform cross-section extruded into a long organic structural profile.
+        sk_profile, sk_params = sample_sketched_profile(rng, w_lo=25.0, w_hi=60.0)
+        size_def = sk_params["sk_w"].default
+        l_def = round(min(300.0, size_def * rng.uniform(2.5, 8.0)), 1)
+        sk_params["length"] = ParamSpec(
+            type="float", default=l_def,
+            min=round(l_def * 0.3, 1), max=round(l_def * 3.0, 1), step=5.0,
+            group="Body", label="Length (mm)",
+        )
+        sk_ops: list[Operation] = [ExtrudeOp(profile=sk_profile, distance=ref("length"))]
+        return PartIR(
+            id=_make_id(seed, "profiled", index),
+            params=sk_params,
+            operations=sk_ops,
+            metadata=PartMetadata(
+                seed=seed,
+                generator_version=GENERATOR_VERSION,
+                family="profiled",
+                tier=tier,
+                op_count=len(sk_ops),
+            ),
+        )
 
     if profile_kind == "circle":
         d_def = _nice(rng, 8.0, 50.0, 0.3)
@@ -1021,6 +1051,105 @@ def sample_profiled(rng: Random, tier: int, config: dict, seed: int, index: int)
             seed=seed,
             generator_version=GENERATOR_VERSION,
             family="profiled",
+            tier=tier,
+            op_count=len(ops),
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Family: sketched (freeform 2D sketches — line/arc/bezier/spline loops)
+# ---------------------------------------------------------------------------
+
+def sample_sketched(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    A part whose base solid comes from a *freeform* closed 2D sketch (mixed
+    line / arc / Bézier / spline segments), either extruded into an organic
+    prism or revolved into an organic turned body.  This is the general
+    sketch→extrude / sketch→revolve paradigm that the four parametric primitives
+    (rect / circle / polygon / slot) can't express.
+
+    Tiers (extrude mode): 0 bare prism; 1 + a centered through-hole; 2 + a
+    centered boss; 3 also exposes an (off-by-default) corner fillet for the
+    customizer.  Revolve mode varies entirely through the silhouette shape and
+    so ignores tier beyond the base body.
+    """
+    fcfg = config.get("families", {}).get("sketched", {})
+    revolve_prob = fcfg.get("revolve_prob", 0.4)
+    w_lo = fcfg.get("width_min", 40.0)
+    w_hi = fcfg.get("width_max", 90.0)
+
+    mode = "revolve" if rng.random() < revolve_prob else "extrude"
+
+    if mode == "revolve":
+        profile, params = sample_sketched_revolve_profile(rng)
+        ops: list[Operation] = [SketchedRevolveOp(half_profile=profile)]
+        return PartIR(
+            id=_make_id(seed, "sketched", index),
+            params=params,
+            operations=ops,
+            metadata=PartMetadata(
+                seed=seed,
+                generator_version=GENERATOR_VERSION,
+                family="sketched",
+                tier=tier,
+                op_count=len(ops),
+            ),
+        )
+
+    # extrude mode
+    profile, params = sample_sketched_profile(rng, w_lo=w_lo, w_hi=w_hi)
+    t_def = _nice(rng, 6.0, 30.0)
+    params["sk_t"] = ParamSpec(
+        type="float", default=t_def,
+        min=round(t_def * 0.4, 1), max=round(t_def * 2.2, 1), step=1.0,
+        group="Body", label="Thickness (mm)",
+    )
+    ops = [ExtrudeOp(profile=profile, distance=ref("sk_t"))]
+
+    if tier >= 1:
+        # Single centered through-hole — a 1×1 rarray sits exactly at the face
+        # center, which is safe for any organic cross-section (unlike a corner
+        # construction rect that could fall outside the sketch boundary).
+        hd = snap_fastener_diameter(rng, 4.0, 10.0)
+        params["sk_hole_d"] = ParamSpec(
+            type="float", default=hd, min=2.0, max=round(hd * 2.0, 1), step=0.5,
+            group="Holes", label="Hole diameter (mm)",
+        )
+        ops.append(HolesOp(
+            diameter=ref("sk_hole_d"), placement="grid",
+            nx=lit(1), ny=lit(1), spacing_x=lit(10.0), spacing_y=lit(10.0),
+        ))
+
+    if tier >= 2:
+        boss_op, bp = sample_boss(rng, parent_h_param="sk_t", h_default=t_def)
+        params.update(bp)
+        ops.append(boss_op)
+
+    if tier >= 3:
+        # Off-by-default so the canonical (defaults) instance stays valid even
+        # when filleting an arbitrary prism's vertical edges would fail.
+        fr_def = round(min(params["sk_w"].default, params["sk_h"].default) * 0.04, 1)
+        params["sk_fillet_r"] = ParamSpec(
+            type="float", default=fr_def, min=0.5, max=round(fr_def * 2.5, 1),
+            step=0.5, group="Body", label="Edge fillet radius (mm)",
+        )
+        params["sk_filleted"] = ParamSpec(
+            type="bool", default=False, group="Body", label="Fillet vertical edges",
+        )
+        ops.append(FilletOp(
+            radius=ref("sk_fillet_r"), edge_selector="|Z",
+            enabled=ref("sk_filleted"),
+        ))
+
+    return PartIR(
+        id=_make_id(seed, "sketched", index),
+        params=params,
+        operations=ops,
+        metadata=PartMetadata(
+            seed=seed,
+            generator_version=GENERATOR_VERSION,
+            family="sketched",
             tier=tier,
             op_count=len(ops),
         ),
@@ -1939,6 +2068,7 @@ _FAMILY_SAMPLERS = {
     "flanged": sample_flanged,
     "ribbed": sample_ribbed,
     "profiled": sample_profiled,
+    "sketched": sample_sketched,
     "gear": sample_gear,
     "threaded": sample_threaded,
 }

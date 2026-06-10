@@ -24,6 +24,7 @@ flanged   = 0.06   # revolved stub + bolt circle
 ribbed    = 0.05   # base + patterned ribs / webs
 enclosure = 0.05   # shelled box / enclosures
 profiled  = 0.04   # long constant cross-section extrusions (incl. polygon bars)
+sketched  = 0.06   # freeform 2D sketches (line/arc/bezier/spline loops) extruded or revolved
 gear      = 0.06   # involute/cycloid gears (py_gearworks) — requires the `mech` extra
 threaded  = 0.06   # real ISO/ACME/trapezoidal threads (bd_warehouse) — requires `mech`
 
@@ -154,6 +155,16 @@ circle_d_min  = 8.0
 circle_d_max  = 50.0
 tier_min      = 0
 tier_max      = 2
+
+[families.sketched]
+# Freeform closed 2D sketches (line/arc/bezier/spline loops) extruded into
+# organic prisms or revolved into organic turned bodies.  The loop shape is
+# fixed per seed; two sliders (width/height or radius/height) scale it.
+width_min     = 40.0
+width_max     = 90.0
+revolve_prob  = 0.4    # fraction sampled as revolves rather than extrusions
+tier_min      = 0
+tier_max      = 3
 
 # --- Mechanical families (require the `mech` extra to execute) ---------------
 # These build on the build123d/py_gearworks/bd_warehouse stack and are bridged

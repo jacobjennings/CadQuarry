@@ -5,7 +5,7 @@ import sys
 import types
 import unittest
 from cadquarry.ir import (
-    BoxOp, FilletOp, GearOp, HolesOp, ThreadedOp, PartIR, PartMetadata, ParamSpec,
+    BoxOp, ExtrudeOp, FilletOp, GearOp, HolesOp, ThreadedOp, PartIR, PartMetadata, ParamSpec,
     lit, ref, scaled,
 )
 from cadquarry.emit import emit_source, emit_params_json, emit_meta_json
@@ -294,6 +294,75 @@ class TestEmitMetaJson(unittest.TestCase):
                "n_faces": 8, "n_edges": 12, "n_vertices": 8}
         data = emit_meta_json(_make_plate_part(), geometry_signature=sig)
         self.assertEqual(data["geometry_signature"]["volume"], 14400.0)
+
+
+def _make_sketched_part() -> PartIR:
+    """Extruded freeform sketch exercising all four segment kinds."""
+    from cadquarry.ir import SketchedProfile, SketchSeg
+    prof = SketchedProfile(
+        w_param="sk_w", h_param="sk_h", start=(0.45, 0.0),
+        segments=[
+            SketchSeg(kind="line", x=0.0, y=0.45),
+            SketchSeg(kind="arc", x=-0.45, y=0.0, mx=-0.55, my=0.25),
+            SketchSeg(kind="bezier", x=0.0, y=-0.45, ctrl=[(-0.25, -0.35)]),
+            SketchSeg(kind="spline", x=0.45, y=0.0, ctrl=[(0.3, -0.3)]),
+        ],
+    )
+    return PartIR(
+        id="sketched_emit_test",
+        params={
+            "sk_w": ParamSpec(type="float", default=80.0, min=40.0, max=140.0, step=1.0, group="Sketch", label="W"),
+            "sk_h": ParamSpec(type="float", default=60.0, min=30.0, max=110.0, step=1.0, group="Sketch", label="H"),
+            "sk_t": ParamSpec(type="float", default=10.0, min=4.0, max=22.0, step=1.0, group="Body", label="T"),
+        },
+        operations=[ExtrudeOp(profile=prof, distance=ref("sk_t"))],
+        metadata=PartMetadata(seed=1, generator_version="0.5.0", family="sketched", tier=0, op_count=1),
+    )
+
+
+class TestSketchedEmit(unittest.TestCase):
+    """Pure-string checks for SketchedProfile / SketchedRevolveOp."""
+
+    def test_is_valid_python(self):
+        ast.parse(emit_source(_make_sketched_part()))
+
+    def test_emits_all_segment_kinds(self):
+        code = emit_source(_make_sketched_part())
+        self.assertIn(".moveTo(", code)
+        self.assertIn(".lineTo(", code)
+        self.assertIn(".threePointArc(", code)
+        self.assertIn(".bezier(", code)
+        self.assertIn(".spline(", code)
+        self.assertIn(".close()", code)
+
+    def test_coords_are_parametric(self):
+        code = emit_source(_make_sketched_part())
+        self.assertIn('p["sk_w"] *', code)
+        self.assertIn('p["sk_h"] *', code)
+
+    def test_revolve_op_emits_xz_revolve(self):
+        from cadquarry.ir import SketchedProfile, SketchSeg, SketchedRevolveOp
+        prof = SketchedProfile(
+            w_param="sk_r", h_param="sk_h", start=(0.5, 0.0),
+            segments=[
+                SketchSeg(kind="line", x=0.8, y=0.5),
+                SketchSeg(kind="arc", x=0.3, y=1.0, mx=0.6, my=0.8),
+                SketchSeg(kind="line", x=0.0, y=1.0),
+                SketchSeg(kind="line", x=0.0, y=0.0),
+            ],
+        )
+        part = PartIR(
+            id="sketched_rev_emit_test",
+            params={"sk_r": ParamSpec(type="float", default=30.0, group="Sketch", label="R"),
+                    "sk_h": ParamSpec(type="float", default=50.0, group="Sketch", label="H")},
+            operations=[SketchedRevolveOp(half_profile=prof)],
+            metadata=PartMetadata(seed=1, generator_version="0.5.0", family="sketched", tier=0, op_count=1),
+        )
+        code = emit_source(part)
+        ast.parse(code)
+        self.assertIn("cq.Workplane('XZ')", code)
+        self.assertIn(".revolve()", code)
+        self.assertIn('p["sk_r"] *', code)
 
 
 if __name__ == "__main__":

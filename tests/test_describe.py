@@ -131,6 +131,50 @@ class TestDescribeDimensions(unittest.TestCase):
         self.assertIn("M10x1.5", text)
         self.assertIn("external thread", text)
 
+    def test_sketched_extrude_summary(self):
+        from cadquarry.ir import SketchedProfile, SketchSeg
+        prof = SketchedProfile(
+            w_param="sk_w", h_param="sk_h", start=(0.4, 0.0),
+            segments=[
+                SketchSeg(kind="line", x=0.0, y=0.4),
+                SketchSeg(kind="arc", x=-0.4, y=0.0, mx=-0.5, my=0.2),
+                SketchSeg(kind="bezier", x=0.0, y=-0.4, ctrl=[(-0.2, -0.3)]),
+                SketchSeg(kind="line", x=0.4, y=0.0),
+            ],
+        )
+        part = PartIR(
+            id="sk_desc_test",
+            params={"sk_w": ParamSpec(type="float", default=80.0, group="Sketch", label="W"),
+                    "sk_h": ParamSpec(type="float", default=60.0, group="Sketch", label="H"),
+                    "sk_t": ParamSpec(type="float", default=10.0, group="Body", label="T")},
+            operations=[ExtrudeOp(profile=prof, distance=ref("sk_t"))],
+            metadata=PartMetadata(seed=1, generator_version="test", family="sketched", tier=0, op_count=1),
+        )
+        text = describe_dimensions(part)["text"]
+        self.assertIn("freeform sketched section", text)
+        self.assertIn("extruded 10 mm", text)
+
+    def test_sketched_revolve_summary(self):
+        from cadquarry.ir import SketchedProfile, SketchSeg, SketchedRevolveOp
+        prof = SketchedProfile(
+            w_param="sk_r", h_param="sk_h", start=(0.5, 0.0),
+            segments=[
+                SketchSeg(kind="line", x=0.8, y=0.5),
+                SketchSeg(kind="line", x=0.3, y=1.0),
+                SketchSeg(kind="line", x=0.0, y=1.0),
+                SketchSeg(kind="line", x=0.0, y=0.0),
+            ],
+        )
+        part = PartIR(
+            id="skrev_desc_test",
+            params={"sk_r": ParamSpec(type="float", default=30.0, group="Sketch", label="R"),
+                    "sk_h": ParamSpec(type="float", default=50.0, group="Sketch", label="H")},
+            operations=[SketchedRevolveOp(half_profile=prof)],
+            metadata=PartMetadata(seed=1, generator_version="test", family="sketched", tier=0, op_count=1),
+        )
+        text = describe_dimensions(part)["text"]
+        self.assertIn("Revolved organic body", text)
+
 
 class TestEmitIncludesDimensions(unittest.TestCase):
     def test_meta_json_has_dimensions(self):

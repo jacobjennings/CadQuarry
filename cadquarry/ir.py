@@ -218,8 +218,77 @@ class SlotProfile(BaseModel):
         return f".slot2D({self.length.to_code()}, {self.width.to_code()})"
 
 
+class SketchSeg(BaseModel):
+    """
+    One segment of a freeform 2D sketch loop, in *normalized* coordinates that
+    SketchedProfile scales by its width/height params.
+
+    kind:
+      'line'   — straight segment to (x, y)
+      'arc'    — circular arc through midpoint (mx, my) ending at (x, y)
+      'bezier' — Bézier curve; ``ctrl`` are the interior control points
+      'spline' — interpolating spline; ``ctrl`` are interior through-points
+
+    For bezier/spline the emitted point list is [previous_vertex, *ctrl, (x, y)]
+    — CadQuery's .bezier()/.spline() expect the current point as the first entry.
+    """
+    kind: Literal["line", "arc", "bezier", "spline"]
+    x: float
+    y: float
+    mx: float | None = None   # arc midpoint (normalized)
+    my: float | None = None
+    ctrl: list[tuple[float, float]] | None = None  # bezier/spline interior points
+
+
+class SketchedProfile(BaseModel):
+    """
+    A general closed 2D sketch: a start point plus a chain of line/arc/bezier/
+    spline segments, closed back to the start.  Coordinates are stored
+    normalized and scaled at emit time by two parameters (``w_param`` scales x,
+    ``h_param`` scales y), so the whole sketch stays parametric behind two
+    sliders.  Used both for extrusion (on XY) and, via SketchedRevolveOp, for
+    an axis-safe half-silhouette revolve (on XZ, where y is the Z height).
+    """
+    type: Literal["sketched"] = "sketched"
+    w_param: str
+    h_param: str
+    start: tuple[float, float]
+    segments: list[SketchSeg]
+
+    def _xy(self, nx: float, ny: float) -> str:
+        """Two-argument coordinate code (for moveTo / lineTo)."""
+        return f'p["{self.w_param}"] * {nx!r}, p["{self.h_param}"] * {ny!r}'
+
+    def _pt(self, nx: float, ny: float) -> str:
+        """Single-tuple coordinate code (for threePointArc / bezier / spline)."""
+        return f"({self._xy(nx, ny)})"
+
+    def to_code(self) -> str:
+        sx, sy = self.start
+        parts = [f".moveTo({self._xy(sx, sy)})"]
+        prev = (sx, sy)
+        for seg in self.segments:
+            if seg.kind == "line":
+                parts.append(f".lineTo({self._xy(seg.x, seg.y)})")
+            elif seg.kind == "arc":
+                parts.append(
+                    f".threePointArc({self._pt(seg.mx, seg.my)}, "
+                    f"{self._pt(seg.x, seg.y)})"
+                )
+            else:  # bezier / spline
+                pts = [prev, *(seg.ctrl or []), (seg.x, seg.y)]
+                listcode = "[" + ", ".join(self._pt(a, b) for a, b in pts) + "]"
+                parts.append(f".{seg.kind}({listcode})")
+            prev = (seg.x, seg.y)
+        parts.append(".close()")
+        return "".join(parts)
+
+
 Profile = Annotated[
-    Union[RectProfile, RoundedRectProfile, CircleProfile, PolygonProfile, SlotProfile],
+    Union[
+        RectProfile, RoundedRectProfile, CircleProfile, PolygonProfile,
+        SlotProfile, SketchedProfile,
+    ],
     Field(discriminator="type"),
 ]
 
@@ -320,6 +389,27 @@ class RevolveOp(BaseModel):
         lines.append("        .revolve()")
         lines.append("    )")
         return lines
+
+
+class SketchedRevolveOp(BaseModel):
+    """
+    Revolve a freeform axis-safe half-silhouette around the Z axis.
+
+    The half-profile is a SketchedProfile whose normalized x is the radius
+    (kept > 0 so it never crosses the axis) and whose normalized y is the Z
+    height; ``w_param`` scales the radius and ``h_param`` scales the height.
+    Produces organic turned bodies (vases, knobs, profiled bushings) distinct
+    from the parametric ``revolved`` family.  Always a base (first) operation.
+    """
+    type: Literal["sketched_revolve"] = "sketched_revolve"
+    half_profile: SketchedProfile
+    plane: str = "XZ"
+
+    def to_code(self) -> list[str]:
+        return [
+            f"    result = (cq.Workplane({self.plane!r})"
+            f"{self.half_profile.to_code()}.revolve())"
+        ]
 
 
 class HolesOp(BaseModel):
@@ -1182,7 +1272,7 @@ class ThreadedOp(BaseModel):
 
 Operation = Annotated[
     Union[
-        BoxOp, ExtrudeOp, RevolveOp,
+        BoxOp, ExtrudeOp, RevolveOp, SketchedRevolveOp,
         HolesOp, CounterboreHolesOp, CountersinkHolesOp,
         FilletOp, ChamferOp,
         ShellOp, PocketOp, BossOp, RibsOp,

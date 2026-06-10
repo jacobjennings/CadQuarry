@@ -112,7 +112,37 @@ def _describe_profile(profile: ir.Profile, params: dict[str, Any]) -> str:
         return f"{sides}-sided polygon section, {_mm(across)} across corners"
     if isinstance(profile, ir.SlotProfile):
         return f"{_num(_ev(profile.length, params))} × {_num(_ev(profile.width, params))} mm slot section"
+    if isinstance(profile, ir.SketchedProfile):
+        return _describe_sketched(profile, params)
     return "profile"
+
+
+def _describe_sketched(profile: ir.SketchedProfile, params: dict[str, Any]) -> str:
+    """Summarize a freeform sketch: segment mix + approximate bounding box."""
+    kinds = [s.kind for s in profile.segments]
+    straight = kinds.count("line")
+    arcs = kinds.count("arc")
+    curves = kinds.count("bezier") + kinds.count("spline")
+    n = len(kinds)
+    bits = []
+    if straight:
+        bits.append(f"{straight} straight")
+    if arcs:
+        bits.append(f"{arcs} {_plural(arcs, 'arc')}")
+    if curves:
+        bits.append(f"{curves} {_plural(curves, 'curve')}")
+    mix = ", ".join(bits) if bits else f"{n} segments"
+    # Bounding box from normalized extents scaled by the width/height params.
+    w = _ev(ir.ParamRef(name=profile.w_param), params)
+    h = _ev(ir.ParamRef(name=profile.h_param), params)
+    xs = [profile.start[0]] + [s.x for s in profile.segments]
+    ys = [profile.start[1]] + [s.y for s in profile.segments]
+    bbox = ""
+    if isinstance(w, (int, float)) and isinstance(h, (int, float)):
+        bw = (max(xs) - min(xs)) * w
+        bh = (max(ys) - min(ys)) * h
+        bbox = f", ~{_num(bw)} × {_num(bh)} mm"
+    return f"freeform sketched section ({n} segments: {mix}){bbox}"
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +214,9 @@ def _describe_op(op: Any, params: dict[str, Any]) -> str | None:  # noqa: C901
         if extra:
             s += " with " + ", ".join(extra)
         return s + "."
+
+    if isinstance(op, ir.SketchedRevolveOp):
+        return f"Revolved organic body from a {_describe_sketched(op.half_profile, params)} half-silhouette."
 
     if isinstance(op, ir.HolesOp):
         n = _hole_count(op, params)

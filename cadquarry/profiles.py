@@ -19,6 +19,8 @@ from .ir import (
     RectProfile,
     RoundedRectProfile,
     ScaledExpr,
+    SketchSeg,
+    SketchedProfile,
     SlotProfile,
     lit,
     ref,
@@ -251,10 +253,163 @@ def sample_slot_profile(
 
 
 # ---------------------------------------------------------------------------
+# Sketched profile — freeform closed loops of line / arc / bezier / spline
+# ---------------------------------------------------------------------------
+
+# Per-edge segment kinds; line-heavy so loops stay simple and mostly faceted,
+# with arcs and curves sprinkled in for organic shapes.
+_SKETCH_SEG_KINDS = ["line", "line", "line", "arc", "arc", "bezier", "spline"]
+
+
+def sample_sketched_profile(
+    rng: Random,
+    w_lo: float = 40.0,
+    w_hi: float = 90.0,
+    w_param: str = "sk_w",
+    h_param: str = "sk_h",
+) -> tuple[SketchedProfile, dict[str, ParamSpec]]:
+    """
+    A freeform closed cross-section for extrusion.  Builds a star-shaped loop
+    (vertices at monotonically increasing angles around the centroid → simple,
+    non-self-intersecting by construction) in normalized coords ~[-0.5, 0.5],
+    then renders each edge as a line, circular arc, Bézier, or spline.  The
+    ``w_param`` / ``h_param`` sliders scale x / y; anisotropic scaling preserves
+    simplicity, so validity stays ~100% by construction.
+    """
+    n = rng.randint(4, 7)
+    step = 2 * math.pi / n
+    jit = step * 0.35
+    angles = sorted(i * step + rng.uniform(-jit, jit) for i in range(n))
+    verts = [
+        (r * math.cos(a), r * math.sin(a))
+        for a, r in ((a, rng.uniform(0.32, 0.5)) for a in angles)
+    ]
+    cx = sum(v[0] for v in verts) / n
+    cy = sum(v[1] for v in verts) / n
+
+    segments: list[SketchSeg] = []
+    for i in range(n):
+        x0, y0 = verts[i]
+        x1, y1 = verts[(i + 1) % n]
+        edge_len = math.hypot(x1 - x0, y1 - y0)
+        kind = rng.choice(_SKETCH_SEG_KINDS)
+        if kind == "arc":
+            mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+            dx, dy = mx - cx, my - cy
+            norm = math.hypot(dx, dy) or 1.0
+            bulge = rng.uniform(0.06, 0.18) * edge_len
+            segments.append(SketchSeg(
+                kind="arc", x=round(x1, 4), y=round(y1, 4),
+                mx=round(mx + dx / norm * bulge, 4),
+                my=round(my + dy / norm * bulge, 4),
+            ))
+        elif kind in ("bezier", "spline"):
+            mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+            ex, ey = x1 - x0, y1 - y0
+            norm = math.hypot(ex, ey) or 1.0
+            px, py = -ey / norm, ex / norm        # perpendicular
+            if (mx - cx) * px + (my - cy) * py < 0:  # point it outward
+                px, py = -px, -py
+            off = rng.uniform(0.05, 0.15) * edge_len
+            segments.append(SketchSeg(
+                kind=kind, x=round(x1, 4), y=round(y1, 4),
+                ctrl=[(round(mx + px * off, 4), round(my + py * off, 4))],
+            ))
+        else:
+            segments.append(SketchSeg(kind="line", x=round(x1, 4), y=round(y1, 4)))
+
+    w_def = _nice(rng, w_lo, w_hi)
+    h_def = _nice(rng, w_lo, w_hi)
+    params: dict[str, ParamSpec] = {
+        w_param: ParamSpec(
+            type="float", default=w_def,
+            min=round(w_def * 0.5, 1), max=round(w_def * 1.8, 1), step=1.0,
+            group="Sketch", label="Sketch width (mm)",
+        ),
+        h_param: ParamSpec(
+            type="float", default=h_def,
+            min=round(h_def * 0.5, 1), max=round(h_def * 1.8, 1), step=1.0,
+            group="Sketch", label="Sketch height (mm)",
+        ),
+    }
+    start = (round(verts[0][0], 4), round(verts[0][1], 4))
+    return SketchedProfile(
+        w_param=w_param, h_param=h_param, start=start, segments=segments,
+    ), params
+
+
+def sample_sketched_revolve_profile(
+    rng: Random,
+    r_lo: float = 14.0,
+    r_hi: float = 45.0,
+    h_lo: float = 20.0,
+    h_hi: float = 70.0,
+    r_param: str = "sk_r",
+    h_param: str = "sk_h",
+) -> tuple[SketchedProfile, dict[str, ParamSpec]]:
+    """
+    An axis-safe freeform half-silhouette for revolving around Z.  Normalized x
+    is the radius (kept ≥ a small positive floor so the loop never crosses the
+    axis), normalized y is the Z height rising 0 → 1 up the outer side, then the
+    loop closes across the top and down an inner wall (a centerline solid, or an
+    inner bore for a tube).  ``r_param`` scales radius, ``h_param`` scales height.
+    """
+    x_min = 0.12
+    n = rng.randint(3, 5)
+    zs = [0.0] + sorted(rng.uniform(0.1, 0.95) for _ in range(n)) + [1.0]
+    xs = [rng.uniform(x_min, 1.0) for _ in zs]
+    bored = rng.random() < 0.45
+    x_in = rng.uniform(x_min * 0.5, min(xs) * 0.7) if bored else 0.0
+
+    segments: list[SketchSeg] = []
+    for i in range(1, len(zs)):
+        x0, x1 = xs[i - 1], xs[i]
+        z0, z1 = zs[i - 1], zs[i]
+        kind = rng.choice(_SKETCH_SEG_KINDS)
+        if kind == "arc":
+            mx = max(x_min * 0.6, (x0 + x1) / 2 + rng.uniform(-0.12, 0.12))
+            segments.append(SketchSeg(
+                kind="arc", x=round(x1, 4), y=round(z1, 4),
+                mx=round(mx, 4), my=round((z0 + z1) / 2, 4),
+            ))
+        elif kind in ("bezier", "spline"):
+            cx = max(x_min * 0.6, (x0 + x1) / 2 + rng.uniform(-0.12, 0.18))
+            segments.append(SketchSeg(
+                kind=kind, x=round(x1, 4), y=round(z1, 4),
+                ctrl=[(round(cx, 4), round((z0 + z1) / 2, 4))],
+            ))
+        else:
+            segments.append(SketchSeg(kind="line", x=round(x1, 4), y=round(z1, 4)))
+
+    # Close across the top, then straight down the inner wall back to the base.
+    segments.append(SketchSeg(kind="line", x=round(x_in, 4), y=1.0))
+    segments.append(SketchSeg(kind="line", x=round(x_in, 4), y=0.0))
+
+    r_def = _nice(rng, r_lo, r_hi)
+    h_def = _nice(rng, h_lo, h_hi)
+    params: dict[str, ParamSpec] = {
+        r_param: ParamSpec(
+            type="float", default=r_def,
+            min=round(r_def * 0.5, 1), max=round(r_def * 1.8, 1), step=1.0,
+            group="Sketch", label="Max radius (mm)",
+        ),
+        h_param: ParamSpec(
+            type="float", default=h_def,
+            min=round(h_def * 0.5, 1), max=round(h_def * 1.8, 1), step=1.0,
+            group="Sketch", label="Height (mm)",
+        ),
+    }
+    start = (round(xs[0], 4), 0.0)
+    return SketchedProfile(
+        w_param=r_param, h_param=h_param, start=start, segments=segments,
+    ), params
+
+
+# ---------------------------------------------------------------------------
 # Generic dispatcher used by features.py
 # ---------------------------------------------------------------------------
 
-PROFILE_SAMPLERS = ["rect", "rounded_rect", "circle", "polygon", "slot"]
+PROFILE_SAMPLERS = ["rect", "rounded_rect", "circle", "polygon", "slot", "sketched"]
 
 
 def sample_profile(
@@ -274,4 +429,6 @@ def sample_profile(
         return sample_polygon_profile(rng, **kwargs)
     if kind == "slot":
         return sample_slot_profile(rng, **kwargs)
+    if kind == "sketched":
+        return sample_sketched_profile(rng, **kwargs)
     raise ValueError(f"Unknown profile kind: {kind!r}")

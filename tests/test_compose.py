@@ -94,6 +94,35 @@ class TestCompose(unittest.TestCase):
         part = compose(seed=42, family="bracket")
         self.assertEqual(part.metadata.family, "bracket")
 
+    def test_sketched_family_available(self):
+        from cadquarry.compose import _FAMILY_SAMPLERS
+        self.assertIn("sketched", _FAMILY_SAMPLERS)
+        part = compose(seed=42, family="sketched")
+        self.assertEqual(part.metadata.family, "sketched")
+
+    def test_sketched_tiers_emit_valid_python(self):
+        from cadquarry.compose import sample_sketched
+        from random import Random
+        for tier in range(4):
+            for seed in (1, 7, 13):
+                part = sample_sketched(Random(seed), tier=tier, config={}, seed=seed, index=0)
+                self.assertGreaterEqual(len(part.params), 2)
+                self.assertIn(part.operations[0].type, ("extrude", "sketched_revolve"))
+                code = emit_source(part)
+                self.assertTrue(_valid_python(code), f"sketched tier={tier} seed={seed} bad Python")
+                # The base op must draw a freeform closed loop.
+                self.assertIn(".moveTo(", code)
+                self.assertIn(".close()", code)
+
+    def test_sketched_both_modes_appear(self):
+        """Over many seeds we sample both extruded and revolved sketches."""
+        base_ops = set()
+        for seed in range(60):
+            part = compose(seed=4000 + seed, index=0, family="sketched")
+            base_ops.add(part.operations[0].type)
+        self.assertIn("extrude", base_ops)
+        self.assertIn("sketched_revolve", base_ops)
+
 
 class TestFamilySamplers(unittest.TestCase):
     def _check(self, part: PartIR) -> None:
