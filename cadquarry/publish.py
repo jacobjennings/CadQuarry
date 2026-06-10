@@ -543,7 +543,7 @@ with `tier == 3`. Data files live under `{{tag}}/` (all tiers) and
 | Column | Type | Description |
 |--------|------|-------------|
 | `part_id` | string | Unique deterministic identifier |
-| `family` | string | `plate`, `bracket`, `revolved`, `block`, `compound`, `enclosure`, `flanged`, `ribbed`, `profiled`, `gear`, `threaded` |
+| `family` | string | `plate`, `bracket`, `revolved`, `block`, `compound`, `sketched`, `flanged`, `ribbed`, `enclosure`, `profiled`, `lofted`, `swept`, `tapped`, `gear`, `threaded` |
 | `tier` | int32 | Complexity tier 0–3 |
 | `seed` | int64 | Per-part seed |
 | `symmetry` | string | Detected symmetry class |
@@ -566,8 +566,8 @@ with `tier == 3`. Data files live under `{{tag}}/` (all tiers) and
 
 Render views: `front`, `top`, `right`, `iso`, `iso_fr`, `iso_fl`, `iso_br`, `iso_bl`.
 When a corpus was rendered with extra passes, each view also carries
-`render_{view}_normal` (view-space normal map), `render_{view}_depth` (linear
-depth) and/or `render_{view}_edge` (feature-edge overlay) image columns.
+`render_{{view}}_normal` (view-space normal map), `render_{{view}}_depth` (linear
+depth) and/or `render_{{view}}_edge` (feature-edge overlay) image columns.
 
 ---
 
