@@ -13,9 +13,6 @@
     --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --radius: 8px;
     --open: #4caf82; --restricted: #e0a23c; --gated: #e06a5b;
-    --plate:#5b8fff; --bracket:#ff9f5b; --revolved:#7be0ae; --block:#e8a95b;
-    --enclosure:#c47bf0; --flanged:#f07b7b; --ribbed:#7bd9e8; --profiled:#e8d87b;
-    --gear:#9fe85b; --threaded:#f0a35b; --compound:#b0b0c8;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
@@ -27,99 +24,98 @@
 
   header {
     position: sticky; top: 0; z-index: 20;
-    background: rgba(22,22,26,.82); backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
+    background: rgba(22,22,26,.82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
   }
-  .header-inner { max-width: 1280px; margin: 0 auto; padding: 14px 24px; }
+  .header-inner { max-width: 1320px; margin: 0 auto; padding: 14px 24px; }
   .header-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .logo { font-weight: 800; font-size: 20px; letter-spacing: .01em; }
   .logo span { color: var(--text2); font-weight: 400; }
-  .badge {
-    font-family: var(--mono); font-size: 11px; padding: 3px 9px; border-radius: 99px;
-    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
-  }
+  .badge { font-family: var(--mono); font-size: 11px; padding: 3px 9px; border-radius: 99px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
   .badge.cc0 { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
   .header-links { margin-left: auto; display: flex; gap: 16px; font-size: 13px; align-items: center; }
 
-  main { max-width: 1280px; margin: 0 auto; padding: 26px 24px 80px; }
-  .intro { max-width: 860px; }
+  main { max-width: 1320px; margin: 0 auto; padding: 26px 24px 80px; }
+  .intro { max-width: 880px; }
   .intro h1 { font-size: 24px; font-weight: 800; letter-spacing: -.01em; margin-bottom: 10px; }
   .intro p { color: var(--text2); line-height: 1.6; margin-bottom: 10px; }
-  .intro .premise {
-    background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
-    border-radius: var(--radius); padding: 13px 16px; margin: 6px 0 4px; color: var(--text2); line-height: 1.6;
-  }
+  .intro .premise { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--restricted);
+    border-radius: var(--radius); padding: 13px 16px; margin: 6px 0 4px; color: var(--text2); line-height: 1.6; }
   .intro .premise strong { color: var(--text); }
 
-  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0 26px; font-size: 12.5px; color: var(--text2); }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0 8px; font-size: 12.5px; color: var(--text2); }
   .legend .lk { display: inline-flex; align-items: center; gap: 7px; }
   .dot { width: 9px; height: 9px; border-radius: 99px; display: inline-block; }
   .dot.open { background: var(--open); } .dot.restricted { background: var(--restricted); } .dot.gated { background: var(--gated); }
 
-  .section-h { font-size: 12px; text-transform: uppercase; letter-spacing: .09em; color: var(--text3); font-weight: 700; margin: 30px 0 14px; }
-
-  /* CadQuarry featured card */
-  .feature { display: grid; grid-template-columns: 1.25fr 1fr; gap: 0; background: var(--surface);
-    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 12px; overflow: hidden; }
-  @media (max-width: 820px){ .feature { grid-template-columns: 1fr; } }
-  .feature .viewer { position: relative; min-height: 340px; background: radial-gradient(circle at 50% 38%, #20202a, #121216); }
-  .feature .viewer canvas { width: 100% !important; height: 100% !important; display: block; }
-  .feature .vinfo { position: absolute; left: 12px; bottom: 10px; font-family: var(--mono); font-size: 11px; color: var(--text2); }
-  .feature .vhint { position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: var(--text3); }
-  .feature .meta { padding: 20px 22px; display: flex; flex-direction: column; min-width: 0; }
-  .feature .meta h2 { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-  .feature .meta .tagline { color: var(--text2); margin: 4px 0 14px; line-height: 1.5; }
   .lic-badge { font-family: var(--mono); font-size: 10.5px; padding: 3px 9px; border-radius: 99px; border: 1px solid; white-space: nowrap; }
   .lic-badge.open { color: var(--open); border-color: color-mix(in srgb, var(--open) 45%, transparent); background: color-mix(in srgb, var(--open) 12%, transparent); }
   .lic-badge.restricted { color: var(--restricted); border-color: color-mix(in srgb, var(--restricted) 45%, transparent); background: color-mix(in srgb, var(--restricted) 12%, transparent); }
   .lic-badge.gated { color: var(--gated); border-color: color-mix(in srgb, var(--gated) 45%, transparent); background: color-mix(in srgb, var(--gated) 12%, transparent); }
 
-  .props { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; font-size: 12.5px; margin-top: 2px; }
-  .props dt { color: var(--text3); white-space: nowrap; }
-  .props dd { color: var(--text); }
-  .props dd.mono { font-family: var(--mono); font-size: 11.5px; }
+  /* dataset section */
+  .ds { margin-top: 34px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--bg2); }
+  .ds.cq { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .ds-head { padding: 16px 18px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .ds-head .left { min-width: 220px; flex: 1; }
+  .ds-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ds-title h2 { font-size: 18px; font-weight: 800; }
+  .ds-title .accent-dot { width: 10px; height: 10px; border-radius: 99px; }
+  .ds-cite { font-size: 11.5px; color: var(--text3); margin-top: 3px; }
+  .ds-tagline { color: var(--text2); margin-top: 6px; line-height: 1.5; font-size: 12.5px; max-width: 620px; }
+  .ds-props { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; font-size: 12px; min-width: 260px; }
+  .ds-props dt { color: var(--text3); white-space: nowrap; }
+  .ds-props dd { color: var(--text); }
+  .ds-props dd.mono { font-family: var(--mono); font-size: 11px; }
+  .ds-src { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 
-  .switcher { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
-  .pchip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 12px;
-    cursor: pointer; border: 1px solid var(--border); background: none; color: var(--text2); transition: all .12s; }
-  .pchip:hover { background: var(--surface2); color: var(--text); }
-  .pchip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .pchip .fdot { width: 8px; height: 8px; border-radius: 99px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 16px 18px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  .card .preview { height: 122px; background: radial-gradient(circle at 50% 35%, #20202a, #141418); position: relative; display: flex; align-items: center; justify-content: center; }
+  .card .preview canvas { width: 100% !important; height: 100% !important; }
+  .card .preview .ph { color: var(--text3); font-size: 11px; font-family: var(--mono); }
+  .card .pid { font-family: var(--mono); font-size: 9.5px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 7px 9px 9px; }
+  .sentinel { grid-column: 1/-1; text-align: center; color: var(--text3); padding: 10px; font-size: 12px; }
 
-  /* dataset grid */
-  .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(284px, 1fr)); gap: 16px; }
-  .dcard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
-  .dcard > .dhead { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); }
-  .dcard .dtitle { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; }
-  .dcard h3 { font-size: 15.5px; font-weight: 700; }
-  .dcard .cite { font-size: 11px; color: var(--text3); margin-top: 3px; }
-  .dcard .dhead .lic-badge { margin-top: 9px; display: inline-block; }
-  .dviewer { position: relative; height: 200px; background: radial-gradient(circle at 50% 40%, #1d1d25, #141418); }
-  .dviewer canvas { width: 100% !important; height: 100% !important; display: block; }
-  .dviewer .vinfo { position: absolute; left: 10px; bottom: 8px; font-family: var(--mono); font-size: 10px; color: var(--text2); }
-  /* link-out placeholder */
-  .noredist { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 18px; color: var(--text3); gap: 10px; }
-  .noredist svg { opacity: .5; }
-  .noredist .nrtext { font-size: 11.5px; line-height: 1.5; max-width: 220px; }
-  .noredist .nrtext b { color: var(--text2); }
-  .dcard .dbody { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
-  .dcard .note { font-size: 11.5px; color: var(--text3); line-height: 1.55; }
-  .dcard .dfoot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .dcard .src { font-size: 12px; font-weight: 600; }
+  /* link-out (mesh-less / gated) */
+  .linkout { display: flex; gap: 16px; align-items: center; padding: 22px 18px; color: var(--text2); }
+  .linkout svg { opacity: .45; flex-shrink: 0; }
+  .linkout .lo-text { line-height: 1.6; font-size: 13px; max-width: 720px; }
+  .linkout .lo-text b { color: var(--text); }
 
   /* matrix */
-  .matrix-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; margin-top: 8px; }
-  table.matrix { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 720px; }
+  .section-h { font-size: 12px; text-transform: uppercase; letter-spacing: .09em; color: var(--text3); font-weight: 700; margin: 40px 0 12px; }
+  .matrix-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  table.matrix { border-collapse: collapse; width: 100%; font-size: 12.5px; min-width: 760px; }
   table.matrix th, table.matrix td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  table.matrix thead th { color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-size: 10.5px; font-weight: 700; position: sticky; top: 0; background: var(--bg2); }
+  table.matrix thead th { color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-size: 10.5px; font-weight: 700; background: var(--bg2); }
   table.matrix tbody tr:last-child td { border-bottom: none; }
   table.matrix tbody tr.cq { background: color-mix(in srgb, var(--accent) 7%, transparent); }
   table.matrix tbody tr.cq td:first-child { font-weight: 700; }
   table.matrix td:first-child { white-space: nowrap; font-weight: 600; }
-  .yes { color: var(--green); } .no { color: var(--text3); }
 
-  footer { max-width: 1280px; margin: 0 auto; padding: 8px 24px 60px; color: var(--text3); font-size: 12px; line-height: 1.7; }
+  /* modal (adapted from the gallery) */
+  .modal-bg { position: fixed; inset: 0; background: rgba(8,8,11,.72); backdrop-filter: blur(4px); z-index: 50; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; width: min(1000px, 100%); height: min(640px, 92vh); display: grid; grid-template-columns: 1.3fr 1fr; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+  @media (max-width: 760px){ .modal { grid-template-columns: 1fr; grid-template-rows: 300px 1fr; height: 92vh; } }
+  .modal .view { position: relative; min-width: 0; background: radial-gradient(circle at 50% 40%, #20202a, #121216); }
+  .modal .view canvas { width: 100% !important; height: 100% !important; display: block; }
+  .modal .view .vinfo { position: absolute; left: 12px; bottom: 10px; font-family: var(--mono); font-size: 11px; color: var(--text2); }
+  .modal .view .vhint { position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: var(--text3); }
+  .modal .side { display: flex; flex-direction: column; border-left: 1px solid var(--border); min-height: 0; }
+  .modal .side-head { padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .modal .side-head .mds { font-size: 12px; color: var(--text2); }
+  .modal .side-head .mpid { font-family: var(--mono); font-size: 14px; color: var(--text); word-break: break-all; margin-top: 4px; }
+  .modal .side-head .mtags { margin-top: 9px; }
+  .modal .side-body { overflow-y: auto; padding: 16px 18px; }
+  .kv { display: grid; grid-template-columns: 96px 1fr; gap: 5px 10px; font-size: 12px; margin-bottom: 14px; }
+  .kv .k { color: var(--text3); } .kv .v { font-family: var(--mono); color: var(--text); }
+  .mnote { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .mclose { position: absolute; top: 12px; right: 14px; z-index: 2; background: rgba(0,0,0,.4); border: 1px solid var(--border); color: var(--text); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+  .mclose:hover { background: var(--surface2); }
+
+  footer { max-width: 1320px; margin: 0 auto; padding: 8px 24px 60px; color: var(--text3); font-size: 12px; line-height: 1.7; }
   footer .notice { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 16px; margin-top: 10px; }
   code.inl { font-family: var(--mono); background: var(--surface2); padding: 1px 6px; border-radius: 4px; color: var(--accent2); font-size: 12px; }
 </style>
@@ -133,9 +129,9 @@
       <span class="badge">dataset comparison</span>
       <span class="badge cc0">CC0-1.0 data</span>
       <div class="header-links">
-        <a id="lnk-gallery" href="../demo-1k/preview.html">← Gallery</a>
-        <a id="lnk-repo" href="https://github.com/jacobjennings/CadQuarry" target="_blank">GitHub ↗</a>
-        <a id="lnk-hf" href="https://huggingface.co/datasets/jacobjennings/cadquarry" target="_blank">HF ↗</a>
+        <a href="../demo-1k/preview.html">← Gallery</a>
+        <a href="https://github.com/jacobjennings/CadQuarry" target="_blank">GitHub ↗</a>
+        <a href="https://huggingface.co/datasets/jacobjennings/cadquarry" target="_blank">HF ↗</a>
       </div>
     </div>
   </div>
@@ -143,67 +139,81 @@
 
 <main>
   <div class="intro">
-    <h1>How CadQuarry compares to other CAD/geometry datasets</h1>
-    <p>An apples-to-apples look at CadQuarry next to the datasets most often used for geometric
-      deep learning and CAD generation. The CadQuarry parts below are live, interactive 3D — they are
-      public-domain (CC0) and ours to share. Spin them, then read how the alternatives differ.</p>
-    <p class="premise"><strong>About the other datasets:</strong> we deliberately do <em>not</em> re-host
-      their models here. Several (ShapeNet, Fusion 360 Gallery) are distributed under terms that forbid
-      redistribution outright; others (ABC, DeepCAD, Thingi10K) carry <em>per-model, inconsistent</em>
-      licenses, so "the dataset is for research" never establishes that any single model may be re-hosted.
-      Each card links to the dataset's own distribution. That gap — needing to chase down per-model rights —
-      is precisely the friction CadQuarry removes. See
-      <a href="THIRD_PARTY_LICENSES.md">THIRD_PARTY_LICENSES.md</a> for the full breakdown.</p>
+    <h1>CadQuarry vs. other CAD / geometry datasets</h1>
+    <p>An apples-to-apples look at CadQuarry beside the datasets most used for geometric deep learning and
+      CAD generation. Each section below renders a sample of ~100 real models, live in your browser — click any
+      to spin it in 3D.</p>
+    <p class="premise"><strong>Licensing — read this.</strong> Only the CadQuarry models are CC0 and ours to
+      share freely. The third-party samples are hosted here <em>for visual comparison only</em>; they are
+      <strong>not</strong> CC0 and each retains its origin dataset's / author's license (often per-model and
+      inconsistent). ShapeNet and DeepCAD are not shown as meshes — ShapeNet's surface meshes are gated behind
+      a signed agreement, and DeepCAD ships command-sequences, not meshes. Full per-source detail and the
+      attribution table are in <a href="THIRD_PARTY_LICENSES.md">THIRD_PARTY_LICENSES.md</a>.</p>
   </div>
 
   <div class="legend">
     <span class="lk"><span class="dot open"></span> Open — free to use &amp; redistribute</span>
     <span class="lk"><span class="dot restricted"></span> Restricted / per-model — check each model</span>
-    <span class="lk"><span class="dot gated"></span> Gated — no redistribution</span>
+    <span class="lk"><span class="dot gated"></span> Gated — redistribution not permitted</span>
   </div>
 
-  <div class="section-h">CadQuarry — live, public-domain, parametric</div>
-  <div class="feature" id="feature"><!-- built by JS --></div>
-
-  <div class="section-h">Other generated-geometry datasets</div>
-  <div class="dgrid" id="dgrid"><!-- built by JS --></div>
+  <div id="sections"></div>
 
   <div class="section-h">Side-by-side at a glance</div>
-  <div class="matrix-wrap">
-    <table class="matrix" id="matrix"><!-- built by JS --></table>
-  </div>
+  <div class="matrix-wrap"><table class="matrix" id="matrix"></table></div>
 </main>
 
 <footer>
   <p><strong>Provenance &amp; trademarks.</strong> Dataset names, facts and citations are used for
-    identification and comparison only. CadQuarry is not affiliated with, endorsed by, or sponsored by
-    any of the projects listed. Names and trademarks belong to their respective owners.</p>
+    identification and comparison only. CadQuarry is not affiliated with, endorsed by, or sponsored by any of
+    the projects listed; names and trademarks belong to their respective owners.</p>
   <div class="notice">
     <strong>Licensing of this page.</strong> CadQuarry's generator is Apache-2.0 and its generated data
-    (including every CadQuarry part shown here) is CC0-1.0. Everything attributed to a third-party dataset
-    is <em>not</em> CC0 and retains the license of its origin. No third-party model files are committed to
-    this repository — see <a href="THIRD_PARTY_LICENSES.md">THIRD_PARTY_LICENSES.md</a>. To add a model you
-    have confirmed you may redistribute, drop its path into <code class="inl">manifest.json</code> and record
-    its license there; the card becomes a live 3D viewer automatically.
+    (every CadQuarry model here) is CC0-1.0. Everything under <code class="inl">sample/compare/models/&lt;dataset&gt;/</code>
+    is third-party, <em>not</em> CC0, and retains its origin license — see
+    <a href="THIRD_PARTY_LICENSES.md">THIRD_PARTY_LICENSES.md</a> for per-source provenance, mirrors and the
+    attribution table.
   </div>
 </footer>
 
-<!-- Classic global builds (no ES modules) for htmlpreview.github.io proxy compatibility. -->
+<!-- Modal -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="view">
+      <button class="mclose" id="m-close">×</button>
+      <canvas id="m-canvas"></canvas>
+      <div class="vinfo" id="m-vinfo"></div>
+      <div class="vhint">drag to orbit · scroll to zoom</div>
+    </div>
+    <div class="side">
+      <div class="side-head">
+        <div class="mds" id="m-ds"></div>
+        <div class="mpid" id="m-pid"></div>
+        <div class="mtags" id="m-tags"></div>
+      </div>
+      <div class="side-body">
+        <div class="kv" id="m-kv"></div>
+        <p class="mnote" id="m-note"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Classic global builds for htmlpreview.github.io proxy compatibility. -->
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
 <script>
+const loader = new THREE.STLLoader();
 const FAMILY_COLORS = {
   plate:'#5b8fff', bracket:'#ff9f5b', revolved:'#7be0ae', block:'#e8a95b',
   enclosure:'#c47bf0', flanged:'#f07b7b', ribbed:'#7bd9e8', profiled:'#e8d87b',
   gear:'#9fe85b', threaded:'#f0a35b', compound:'#b0b0c8', lofted:'#7be0ae',
   swept:'#7be0ae', sketched:'#e8d87b', tapped:'#f0a35b',
 };
+const DS_TINT = { 'ABC Dataset':'#7bd9e8', 'Fusion 360 Gallery':'#ff9f5b', 'Thingi10K':'#c47bf0' };
 function famColor(f){ return FAMILY_COLORS[f] || '#9aa8c8'; }
-const loader = new THREE.STLLoader();
 
-// Resolve where this page lives, and where the demo-1k geometry sits relative to it,
-// covering local files, GitHub Pages, and the htmlpreview.github.io raw-URL proxy.
 function pageDir() {
   const raw = decodeURIComponent(location.search.replace(/^\?/, ''));
   if (/^https?:\/\//.test(raw) && raw.includes('githubusercontent')) {
@@ -212,193 +222,239 @@ function pageDir() {
   return location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
 }
 const DIR = pageDir();
-const CQ_GEO = DIR + '../demo-1k/geometry/';      // ../demo-1k/geometry/<id>.stl
-function manifestURL(){ return DIR + 'manifest.json'; }
-function meshURL(p){ return /^https?:\/\//.test(p) ? p : DIR + p; }
+function rel(p){ return /^https?:\/\//.test(p) ? p : DIR + p; }
 
-// ── A self-contained interactive STL viewer bound to one container ──
-function makeViewer(container) {
-  const canvas = document.createElement('canvas');
-  container.appendChild(canvas);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(42, 1, .01, 1e5);
-  const controls = new THREE.OrbitControls(camera, canvas);
-  controls.enableDamping = true; controls.dampingFactor = .08;
-  controls.autoRotate = true; controls.autoRotateSpeed = 1.1;
-  canvas.addEventListener('pointerdown', () => { controls.autoRotate = false; });
-  scene.add(new THREE.AmbientLight(0xffffff, .55));
-  const k = new THREE.DirectionalLight(0xffffff, 1.25); k.position.set(1, 1.6, 1.1); scene.add(k);
-  const f = new THREE.DirectionalLight(0x88aaff, .42); f.position.set(-1, -.6, -.8); scene.add(f);
-  let mesh = null;
-  const resize = () => {
-    const w = container.clientWidth, h = container.clientHeight;
-    if (!w || !h) return;
-    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
-  };
-  new ResizeObserver(resize).observe(container);
-  (function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
-  return {
-    load(buffer, color, infoEl) {
-      if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose(); }
-      const geo = loader.parse(buffer); geo.computeVertexNormals();
-      mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color || '#9aa8c8'), metalness:.28, roughness:.5 }));
-      scene.add(mesh);
-      const box = new THREE.Box3().setFromObject(mesh);
-      const ctr = box.getCenter(new THREE.Vector3());
-      const sz = box.getSize(new THREE.Vector3());
-      const md = Math.max(sz.x, sz.y, sz.z) || 1;
-      controls.target.copy(ctr);
-      camera.position.copy(ctr).add(new THREE.Vector3(md*0.85, md*0.7, md*1.05));
-      camera.near = md*0.005; camera.far = md*30; camera.updateProjectionMatrix();
-      controls.autoRotate = true; controls.update();
-      if (infoEl) infoEl.textContent =
-        `${sz.x.toFixed(1)} × ${sz.y.toFixed(1)} × ${sz.z.toFixed(1)} mm · ${(geo.attributes.position.count/3).toLocaleString()} tris`;
-    }
-  };
+// ── Shared single-context thumbnail renderer (blit to each card's 2D canvas) ──
+let cardRenderer = null;
+function getCardRenderer() {
+  if (cardRenderer) return cardRenderer;
+  const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  r.setPixelRatio(1);
+  r.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); cardRenderer = null; }, false);
+  cardRenderer = r; return r;
+}
+function renderCard(canvas, buffer, color) {
+  try {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const w = canvas.clientWidth || 150, h = canvas.clientHeight || 122;
+    const pw = Math.max(1, Math.round(w*dpr)), ph = Math.max(1, Math.round(h*dpr));
+    const r = getCardRenderer(); r.setSize(pw, ph, false);
+    const s = new THREE.Scene();
+    const c = new THREE.PerspectiveCamera(42, pw/ph, .01, 1e5);
+    const geo = loader.parse(buffer); geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color||'#9aa8c8'), metalness:.28, roughness:.5 }));
+    s.add(m); s.add(new THREE.AmbientLight(0xffffff,.55));
+    const d1 = new THREE.DirectionalLight(0xffffff,1.25); d1.position.set(1,1.6,1.1); s.add(d1);
+    const d2 = new THREE.DirectionalLight(0x88aaff,.4); d2.position.set(-1,-.6,-.8); s.add(d2);
+    const box = new THREE.Box3().setFromObject(m);
+    const ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+    const md = Math.max(sz.x,sz.y,sz.z)||1;
+    c.position.copy(ctr).add(new THREE.Vector3(md*0.95, md*0.8, md*1.1));
+    c.lookAt(ctr); c.near = md*0.01; c.far = md*20; c.updateProjectionMatrix();
+    r.render(s, c);
+    canvas.width = pw; canvas.height = ph;
+    const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,pw,ph); ctx.drawImage(r.domElement,0,0,pw,ph);
+    geo.dispose(); m.material.dispose();
+  } catch(e) {}
 }
 
-const NOREDIST_SVG = `<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-  <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>`;
+// ── Persistent modal viewer ──
+let mRenderer, mScene, mCamera, mControls, mMesh;
+function ensureModalViewer() {
+  if (mRenderer) return;
+  const canvas = document.getElementById('m-canvas');
+  mRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  mRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  mScene = new THREE.Scene();
+  mCamera = new THREE.PerspectiveCamera(45, 1, .01, 1e5);
+  mControls = new THREE.OrbitControls(mCamera, canvas);
+  mControls.enableDamping = true; mControls.dampingFactor = .08;
+  mControls.autoRotate = true; mControls.autoRotateSpeed = 1.0;
+  canvas.addEventListener('pointerdown', () => { mControls.autoRotate = false; });
+  mScene.add(new THREE.AmbientLight(0xffffff, .5));
+  const k = new THREE.DirectionalLight(0xffffff, 1.25); k.position.set(1,1.6,1); mScene.add(k);
+  const f = new THREE.DirectionalLight(0x88aaff, .45); f.position.set(-1,-.5,-.7); mScene.add(f);
+  const grid = new THREE.GridHelper(400, 24, 0x2a2a35, 0x24242c); mScene.userData.grid = grid; mScene.add(grid);
+  new ResizeObserver(() => {
+    const w = canvas.clientWidth, h = canvas.clientHeight; if (!w||!h) return;
+    mRenderer.setSize(w,h,false); mCamera.aspect = w/h; mCamera.updateProjectionMatrix();
+  }).observe(canvas);
+  (function loop(){ requestAnimationFrame(loop); mControls.update(); mRenderer.render(mScene, mCamera); })();
+}
+function loadModalMesh(buffer, color) {
+  ensureModalViewer();
+  if (mMesh) { mScene.remove(mMesh); mMesh.geometry.dispose(); mMesh.material.dispose(); }
+  const geo = loader.parse(buffer); geo.computeVertexNormals();
+  mMesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color||'#9aa8c8'), metalness:.3, roughness:.5 }));
+  mScene.add(mMesh);
+  const box = new THREE.Box3().setFromObject(mMesh);
+  const ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+  const md = Math.max(sz.x,sz.y,sz.z)||1;
+  mControls.target.copy(ctr);
+  mCamera.position.copy(ctr).add(new THREE.Vector3(md*0.8, md*0.7, md*1.0));
+  mCamera.near = md*0.005; mCamera.far = md*30; mCamera.updateProjectionMatrix();
+  mControls.autoRotate = true; mControls.update();
+  if (mScene.userData.grid) mScene.userData.grid.position.y = box.min.y;
+  document.getElementById('m-vinfo').textContent =
+    `${sz.x.toFixed(1)} × ${sz.y.toFixed(1)} × ${sz.z.toFixed(1)} · ${(geo.attributes.position.count/3).toLocaleString()} tris`;
+}
+
+const cardObserver = new IntersectionObserver(es => {
+  for (const e of es) if (e.isIntersecting) { cardObserver.unobserve(e.target); loadCardMesh(e.target); }
+}, { rootMargin: '300px' });
+
+async function loadCardMesh(prev) {
+  try {
+    const buf = await (await fetch(prev.dataset.mesh)).arrayBuffer();
+    prev.innerHTML = '<canvas></canvas>';
+    const cv = prev.querySelector('canvas');
+    requestAnimationFrame(() => renderCard(cv, buf, prev.dataset.color));
+  } catch (e) {
+    const ph = prev.querySelector('.ph'); if (ph) ph.textContent = 'no preview';
+  }
+}
+
+function makeCard(item) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<div class="preview" data-mesh="${item.mesh}" data-color="${item.color}"><span class="ph">●●●</span></div>
+    <div class="pid">${item.label}</div>`;
+  card.onclick = () => openModal(item);
+  cardObserver.observe(card.querySelector('.preview'));
+  return card;
+}
 
 let MANIFEST = null;
-let featureViewer = null, featureParts = [];
 
 async function boot() {
-  try {
-    const res = await fetch(manifestURL(), { cache: 'no-store' });
-    MANIFEST = await res.json();
-  } catch (e) {
-    document.getElementById('feature').innerHTML =
-      '<div style="padding:24px;color:var(--text3)">Could not load manifest.json. ' +
-      'On a raw GitHub URL, use GitHub Pages or the htmlpreview proxy instead.</div>';
-    return;
-  }
-  buildFeature();
-  buildDatasetGrid();
+  try { MANIFEST = await (await fetch(rel('manifest.json'), { cache:'no-store' })).json(); }
+  catch (e) { document.getElementById('sections').innerHTML = '<p style="color:var(--text3);padding:20px">Could not load manifest.json.</p>'; return; }
+  const host = document.getElementById('sections');
+  host.appendChild(await cqSection(MANIFEST.cadquarry));
+  for (const d of MANIFEST.datasets) host.appendChild(await datasetSection(d));
   buildMatrix();
+  wireModal();
 }
 
-function buildFeature() {
-  const cq = MANIFEST.cadquarry;
-  const el = document.getElementById('feature');
-  el.innerHTML = `
-    <div class="viewer" id="cq-viewer">
-      <div class="vinfo" id="cq-vinfo"></div>
-      <div class="vhint">drag to orbit · scroll to zoom</div>
-    </div>
-    <div class="meta">
-      <h2>${cq.name} <span class="lic-badge open">${cq.license.label}</span></h2>
-      <div class="tagline">${cq.tagline}</div>
-      <dl class="props">
-        <dt>Parametric</dt><dd>${cq.parametric}</dd>
-        <dt>Format</dt><dd class="mono">${cq.format}</dd>
-        <dt>Provenance</dt><dd>${cq.provenance}</dd>
-        <dt>Models</dt><dd>${cq.models}</dd>
-        <dt>Redistribute</dt><dd>${cq.redistributable}</dd>
-      </dl>
-      <div class="switcher" id="cq-switcher"></div>
-    </div>`;
-  featureViewer = makeViewer(document.getElementById('cq-viewer'));
-  featureParts = cq.parts || [];
-  const sw = document.getElementById('cq-switcher');
-  featureParts.forEach((p, i) => {
-    const b = document.createElement('button');
-    b.className = 'pchip' + (i === 0 ? ' active' : '');
-    b.innerHTML = `<span class="fdot" style="background:${famColor(p.family)}"></span>${p.label}`;
-    b.onclick = () => { selectPart(i); };
-    sw.appendChild(b);
-  });
-  if (featureParts.length) selectPart(0);
-}
-
-async function selectPart(i) {
-  const parts = document.querySelectorAll('#cq-switcher .pchip');
-  parts.forEach((b, j) => b.classList.toggle('active', i === j));
-  const p = featureParts[i];
-  try {
-    const buf = await (await fetch(CQ_GEO + p.id + '.stl')).arrayBuffer();
-    featureViewer.load(buf, famColor(p.family), document.getElementById('cq-vinfo'));
-  } catch (e) { document.getElementById('cq-vinfo').textContent = 'mesh unavailable'; }
-}
-
-const dViewerObserver = new IntersectionObserver(es => {
-  for (const e of es) if (e.isIntersecting) { dViewerObserver.unobserve(e.target); initDViewer(e.target); }
-}, { rootMargin: '200px' });
-
-async function initDViewer(host) {
-  const url = host.dataset.mesh;
-  const v = makeViewer(host);
-  try {
-    const buf = await (await fetch(url)).arrayBuffer();
-    const info = document.createElement('div'); info.className = 'vinfo'; host.appendChild(info);
-    v.load(buf, '#9aa8c8', info);
-  } catch (e) { host.innerHTML = '<div class="noredist"><div class="nrtext">mesh failed to load</div></div>'; }
-}
-
-function buildDatasetGrid() {
-  const grid = document.getElementById('dgrid');
-  grid.innerHTML = '';
-  for (const d of MANIFEST.datasets) {
-    const card = document.createElement('article');
-    card.className = 'dcard';
-    const tier = d.license.tier;
-    let viewerHTML;
-    if (d.mesh) {
-      viewerHTML = `<div class="dviewer" data-mesh="${meshURL(d.mesh)}"></div>`;
-    } else {
-      viewerHTML = `<div class="dviewer"><div class="noredist">${NOREDIST_SVG}
-        <div class="nrtext"><b>Not re-hosted here.</b> This dataset's license doesn't grant
-        redistribution of individual models — view it at the source.</div></div></div>`;
-    }
-    card.innerHTML = `
-      <div class="dhead">
-        <div class="dtitle"><h3>${d.name}</h3></div>
-        <div class="cite">${d.citation || ''}</div>
-        <span class="lic-badge ${tier}">${d.license.label}</span>
+function sectionShell(opts) {
+  const sec = document.createElement('section');
+  sec.className = 'ds' + (opts.cq ? ' cq' : '');
+  sec.innerHTML = `
+    <div class="ds-head">
+      <div class="left">
+        <div class="ds-title">
+          <span class="accent-dot" style="background:${opts.tint}"></span>
+          <h2>${opts.name}</h2>
+          <span class="lic-badge ${opts.license.tier}">${opts.license.label}</span>
+        </div>
+        <div class="ds-cite">${opts.cite || ''}</div>
+        <div class="ds-tagline">${opts.tagline || ''}</div>
       </div>
-      ${viewerHTML}
-      <div class="dbody">
-        <dl class="props">
-          <dt>Parametric</dt><dd>${d.parametric}</dd>
-          <dt>Format</dt><dd class="mono">${d.format}</dd>
-          <dt>Provenance</dt><dd>${d.provenance}</dd>
-          <dt>Models</dt><dd>${d.models}</dd>
-          <dt>Redistribute</dt><dd>${d.redistributable}</dd>
-        </dl>
-        <p class="note">${d.note || ''}</p>
-        <div class="dfoot"><a class="src" href="${d.source_url}" target="_blank" rel="noopener">View at source ↗</a></div>
-      </div>`;
-    grid.appendChild(card);
-    const dv = card.querySelector('.dviewer[data-mesh]');
-    if (dv) dViewerObserver.observe(dv);
+      <dl class="ds-props">
+        <dt>Parametric</dt><dd>${opts.parametric}</dd>
+        <dt>Format</dt><dd class="mono">${opts.format}</dd>
+        <dt>Provenance</dt><dd>${opts.provenance}</dd>
+        <dt>Models</dt><dd>${opts.models}</dd>
+        <dt>Redistribute</dt><dd>${opts.redistributable}</dd>
+      </dl>
+      <a class="ds-src" href="${opts.source_url}" target="_blank" rel="noopener">Source ↗</a>
+    </div>`;
+  return sec;
+}
+
+async function cqSection(cq) {
+  const sec = sectionShell({
+    cq:true, tint:'#5b8fff', name:cq.name, license:cq.license, tagline:cq.tagline,
+    parametric:cq.parametric, format:cq.format, provenance:cq.provenance, models:cq.models,
+    redistributable:cq.redistributable, source_url:cq.source_url,
+  });
+  const grid = document.createElement('div'); grid.className = 'grid'; sec.appendChild(grid);
+  try {
+    const txt = await (await fetch(rel(cq.corpus_manifest), { cache:'no-store' })).text();
+    const recs = txt.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean).slice(0, cq.sample_count || 100);
+    for (const r of recs) {
+      grid.appendChild(makeCard({
+        label: r.part_id, mesh: rel(cq.geometry_base + r.part_id + '.stl'), color: famColor(r.family),
+        dataset: cq.name, source_url: cq.source_url, family: r.family, rec: r,
+      }));
+    }
+  } catch (e) { grid.innerHTML = '<div class="sentinel">corpus manifest unavailable</div>'; }
+  return sec;
+}
+
+async function datasetSection(d) {
+  const tint = DS_TINT[d.name] || '#9aa8c8';
+  const sec = sectionShell({
+    tint, name:d.name, license:d.license, cite:d.citation, tagline:d.note,
+    parametric:d.parametric, format:d.format, provenance:d.provenance, models:d.models,
+    redistributable:d.redistributable, source_url:d.source_url,
+  });
+  if (d.status === 'hosted') {
+    const grid = document.createElement('div'); grid.className = 'grid'; sec.appendChild(grid);
+    try {
+      const idx = await (await fetch(rel(d.samples_dir + 'index.json'), { cache:'no-store' })).json();
+      for (const it of idx) {
+        grid.appendChild(makeCard({
+          label: it.id, mesh: rel(d.samples_dir + it.file), color: tint,
+          dataset: d.name, source_url: d.source_url, note: d.note,
+        }));
+      }
+      if (!idx.length) grid.innerHTML = '<div class="sentinel">no samples committed yet</div>';
+    } catch (e) { grid.innerHTML = '<div class="sentinel">samples not available — run scripts/fetch_compare_samples.py</div>'; }
+  } else {
+    const lo = document.createElement('div'); lo.className = 'linkout';
+    lo.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+      <path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+      <div class="lo-text"><b>Not shown here as meshes.</b> ${d.reason}
+      <br>View it at the <a href="${d.source_url}" target="_blank" rel="noopener">source ↗</a>.</div>`;
+    sec.appendChild(lo);
   }
+  return sec;
+}
+
+// ── Modal ──
+function wireModal() {
+  document.getElementById('m-close').onclick = closeModal;
+  document.getElementById('modal-bg').onclick = e => { if (e.target.id === 'modal-bg') closeModal(); };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+}
+function closeModal(){ document.getElementById('modal-bg').classList.remove('open'); }
+
+async function openModal(item) {
+  document.getElementById('modal-bg').classList.add('open');
+  document.getElementById('m-ds').textContent = item.dataset;
+  document.getElementById('m-pid').textContent = item.label;
+  document.getElementById('m-tags').innerHTML = '';
+  const kv = [];
+  if (item.rec) {
+    const g = item.rec.geometry_signature || {};
+    kv.push(['Family', item.family || '—']);
+    kv.push(['Tier', item.rec.tier ?? '—']);
+    kv.push(['Volume', g.volume != null ? g.volume.toLocaleString()+' mm³' : '—']);
+    kv.push(['Faces', g.n_faces ?? '—']);
+  }
+  document.getElementById('m-kv').innerHTML = kv.map(([k,v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join('');
+  document.getElementById('m-note').innerHTML = item.rec
+    ? `Public-domain CadQuarry part (CC0-1.0). <a href="${item.source_url}" target="_blank">View the generator ↗</a>`
+    : `Sample from <b>${item.dataset}</b> — not CC0; retains its origin license. ${item.note || ''} <a href="${item.source_url}" target="_blank">View dataset ↗</a>`;
+  document.getElementById('m-vinfo').textContent = 'loading…';
+  try {
+    const buf = await (await fetch(item.mesh)).arrayBuffer();
+    loadModalMesh(buf, item.color);
+  } catch (e) { document.getElementById('m-vinfo').textContent = 'mesh unavailable'; }
 }
 
 function buildMatrix() {
   const cq = MANIFEST.cadquarry;
-  const rows = [{
-    name: cq.name, cq: true, license: cq.license, parametric: cq.parametric,
-    redistributable: cq.redistributable, models: cq.models, provenance: cq.provenance,
-  }].concat(MANIFEST.datasets.map(d => ({
-    name: d.name, cq: false, license: d.license, parametric: d.parametric,
-    redistributable: d.redistributable, models: d.models, provenance: d.provenance,
-  })));
+  const rows = [{ name:cq.name, cq:true, license:cq.license, parametric:cq.parametric, redistributable:cq.redistributable, models:cq.models, provenance:cq.provenance }]
+    .concat(MANIFEST.datasets.map(d => ({ name:d.name, cq:false, license:d.license, parametric:d.parametric, redistributable:d.redistributable, models:d.models, provenance:d.provenance })));
   const t = document.getElementById('matrix');
-  t.innerHTML =
-    `<thead><tr><th>Dataset</th><th>License</th><th>Parametric</th><th>Redistributable</th><th>Models</th><th>Provenance</th></tr></thead>`;
+  t.innerHTML = `<thead><tr><th>Dataset</th><th>License</th><th>Parametric</th><th>Redistributable</th><th>Models</th><th>Provenance</th></tr></thead>`;
   const tb = document.createElement('tbody');
   for (const r of rows) {
-    const tr = document.createElement('tr');
-    if (r.cq) tr.className = 'cq';
-    tr.innerHTML =
-      `<td>${r.name}</td>` +
-      `<td><span class="lic-badge ${r.license.tier}">${r.license.label}</span></td>` +
-      `<td>${r.parametric}</td>` +
-      `<td>${r.redistributable}</td>` +
-      `<td>${r.models}</td>` +
-      `<td>${r.provenance}</td>`;
+    const tr = document.createElement('tr'); if (r.cq) tr.className = 'cq';
+    tr.innerHTML = `<td>${r.name}</td><td><span class="lic-badge ${r.license.tier}">${r.license.label}</span></td>` +
+      `<td>${r.parametric}</td><td>${r.redistributable}</td><td>${r.models}</td><td>${r.provenance}</td>`;
     tb.appendChild(tr);
   }
   t.appendChild(tb);

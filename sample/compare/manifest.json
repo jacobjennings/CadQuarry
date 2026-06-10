@@ -1,5 +1,5 @@
 {
-  "_comment": "Drives compare.html. To turn any third-party dataset cell into a live 3D viewer, set its `mesh` to a relative path of an STL you have CONFIRMED you may redistribute, and add the matching entry to THIRD_PARTY_LICENSES.md. Leave `mesh` null to keep a link-out card. Nothing here under a third-party `name` is CC0 — see THIRD_PARTY_LICENSES.md.",
+  "_comment": "Drives compare.html. Third-party samples under models/<dataset>/ are NOT CadQuarry data and NOT CC0 — each retains its origin dataset's / author's license. See THIRD_PARTY_LICENSES.md. A dataset with status 'hosted' renders a live 3D grid from its models/<dataset>/index.json; 'linkout' shows an info card only (gated or mesh-less sources).",
   "cadquarry": {
     "name": "CadQuarry",
     "tagline": "Procedurally generated parametric CAD",
@@ -10,16 +10,9 @@
     "models": "demo-1k: 1,000 · corpora to 200k",
     "redistributable": "Yes — public domain, no attribution required",
     "source_url": "https://github.com/jacobjennings/CadQuarry",
-    "parts": [
-      { "id": "gear_498d6ae5_1007",      "label": "Spur gear",        "family": "gear" },
-      { "id": "threaded_498d6721_0043",  "label": "Threaded stud",    "family": "threaded" },
-      { "id": "flanged_498d67e0_0234",   "label": "Flanged hub",      "family": "flanged" },
-      { "id": "enclosure_498d677c_0134", "label": "Enclosure",        "family": "enclosure" },
-      { "id": "bracket_498d6802_0268",   "label": "Bracket",          "family": "bracket" },
-      { "id": "ribbed_498d68ba_0452",    "label": "Ribbed plate",     "family": "ribbed" },
-      { "id": "compound_498d6803_0269",  "label": "Compound part",    "family": "compound" },
-      { "id": "plate_498d6943_0589",     "label": "Plate w/ holes",   "family": "plate" }
-    ]
+    "corpus_manifest": "../demo-1k/manifest.jsonl",
+    "geometry_base": "../demo-1k/geometry/",
+    "sample_count": 100
   },
   "datasets": [
     {
@@ -33,22 +26,10 @@
       "models": "~1,000,000",
       "redistributable": "Inconsistent — each model keeps its original Onshape author license",
       "source_url": "https://deep-geometry.github.io/abc-dataset/",
-      "mesh": null,
-      "note": "There is no single dataset-wide license: individual models retain whatever license their original Onshape author chose, so a blanket 'redistribute' grant does not exist."
-    },
-    {
-      "name": "DeepCAD",
-      "year": 2021,
-      "citation": "Wu et al., ICCV 2021",
-      "license": { "label": "MIT (code) · data from ABC", "tier": "restricted" },
-      "parametric": "Construction sequences (sketch + extrude commands), not free-parameter schemas",
-      "format": "JSON command sequence · reconstructed B-rep",
-      "provenance": "Derived from the ABC dataset (Onshape)",
-      "models": "~178,000",
-      "redistributable": "Code is MIT; the underlying geometry inherits ABC/Onshape provenance",
-      "source_url": "https://github.com/ChrisWu1997/DeepCAD",
-      "mesh": null,
-      "note": "The MIT license covers the modeling/learning code. The shapes themselves come from ABC, so their redistribution rights are ABC's, not MIT."
+      "source_mirror": "archive.nyu.edu — abc_0000_obj_v00.7z (official OBJ chunk 0)",
+      "status": "hosted",
+      "samples_dir": "models/abc/",
+      "note": "Sample of OBJ meshes from official chunk 0, converted to STL for display. There is no single dataset-wide license: each model retains whatever license its original Onshape author chose."
     },
     {
       "name": "Fusion 360 Gallery",
@@ -61,8 +42,10 @@
       "models": "~8,000+ designs",
       "redistributable": "No — Autodesk research license restricts redistribution",
       "source_url": "https://github.com/AutodeskAILab/Fusion360GalleryDataset",
-      "mesh": null,
-      "note": "Distributed under an Autodesk research license that does not grant re-hosting of the models."
+      "source_mirror": "HF: maksimko123/fusion360_test_mesh",
+      "status": "hosted",
+      "samples_dir": "models/fusion360/",
+      "note": "Sample STL meshes via a public HF mirror. Upstream Autodesk terms are research-only; shown here for comparison."
     },
     {
       "name": "Thingi10K",
@@ -75,8 +58,25 @@
       "models": "10,000",
       "redistributable": "Per-model: a mix of CC0, CC BY, CC BY-SA, CC BY-NC, CC BY-ND and all-rights-reserved",
       "source_url": "https://ten-thousand-models.appspot.com/",
-      "mesh": null,
-      "note": "Some models forbid derivatives (ND) or any reuse; you must check each model's individual Thingiverse license before re-hosting it."
+      "source_mirror": "HF: Thingi10K/Thingi10K (raw_meshes/)",
+      "status": "hosted",
+      "samples_dir": "models/thingi10k/",
+      "note": "Sample STL meshes via the official HF dataset. Each model carries its own Thingiverse license (trace by id at thingiverse.com/thing:<id>); check before any reuse."
+    },
+    {
+      "name": "DeepCAD",
+      "year": 2021,
+      "citation": "Wu et al., ICCV 2021",
+      "license": { "label": "MIT (code) · data from ABC", "tier": "restricted" },
+      "parametric": "Construction sequences (sketch + extrude commands), not free-parameter schemas",
+      "format": "JSON command sequence · reconstructed B-rep",
+      "provenance": "Derived from the ABC dataset (Onshape)",
+      "models": "~178,000",
+      "redistributable": "Code is MIT; the underlying geometry inherits ABC/Onshape provenance",
+      "source_url": "https://github.com/ChrisWu1997/DeepCAD",
+      "status": "linkout",
+      "reason": "DeepCAD is distributed as CAD command-sequences, not meshes — its geometry is a curated subset of ABC (shown above). Producing meshes needs running its reconstruction pipeline.",
+      "note": "The MIT license covers the modeling/learning code; the shapes come from ABC."
     },
     {
       "name": "ShapeNet",
@@ -89,8 +89,9 @@
       "models": "~51,000 (core) / 3M+ (full)",
       "redistributable": "No — terms require registration and forbid re-hosting",
       "source_url": "https://shapenet.org/",
-      "mesh": null,
-      "note": "Access is gated behind a signed agreement; the terms of use explicitly prohibit redistribution, so no sample can be shown here even for demonstration."
+      "status": "linkout",
+      "reason": "ShapeNet's surface meshes sit behind a signed-agreement login; the only ungated mirrors are point clouds / SDFs / renders, not meshes. Bandwidth doesn't help — it's a gating restriction.",
+      "note": "To include it, download under your own ShapeNet account and drop the OBJs into models/shapenet/."
     }
   ]
 }
