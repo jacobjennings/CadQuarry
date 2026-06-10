@@ -16,6 +16,22 @@
   },
   "datasets": [
     {
+      "name": "CAD-Recode",
+      "year": 2025,
+      "citation": "Rukhovich et al., ICCV 2025",
+      "license": { "label": "CC BY-NC-4.0", "tier": "restricted" },
+      "parametric": "CadQuery Python code (sketch + extrude) — procedural, but not an exposed free-parameter schema",
+      "format": "CadQuery .py code",
+      "provenance": "Procedurally generated training set for CAD reverse-engineering from point clouds",
+      "models": "~1,000,000 (train) + ~1k val",
+      "redistributable": "CC BY-NC-4.0 — non-commercial only, attribution required",
+      "source_url": "https://github.com/filaPro/cad-recode",
+      "source_mirror": "HF: filapro/cad-recode (val/ .py, executed to STL via CadQuery)",
+      "status": "hosted",
+      "samples_dir": "models/cad_recode/",
+      "note": "The closest peer to CadQuarry: also procedurally generated CadQuery code (meshes here are produced by executing its .py). Key difference — CAD-Recode is CC BY-NC-4.0 (non-commercial), whereas CadQuarry data is CC0 with no restrictions."
+    },
+    {
       "name": "ABC Dataset",
       "year": 2019,
       "citation": "Koch et al., CVPR 2019",

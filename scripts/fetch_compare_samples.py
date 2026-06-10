@@ -57,6 +57,16 @@ SOURCES: dict[str, dict] = {
         "count": 100,
         "size_cap": 600_000,
     },
+    "cad_recode": {
+        # CadQuery .py programs; we execute each and export the resulting solid to
+        # STL (CAD-Recode, like CadQuarry, emits CadQuery code rather than meshes).
+        "type": "cqcode",
+        "repo_id": "filapro/cad-recode",
+        "subdir": "val",
+        "ext": ".py",
+        "count": 100,
+        "size_cap": 600_000,
+    },
 }
 
 
@@ -123,9 +133,51 @@ def fetch_archive7z(name: str, cfg: dict) -> None:
     _write_index(out_dir, index)
 
 
+def fetch_cqcode(name: str, cfg: dict) -> None:
+    """Download CadQuery .py programs and execute each one into an STL mesh."""
+    import cadquery as cq
+
+    out_dir = OUT_ROOT / name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    entries = list_tree(cfg["repo_id"], cfg["subdir"])
+    pys = [e for e in entries if e.get("type") == "file" and e["path"].lower().endswith(cfg["ext"])]
+    pys.sort(key=lambda e: int(Path(e["path"]).stem) if Path(e["path"]).stem.isdigit() else 1 << 30)
+    print(f"[{name}] {cfg['repo_id']}: executing CadQuery programs until {cfg['count']} succeed…")
+
+    base = f"https://huggingface.co/datasets/{cfg['repo_id']}/resolve/main/"
+    index, tried = [], 0
+    for e in pys:
+        if len(index) >= cfg["count"]:
+            break
+        tried += 1
+        stem = Path(e["path"]).stem
+        try:
+            code = urllib.request.urlopen(base + e["path"], timeout=30).read().decode()
+            ns: dict = {}
+            exec(code, ns)  # noqa: S102 — trusted-as-much-as-running-the-generator
+            obj = ns.get("r") or ns.get("result")
+            if obj is None:
+                continue
+            dest = out_dir / f"{stem}.stl"
+            cq.exporters.export(obj, str(dest))
+            if not dest.exists() or dest.stat().st_size == 0 or dest.stat().st_size > cfg["size_cap"]:
+                dest.unlink(missing_ok=True)
+                continue
+            index.append({"file": dest.name, "id": stem})
+            if len(index) % 20 == 0:
+                print(f"  {len(index)}/{cfg['count']} (tried {tried})")
+        except Exception:
+            continue
+    print(f"[{name}] {len(index)} succeeded from {tried} programs")
+    _write_index(out_dir, index)
+
+
 def fetch_source(name: str, cfg: dict) -> None:
     if cfg["type"] == "archive7z":
         fetch_archive7z(name, cfg)
+        return
+    if cfg["type"] == "cqcode":
+        fetch_cqcode(name, cfg)
         return
 
     from huggingface_hub import hf_hub_download

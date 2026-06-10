@@ -20,21 +20,21 @@ you are responsible for the third-party content in `models/`.
 
 | Dataset | Hosted here? | Why |
 | ------- | ------------ | --- |
+| CAD-Recode | ✅ ~100 .py→STL | Non-gated HF dataset of CadQuery code; we execute it to meshes |
 | ABC Dataset | ✅ ~100 OBJ→STL | Official OBJ chunk 0 is openly downloadable from the NYU archive |
 | Fusion 360 Gallery | ✅ ~100 STL | Public Hugging Face mesh mirror |
 | Thingi10K | ✅ ~100 STL | Official Hugging Face dataset exposes per-model meshes |
 | DeepCAD | ❌ link-out | Distributed as CAD command-sequences, not meshes; its geometry is a curated subset of ABC |
-| ShapeNet | ❌ link-out | Surface meshes are gated behind a signed agreement; ungated mirrors are point clouds / SDFs / renders, not meshes |
 
 ## Per-source provenance, mirror, and license
 
 | Dataset | Sample source (mirror) | Upstream license of distribution | Reference |
 | ------- | ---------------------- | -------------------------------- | --------- |
+| **CAD-Recode** | HF `filapro/cad-recode` (`val/` `.py`, executed to STL) | **CC BY-NC-4.0** — non-commercial, attribution required | Rukhovich et al., *CAD-Recode: Reverse Engineering CAD Code from Point Clouds*, ICCV 2025 — https://github.com/filaPro/cad-recode |
 | **ABC Dataset** | `archive.nyu.edu` — `abc_0000_obj_v00.7z` (OBJ chunk 0) | No single license: each model retains its original **Onshape author** license | Koch et al., *ABC: A Big CAD Model Dataset*, CVPR 2019 — https://deep-geometry.github.io/abc-dataset/ |
 | **Fusion 360 Gallery** | HF `maksimko123/fusion360_test_mesh` | **Autodesk research-only** license (upstream); mirror is public | Willis et al., Autodesk AI Lab — https://github.com/AutodeskAILab/Fusion360GalleryDataset |
 | **Thingi10K** | HF `Thingi10K/Thingi10K` (`raw_meshes/`) | **Per-model** Thingiverse licenses (CC0 / BY / BY-SA / BY-NC / BY-ND / all-rights-reserved) | Zhou & Jacobson, *Thingi10K*, 2016 — https://ten-thousand-models.appspot.com/ |
 | **DeepCAD** | — (not hosted) | MIT (code); geometry derived from ABC | Wu et al., *DeepCAD*, ICCV 2021 — https://github.com/ChrisWu1997/DeepCAD |
-| **ShapeNet** | — (not hosted) | ShapeNet Terms of Use — registration required, **no redistribution** | Chang et al., *ShapeNet*, 2015 — https://shapenet.org/ |
 
 ### Tracing an individual model's license
 
