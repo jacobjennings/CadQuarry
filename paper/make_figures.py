@@ -23,7 +23,8 @@ OUT.mkdir(parents=True, exist_ok=True)
 BG = (255, 255, 255, 255)
 FAMILIES = [
     "plate", "bracket", "revolved", "block", "compound",
-    "flanged", "ribbed", "enclosure", "profiled", "gear", "threaded",
+    "flanged", "ribbed", "enclosure", "profiled", "sketched",
+    "lofted", "swept", "tapped", "gear", "threaded",
 ]
 # Keyed by the figure's number in the compiled paper (Fig 2 = pipeline diagram
 # and Fig 5 = distribution chart are not built here, hence the gaps).

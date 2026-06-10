@@ -148,7 +148,7 @@
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{figures/teaser.png}
-  \caption{A 24-part sample drawn across CadQuarry's eleven part families. Every
+  \caption{A 24-part sample drawn across CadQuarry's fifteen part families. Every
   object is a deterministic function of a single integer seed, executes to a
   watertight solid, and ships as live-editable parametric CadQuery code under a
   \cc{} public-domain dedication. Images are CadQuarry's own headless GPU
@@ -167,10 +167,13 @@ corpus it produces: diverse, executable, \emph{parametric} CadQuery programs
 released as public-domain (\cc{}) data with an \apache{} generator. Each part is
 a typed parameter schema plus a pure \code{build(p)} function, so any sample is a
 live design whose geometry updates in milliseconds, not a frozen mesh. The
-vocabulary spans plates, brackets, shafts, blocks, multi-section assemblies, and
-two solver-built mechanical families---involute/cycloid \emph{gears} and
-standards-based \emph{threads} (ISO/ACME/trapezoidal)---raising the complexity
-ceiling beyond sketch-extrude primitives. Validity is guaranteed by execution
+vocabulary spans plates, brackets, shafts, blocks, multi-section assemblies,
+freeform 2D sketches (line/arc/B\'ezier/spline loops, extruded or revolved),
+lofted reducers, swept profiles, and three solver-built mechanical
+families---involute/cycloid \emph{gears}, standards-based \emph{threads}
+(ISO/ACME/trapezoidal), and \emph{tapped} holes with real cut internal
+threads---raising the complexity ceiling beyond the fixed sketch-extrude
+sequences of prior corpora. Validity is guaranteed by execution
 and duplicates are removed by a rotation/translation-invariant geometry
 signature; across our largest corpus all 200{,}000 accepted parts are
 geometrically distinct. The data is published on the Hugging Face Hub as a size
@@ -221,9 +224,10 @@ while it does so.
         \code{PARAMS} schema plus a pure \code{build(p)} function. Samples are
         live-editable designs, enabling research on customizable parts, data
         augmentation, and parameter inference.
-  \item A \textbf{raised complexity ceiling}: multi-section assemblies and two
-        solver-built mechanical families---involute/cycloid gears and
-        standards-based threads---bridged into a single CadQuery solid.
+  \item A \textbf{raised complexity ceiling}: freeform sketched profiles, lofts
+        and sweeps, multi-section assemblies, and three solver-built mechanical
+        families---involute/cycloid gears, standards-based threads, and tapped
+        holes---bridged into a single CadQuery solid.
   \item \textbf{Validity by execution} and \textbf{geometry-signature dedup};
         empirically, 200{,}000/200{,}000 accepted parts are distinct.
   \item \textbf{Developer experience}: a Hugging Face size ladder in Parquet/JSONL
@@ -349,8 +353,8 @@ on demand by \code{export}.}
 \end{figure}
 
 \subsection{Part families and complexity tiers}
-Eleven families span a deliberately broad operation vocabulary
-(\cref{fig:families}). Nine are self-contained on CadQuery alone; the two
+Fifteen families span a deliberately broad operation vocabulary
+(\cref{fig:families}). Twelve are self-contained on CadQuery alone; the three
 mechanical families are described in \cref{sec:mech}. Each part also draws a
 \emph{complexity tier} (0--3) that governs how many features it carries---from a
 bare primitive (tier~0) to deep multi-section trees with pockets, bosses, ribs,
@@ -366,8 +370,10 @@ rises.
 render). \fm{plate}, \fm{bracket} (L/C/Z angle brackets with gussets),
 \fm{revolved} shafts/bushings, \fm{block} housings, \fm{compound}
 multi-section assemblies, \fm{flanged} bolt-circle hubs, \fm{ribbed}
-structures, shelled \fm{enclosure}s, \fm{profiled} bars, involute \fm{gear}s,
-and standards-based \fm{threaded} parts.}
+structures, shelled \fm{enclosure}s, \fm{profiled} bars, \fm{sketched}
+freeform line/arc/B\'ezier/spline bodies, \fm{lofted} reducers, \fm{swept}
+profiles, \fm{tapped} bodies, involute \fm{gear}s, and standards-based
+\fm{threaded} parts.}
 \label{fig:families}
 \end{figure}
 
@@ -408,7 +414,7 @@ of the published tables.
 \vspace{0pt}
 \begin{minted}{python}
 import cadquery as cq
-# CadQuarry v0.5.0 - seed 1234003889 - CC0-1.0
+# CadQuarry v0.6.0 - seed 1234003889 - CC0-1.0
 
 PARAMS = {
   "base_len":  {"type": "float", "default": 60.0,
@@ -482,8 +488,9 @@ been seen is dropped.
 On the published \textbf{200k} corpus, \textbf{all 200{,}000} accepted parts have
 distinct geometry signatures---0 collisions at the dedup tolerance. Dedup also
 acts as a natural governor on families with a small design space: the
-\fm{threaded} family is sampled at 6\% but realizes 2.8\% of the corpus, because
-the finite ISO/ACME standards space saturates and later collisions are dropped.
+\fm{threaded} family, sampled at $\sim$5\%, realizes a smaller share of the
+corpus, because the finite ISO/ACME standards space saturates and later
+collisions are dropped.
 \end{keybox}
 
 \textbf{Reproducibility.} A versioned seed list pins each published corpus to a
@@ -493,20 +500,24 @@ seed list is the canonical source, and any corpus can be regenerated rather than
 relying on a hosted copy. The geometry signature is itself versioned, so the
 dedup rule travels with the seed list.
 
-\subsection{Mechanical families: gears and threads}\label{sec:mech}
-The \fm{gear} and \fm{threaded} families build real, standards-based geometry
-through the build123d~\cite{build123d} stack and bridge it back into CadQuery via
-each object's shared OCP \code{.wrapped} handle---so after one line a generated
-gear or thread is an ordinary single-solid \code{cq.Workplane} that flows through
-the same execution, dedup, export, and customizer paths as every other family.
+\subsection{Mechanical families: gears, threads, and tapped holes}\label{sec:mech}
+The \fm{gear}, \fm{threaded}, and \fm{tapped} families build real,
+standards-based geometry through the build123d~\cite{build123d} stack and bridge
+it back into CadQuery via each object's shared OCP \code{.wrapped}
+handle---so after one line a generated gear or thread is an ordinary single-solid
+\code{cq.Workplane} that flows through the same execution, dedup, export, and
+customizer paths as every other family.
 Gears (via py\_gearworks~\cite{pygearworks}) cover spur, helical (including
 herringbone), bevel, cycloid, and inside-ring types on the ISO~54 module series,
 with optional profile shift, root fillets, bore, and hub. Threads (via
 bd\_warehouse~\cite{bdwarehouse}) cover ISO metric external and internal threads
 from the ISO~261/262 pitch tables, plus ACME and trapezoidal lead screws by
-standard designation. Their seeded \emph{selection} and dedup are stable like any
-other family; only the exact solver output is platform-dependent
-(\cref{sec:uses}).
+standard designation. The \fm{tapped} family reuses bd\_warehouse to cut real ISO
+internal threads into a plate, block, or cylinder: for each hole the body is bored
+to the thread root and an internal thread is fused in before the bridge, yielding
+one valid solid with genuine thread geometry. Their seeded \emph{selection} and
+dedup are stable like any other family; only the exact solver output is
+platform-dependent (\cref{sec:uses}).
 
 % ===========================================================================
 \section{Eight-View Rendering}\label{sec:render}
@@ -668,12 +679,13 @@ amortizes with a pool of \emph{persistent} workers that import once and then
 build many parts each, fanning work across cores while keeping the
 accept/dedup decision in strict attempt order---so output is independent of
 worker count. Under the full default configuration, end-to-end throughput is
-paced by the two solver-built mechanical families (\fm{gear} and \fm{threaded},
-$\sim$12\% of the mix), which solve real involute/thread geometry at a
-meaningful fraction of a second per part; the primitive families alone build in
-milliseconds. \Cref{tab:perf} reports wall-clock times for execution-validated
-generation (no geometry export); throughput settles at $\sim$10 validated
-parts/s and climbs slightly with corpus size as the worker warm-up amortizes.
+paced by the three solver-built mechanical families (\fm{gear}, \fm{threaded},
+and \fm{tapped}, $\sim$14\% of the mix), which solve real involute/thread
+geometry at a meaningful fraction of a second per part; the primitive families
+alone build in milliseconds. \Cref{tab:perf} reports wall-clock times for
+execution-validated generation (no geometry export); throughput settles at
+$\sim$8--10 validated parts/s and climbs slightly with corpus size as the worker
+warm-up amortizes.
 
 \begin{table}[h]
 \centering\small\setlength{\tabcolsep}{10pt}
@@ -784,7 +796,8 @@ Hugging Face corpus) map the code/data license boundary onto the platforms.
 % ===========================================================================
 CadQuarry is a small contribution with a clear shape: a public-domain corpus of
 \emph{parametric}, executable CAD programs, a raised complexity ceiling that
-includes real gears and threads, an unambiguous license, and a reproducible,
+includes freeform sketches, lofts, sweeps, and real gears, threads, and tapped
+holes, an unambiguous license, and a reproducible,
 fast, inspectable generator. We hope the parametric-by-construction framing and
 the \cc{} dedication make it a comfortable default for CAD-program learning, and
 that the versioned generator invites the community to extend the design space
