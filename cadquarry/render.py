@@ -65,6 +65,46 @@ TEX_CYCLES = 11.0
 
 _KERNEL_SIZE = 24
 
+# ---------------------------------------------------------------------------
+# Output passes
+# ---------------------------------------------------------------------------
+#
+# The geometry pass already fills a G-buffer of view-space position + normal; we
+# reuse it to emit several *legibility-first* image variants (model input), not
+# just the shaded look:
+#
+#   shaded  — soft hemispherical + key light (the original, pretty but soft).
+#   normal  — view-space normal encoded n*0.5+0.5 -> RGB (a natural 3-ch image).
+#   depth   — linearized view depth, near=bright, as grayscale.
+#   edge    — screen-space feature edges (creases + silhouette + depth steps) as
+#             black lines on a transparent background, i.e. a technical-drawing
+#             overlay that composites straight over shaded/normal.
+PASSES = ("shaded", "normal", "depth", "edge")
+
+
+# Feature-edge crispness is a single 0..1 knob mapped to the underlying
+# thresholds (below).  High = sensitive, thin, hard lines (clean synthetic CAD);
+# low = tolerant, thicker, softer lines that ignore small per-triangle wobble
+# (real, noisy scans).  Defaulting mid-high keeps synthetic creases crisp while
+# leaving headroom to soften for scans.  The endpoints are (soft, crisp):
+EDGE_CRISPNESS = 0.6
+_EDGE_NORMAL_LO = (0.12, 0.02)   # crease onset, 1 - cos(angle) between normals
+_EDGE_NORMAL_HI = (0.45, 0.12)   # crease fully saturated
+_EDGE_DEPTH_LO = (0.040, 0.008)  # depth-step onset, as a fraction of part radius
+_EDGE_DEPTH_HI = (0.120, 0.035)  # depth-step fully saturated
+_EDGE_WIDTH = (1.7, 1.0)         # sample offset in texels (thicker when soft)
+
+
+def _edge_params(crispness: float) -> dict[str, float]:
+    """Map the 0..1 crispness knob onto the edge-detector's smoothstep bounds."""
+    c = min(1.0, max(0.0, crispness))
+    mix = lambda ab: ab[0] + (ab[1] - ab[0]) * c  # noqa: E731
+    return {
+        "n_lo": mix(_EDGE_NORMAL_LO), "n_hi": mix(_EDGE_NORMAL_HI),
+        "d_lo": mix(_EDGE_DEPTH_LO), "d_hi": mix(_EDGE_DEPTH_HI),
+        "width": mix(_EDGE_WIDTH),
+    }
+
 
 # ---------------------------------------------------------------------------
 # Deterministic per-part color
@@ -322,6 +362,92 @@ void main() {
 }
 """
 
+# View-space normal encoded as a plain RGB normal map (the most common 3-channel
+# normal representation).  Alpha carries coverage so silhouettes anti-alias and
+# the background stays transparent through the premultiplied downsample.
+_NORMAL_FRAG = """
+#version 330
+in vec2 v_uv;
+out vec4 o_col;
+uniform sampler2D u_pos;
+uniform sampler2D u_nrm;
+void main() {
+    vec4 P = texture(u_pos, v_uv);
+    if (P.w < 0.5) { o_col = vec4(0.0); return; }
+    vec3 N = normalize(texture(u_nrm, v_uv).xyz);
+    o_col = vec4(N * 0.5 + 0.5, 1.0);
+}
+"""
+
+# Linearized view depth, normalized across the part's depth span so it always
+# uses the full 0..1 range regardless of model scale.  Near surfaces are bright.
+_DEPTH_FRAG = """
+#version 330
+in vec2 v_uv;
+out vec4 o_col;
+uniform sampler2D u_pos;
+uniform float u_near;   // camera-space distance to the closest possible surface
+uniform float u_far;
+void main() {
+    vec4 P = texture(u_pos, v_uv);
+    if (P.w < 0.5) { o_col = vec4(0.0); return; }
+    float dist = -P.z;  // camera looks down -Z, so distance is +|z|
+    float d = clamp((dist - u_near) / max(1e-4, u_far - u_near), 0.0, 1.0);
+    float v = 1.0 - d;  // near = bright
+    o_col = vec4(v, v, v, 1.0);
+}
+"""
+
+# Screen-space feature edges: creases (normal discontinuity), silhouettes
+# (coverage discontinuity) and depth steps (second-order depth difference, which
+# is ~0 across a planar face even at a steep grazing angle, so oblique faces
+# don't produce false lines).  Output is black with alpha = edge strength, i.e.
+# a transparent technical-drawing overlay.  smoothstep bounds (set per render)
+# keep it tunable so noisy scans can be softened instead of over-hardened.
+_EDGE_FRAG = """
+#version 330
+in vec2 v_uv;
+out vec4 o_col;
+uniform sampler2D u_pos;
+uniform sampler2D u_nrm;
+uniform vec2 u_texel;
+uniform float u_width;        // sample offset in texels
+uniform float u_n_lo, u_n_hi; // crease smoothstep, on 1 - dot(N, Nn)
+uniform float u_d_lo, u_d_hi; // depth-step smoothstep, on |laplacian(z)| / radius
+uniform float u_depth_scale;  // part radius, to make depth thresholds scale-free
+void main() {
+    vec4 Pc = texture(u_pos, v_uv);
+    if (Pc.w < 0.5) { o_col = vec4(0.0); return; }  // background stays clear
+    vec3 Nc = normalize(texture(u_nrm, v_uv).xyz);
+    float zc = Pc.z;
+    vec2 dx = vec2(u_texel.x, 0.0) * u_width;
+    vec2 dy = vec2(0.0, u_texel.y) * u_width;
+
+    vec4 PL = texture(u_pos, v_uv - dx), PR = texture(u_pos, v_uv + dx);
+    vec4 PU = texture(u_pos, v_uv + dy), PD = texture(u_pos, v_uv - dy);
+
+    // Silhouette: a covered pixel next to background.
+    float sil = (PL.w < 0.5 || PR.w < 0.5 || PU.w < 0.5 || PD.w < 0.5) ? 1.0 : 0.0;
+
+    // Creases: largest angle between this normal and any covered neighbor.
+    float ndiff = 0.0;
+    if (PL.w >= 0.5) ndiff = max(ndiff, 1.0 - dot(Nc, normalize(texture(u_nrm, v_uv - dx).xyz)));
+    if (PR.w >= 0.5) ndiff = max(ndiff, 1.0 - dot(Nc, normalize(texture(u_nrm, v_uv + dx).xyz)));
+    if (PU.w >= 0.5) ndiff = max(ndiff, 1.0 - dot(Nc, normalize(texture(u_nrm, v_uv + dy).xyz)));
+    if (PD.w >= 0.5) ndiff = max(ndiff, 1.0 - dot(Nc, normalize(texture(u_nrm, v_uv - dy).xyz)));
+
+    // Depth steps: second derivative (~0 on a planar face at any tilt).
+    float dlap = 0.0;
+    if (PL.w >= 0.5 && PR.w >= 0.5) dlap = max(dlap, abs(PL.z + PR.z - 2.0 * zc));
+    if (PU.w >= 0.5 && PD.w >= 0.5) dlap = max(dlap, abs(PU.z + PD.z - 2.0 * zc));
+
+    float ne = smoothstep(u_n_lo, u_n_hi, ndiff);
+    float de = smoothstep(u_d_lo, u_d_hi, dlap / max(1e-4, u_depth_scale));
+    float e = max(max(ne, de), sil);
+    o_col = vec4(0.0, 0.0, 0.0, e);  // black lines, alpha = strength
+}
+"""
+
 
 # ---------------------------------------------------------------------------
 # Renderer
@@ -344,6 +470,9 @@ class GLRenderer:
         self.ssao_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_SSAO_FRAG)
         self.blur_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_BLUR_FRAG)
         self.light_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_LIGHT_FRAG)
+        self.normal_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_NORMAL_FRAG)
+        self.depth_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_DEPTH_FRAG)
+        self.edge_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_EDGE_FRAG)
         self.down_prog = self.ctx.program(vertex_shader=_FS_VERT, fragment_shader=_DOWN_FRAG)
 
         rs = self.rs
@@ -374,6 +503,9 @@ class GLRenderer:
         self._ssao_vao = self.ctx.simple_vertex_array(self.ssao_prog, self._quad_vbo, "in_pos")
         self._blur_vao = self.ctx.simple_vertex_array(self.blur_prog, self._quad_vbo, "in_pos")
         self._light_vao = self.ctx.simple_vertex_array(self.light_prog, self._quad_vbo, "in_pos")
+        self._normal_vao = self.ctx.simple_vertex_array(self.normal_prog, self._quad_vbo, "in_pos")
+        self._depth_vao = self.ctx.simple_vertex_array(self.depth_prog, self._quad_vbo, "in_pos")
+        self._edge_vao = self.ctx.simple_vertex_array(self.edge_prog, self._quad_vbo, "in_pos")
         self._down_vao = self.ctx.simple_vertex_array(self.down_prog, self._quad_vbo, "in_pos")
         self.down_prog["u_ssaa"].value = ssaa
 
@@ -406,12 +538,27 @@ class GLRenderer:
         faces: np.ndarray,
         views: dict[str, tuple[float, float]] | None = None,
         base_color: tuple[float, float, float] = BASE_COLOR,
-    ) -> dict[str, np.ndarray]:
-        """Render a mesh from each view; returns {view: HxWx4 uint8 RGBA}."""
+        passes: tuple[str, ...] = ("shaded",),
+        edge_crispness: float = EDGE_CRISPNESS,
+    ) -> dict[str, dict[str, np.ndarray]]:
+        """
+        Render a mesh from each view in one or more output passes.
+
+        ``passes`` is any subset of :data:`PASSES` (``shaded``/``normal``/
+        ``depth``/``edge``); all requested passes reuse the single geometry pass'
+        G-buffer, so extra passes are cheap.  Returns ``{view: {pass: HxWx4
+        uint8 RGBA}}``.  ``edge_crispness`` (0..1) tunes the feature-edge pass.
+        """
         import moderngl
 
         if views is None:
             views = STANDARD_VIEWS
+        bad = [p for p in passes if p not in PASSES]
+        if bad:
+            raise ValueError(f"Unknown render pass(es): {bad}. Valid: {list(PASSES)}")
+        # Stable order; the geometry pass is shared so order is just cosmetic.
+        passes = [p for p in PASSES if p in passes]
+        want_shaded = "shaded" in passes
 
         verts = np.asarray(vertices, dtype=np.float64)
         faces = np.asarray(faces)
@@ -445,7 +592,21 @@ class GLRenderer:
         self.light_prog["u_light_pos"].value = tuple((light_dir * dist * 1.0).astype(float))
 
         texel = (1.0 / self.rs, 1.0 / self.rs)
-        out: dict[str, np.ndarray] = {}
+
+        # Per-part uniforms for the depth and feature-edge passes (view-space
+        # depth span + scale-free edge thresholds).
+        self.depth_prog["u_near"].value = float(dist - radius)
+        self.depth_prog["u_far"].value = float(dist + radius)
+        ep = _edge_params(edge_crispness)
+        self.edge_prog["u_texel"].value = texel
+        self.edge_prog["u_width"].value = ep["width"]
+        self.edge_prog["u_n_lo"].value = ep["n_lo"]
+        self.edge_prog["u_n_hi"].value = ep["n_hi"]
+        self.edge_prog["u_d_lo"].value = ep["d_lo"]
+        self.edge_prog["u_d_hi"].value = ep["d_hi"]
+        self.edge_prog["u_depth_scale"].value = float(radius)
+
+        out: dict[str, dict[str, np.ndarray]] = {}
         try:
             for name, (elev, azim) in views.items():
                 view = _view_for(elev, azim, center, dist)
@@ -458,43 +619,58 @@ class GLRenderer:
                 )
                 self.light_prog["u_cam_t"].value = tuple(view[:3, 3].astype(float))
 
-                # 1. Geometry pass.
+                # 1. Geometry pass -> G-buffer (shared by every output pass).
                 self.g_fbo.use()
                 self.ctx.clear(0.0, 0.0, 0.0, 0.0, depth=1.0)
                 geom_vao.render(moderngl.TRIANGLES)
-
-                # 2. SSAO + blur.
                 self.ctx.disable(moderngl.DEPTH_TEST)
-                self.ao_fbo.use()
-                self.g_pos.use(0); self.ssao_prog["u_pos"].value = 0
-                self.g_nrm.use(1); self.ssao_prog["u_nrm"].value = 1
-                self.noise_tex.use(2); self.ssao_prog["u_noise"].value = 2
-                self._ssao_vao.render(moderngl.TRIANGLES)
 
-                self.aob_fbo.use()
-                self.ao_tex.use(0); self.blur_prog["u_ao"].value = 0
-                self.blur_prog["u_texel"].value = texel
-                self._blur_vao.render(moderngl.TRIANGLES)
+                # 2. SSAO + blur — only the shaded pass consumes occlusion.
+                if want_shaded:
+                    self.ao_fbo.use()
+                    self.g_pos.use(0); self.ssao_prog["u_pos"].value = 0
+                    self.g_nrm.use(1); self.ssao_prog["u_nrm"].value = 1
+                    self.noise_tex.use(2); self.ssao_prog["u_noise"].value = 2
+                    self._ssao_vao.render(moderngl.TRIANGLES)
 
-                # 3. Lighting / composite (at supersampled resolution).
-                self.col_fbo.use()
-                self.ctx.clear(0.0, 0.0, 0.0, 0.0)
-                self.g_pos.use(0); self.light_prog["u_pos"].value = 0
-                self.g_nrm.use(1); self.light_prog["u_nrm"].value = 1
-                self.aob_tex.use(2); self.light_prog["u_ao"].value = 2
-                self._light_vao.render(moderngl.TRIANGLES)
+                    self.aob_fbo.use()
+                    self.ao_tex.use(0); self.blur_prog["u_ao"].value = 0
+                    self.blur_prog["u_texel"].value = texel
+                    self._blur_vao.render(moderngl.TRIANGLES)
 
-                # 4. GPU box-downsample to output resolution, then read back the
-                # small image (premultiplied alpha, done on-GPU — far cheaper
-                # than reducing the big SSAA buffer in numpy).
-                self.out_fbo.use()
-                self.col_tex.use(0); self.down_prog["u_src"].value = 0
-                self._down_vao.render(moderngl.TRIANGLES)
+                # 3. Each requested pass shades into the supersampled color buffer
+                #    then GPU box-downsamples (premultiplied alpha) to the small
+                #    output, which is the only buffer read back to the CPU.
+                view_out: dict[str, np.ndarray] = {}
+                for p in passes:
+                    self.col_fbo.use()
+                    self.ctx.clear(0.0, 0.0, 0.0, 0.0)
+                    if p == "shaded":
+                        self.g_pos.use(0); self.light_prog["u_pos"].value = 0
+                        self.g_nrm.use(1); self.light_prog["u_nrm"].value = 1
+                        self.aob_tex.use(2); self.light_prog["u_ao"].value = 2
+                        self._light_vao.render(moderngl.TRIANGLES)
+                    elif p == "normal":
+                        self.g_pos.use(0); self.normal_prog["u_pos"].value = 0
+                        self.g_nrm.use(1); self.normal_prog["u_nrm"].value = 1
+                        self._normal_vao.render(moderngl.TRIANGLES)
+                    elif p == "depth":
+                        self.g_pos.use(0); self.depth_prog["u_pos"].value = 0
+                        self._depth_vao.render(moderngl.TRIANGLES)
+                    elif p == "edge":
+                        self.g_pos.use(0); self.edge_prog["u_pos"].value = 0
+                        self.g_nrm.use(1); self.edge_prog["u_nrm"].value = 1
+                        self._edge_vao.render(moderngl.TRIANGLES)
+
+                    self.out_fbo.use()
+                    self.col_tex.use(0); self.down_prog["u_src"].value = 0
+                    self._down_vao.render(moderngl.TRIANGLES)
+                    raw = self.out_fbo.read(components=4, dtype="f1")
+                    img = np.frombuffer(raw, dtype=np.uint8).reshape(self.size, self.size, 4)
+                    view_out[p] = np.ascontiguousarray(np.flipud(img))  # GL origin bottom-left
+
                 self.ctx.enable(moderngl.DEPTH_TEST)
-
-                raw = self.out_fbo.read(components=4, dtype="f1")
-                img = np.frombuffer(raw, dtype=np.uint8).reshape(self.size, self.size, 4)
-                out[name] = np.ascontiguousarray(np.flipud(img))  # GL origin bottom-left
+                out[name] = view_out
         finally:
             geom_vao.release()
             vbo.release()
@@ -543,13 +719,16 @@ def render_available() -> bool:
 # warm for the worker's lifetime), and they share the one physical GPU.  We use
 # the "spawn" start method so no GL state is inherited across the fork.
 
-def _render_task(args: tuple[str, str, tuple | None, int, int]) -> tuple[str, bool, str]:
-    stl_path, out_dir, base_color, size, ssaa = args
+def _render_task(args: tuple) -> tuple[str, bool, str]:
+    stl_path, out_dir, base_color, size, ssaa, views, passes, edge_crispness = args
     from .export import export_renders
 
     stem = Path(stl_path).stem
     try:
-        export_renders(Path(stl_path), Path(out_dir), size=size, ssaa=ssaa, base_color=base_color)
+        export_renders(
+            Path(stl_path), Path(out_dir), views=views, size=size, ssaa=ssaa,
+            base_color=base_color, passes=passes, edge_crispness=edge_crispness,
+        )
         return stem, True, ""
     except Exception as exc:  # pragma: no cover - reported to caller
         return stem, False, str(exc)
@@ -569,16 +748,20 @@ def render_stls(
     size: int = 512,
     ssaa: int = 2,
     progress_cb=None,
+    views: dict[str, tuple[float, float]] | None = None,
+    passes: tuple[str, ...] = ("shaded",),
+    edge_crispness: float = EDGE_CRISPNESS,
 ) -> dict[str, tuple[bool, str]]:
     """
     Render many STLs to per-part render dirs, optionally across processes.
 
-    ``tasks`` is a list of ``(stl_path, out_dir, base_color_or_None)``.  Returns
-    ``{stem: (ok, error)}``.  ``progress_cb`` (if given) is called once per
-    completed part.
+    ``tasks`` is a list of ``(stl_path, out_dir, base_color_or_None)``.  ``views``
+    and ``passes`` are uniform across the corpus and applied to every part (see
+    :meth:`GLRenderer.render_mesh`).  Returns ``{stem: (ok, error)}``;
+    ``progress_cb`` (if given) is called once per completed part.
     """
     results: dict[str, tuple[bool, str]] = {}
-    full = [(s, o, c, size, ssaa) for (s, o, c) in tasks]
+    full = [(s, o, c, size, ssaa, views, passes, edge_crispness) for (s, o, c) in tasks]
 
     if n_workers <= 1 or len(full) <= 1:
         for t in full:

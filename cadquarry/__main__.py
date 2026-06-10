@@ -48,6 +48,41 @@ def _load_config(config_path: str | None) -> dict:
         return {}
 
 
+def _render_opts(args: argparse.Namespace) -> dict:
+    """
+    Resolve the render view/pass/edge CLI flags into export_corpus_geometry
+    kwargs.  Returns ``{}`` for commands that don't expose them so callers can
+    splat it unconditionally.
+    """
+    from .export import resolve_passes, resolve_views
+
+    if not hasattr(args, "render_views"):
+        return {}
+    return {
+        "render_views": resolve_views(args.render_views),
+        "render_passes": resolve_passes(args.render_passes),
+        "edge_crispness": args.edge_crispness,
+    }
+
+
+def _add_render_flags(p: argparse.ArgumentParser, default_views: str) -> None:
+    """Attach the shared render view/pass/edge selection flags to a subparser."""
+    p.add_argument(
+        "--render-views", default=default_views, metavar="SPEC",
+        help="View set for renders: a preset (all, iso-corners, ortho, cad) or a "
+             f"comma list of view names (default: {default_views})",
+    )
+    p.add_argument(
+        "--render-passes", default="shaded,normal,depth,edge", metavar="LIST",
+        help="Render passes to emit per view, comma-separated: "
+             "shaded,normal,depth,edge (default: all four)",
+    )
+    p.add_argument(
+        "--edge-crispness", type=float, default=0.6, metavar="0..1",
+        help="Feature-edge crispness; lower for noisy real scans (default: 0.6)",
+    )
+
+
 def _default_seeds_path() -> Path:
     """
     The published seed list matching the current generator version (the
@@ -354,7 +389,7 @@ def cmd_build(args: argparse.Namespace) -> int:
             try:
                 counts = export_corpus_geometry(
                     out_dir, formats=formats, n_workers=args.workers,
-                    timeout=args.timeout, verbose=args.verbose,
+                    timeout=args.timeout, verbose=args.verbose, **_render_opts(args),
                 )
                 for fmt, cnt in counts.items():
                     print(f"    {fmt}: {cnt} files written")
@@ -430,7 +465,7 @@ def cmd_build_sample(args: argparse.Namespace) -> int:
         try:
             counts = export_corpus_geometry(
                 out_dir, formats=formats, n_workers=args.workers,
-                timeout=args.timeout, verbose=args.verbose,
+                timeout=args.timeout, verbose=args.verbose, **_render_opts(args),
             )
             for fmt, cnt in counts.items():
                 print(f"    {fmt}: {cnt} files written")
@@ -594,6 +629,7 @@ def cmd_export(args: argparse.Namespace) -> int:
     counts = export_corpus_geometry(
         dataset_dir, formats=formats,
         n_workers=args.workers, timeout=args.timeout, verbose=args.verbose,
+        **_render_opts(args),
     )
     for fmt, n in counts.items():
         print(f"  {fmt}: {n} files written")
@@ -887,6 +923,7 @@ def build_parser() -> argparse.ArgumentParser:
     bld.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export (hang detection; generous for slow gear/threaded parts)")
     bld.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
     bld.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
+    _add_render_flags(bld, default_views="all")
     bld.add_argument("--verbose", "-v", action="store_true")
 
     # build_sample
@@ -901,6 +938,8 @@ def build_parser() -> argparse.ArgumentParser:
     smp.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: the seeds/v*.toml matching this generator version)")
     smp.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export")
     smp.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
+    # The Pages preview gallery references the full eight-view set, so keep it.
+    _add_render_flags(smp, default_views="all")
     smp.add_argument("--verbose", "-v", action="store_true")
 
     # publish
@@ -941,6 +980,7 @@ def build_parser() -> argparse.ArgumentParser:
     exp.add_argument("--formats", default="step,stl,render", help="Comma-separated: step,stl,svg,pointcloud,render (default: step,stl,render)")
     exp.add_argument("--timeout", type=float, default=120.0)
     exp.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel export workers (0 = auto)")
+    _add_render_flags(exp, default_views="all")
     exp.add_argument("--verbose", "-v", action="store_true")
 
     # annotate

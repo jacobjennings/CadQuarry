@@ -86,6 +86,63 @@ STANDARD_VIEWS: dict[str, tuple[float, float]] = {
     "iso_bl": (30.0,  135.0),
 }
 
+# Named view sets selectable from the CLI / dataset path.  ``iso-corners`` is the
+# default for model input: the four three-quarter corners are the most legible,
+# least-degenerate angles (unlike the straight-on front/top/right trio, where a
+# part collapses to a flat silhouette and edges are impossible to read).
+VIEW_PRESETS: dict[str, list[str]] = {
+    "all": list(STANDARD_VIEWS),
+    "iso-corners": ["iso_fr", "iso_fl", "iso_br", "iso_bl"],
+    "ortho": ["front", "top", "right"],
+    "cad": ["front", "top", "right", "iso"],
+}
+
+# Output passes the renderer can emit per view (see cadquarry.render.PASSES).
+RENDER_PASSES = ("shaded", "normal", "depth", "edge")
+
+
+def resolve_views(spec: str | None) -> dict[str, tuple[float, float]]:
+    """
+    Resolve a view selection into a ``{name: (elev, azim)}`` mapping.
+
+    ``spec`` may be a preset name (``all`` / ``iso-corners`` / ``ortho`` /
+    ``cad``), a comma-separated list of individual view names, or None (=>
+    ``all``).  Unknown names raise ValueError.
+    """
+    if spec is None:
+        return dict(STANDARD_VIEWS)
+    key = spec.strip().lower()
+    if key in VIEW_PRESETS:
+        names = VIEW_PRESETS[key]
+    else:
+        names = [n.strip() for n in spec.split(",") if n.strip()]
+    unknown = [n for n in names if n not in STANDARD_VIEWS]
+    if unknown:
+        raise ValueError(
+            f"Unknown view(s): {unknown}. Valid: {sorted(STANDARD_VIEWS)} "
+            f"or presets {sorted(VIEW_PRESETS)}"
+        )
+    return {n: STANDARD_VIEWS[n] for n in names}
+
+
+def resolve_passes(spec: str | None) -> tuple[str, ...]:
+    """Resolve a comma-separated pass selection; None => ``shaded`` only."""
+    if spec is None:
+        return ("shaded",)
+    names = [n.strip().lower() for n in spec.split(",") if n.strip()]
+    unknown = [n for n in names if n not in RENDER_PASSES]
+    if unknown:
+        raise ValueError(f"Unknown render pass(es): {unknown}. Valid: {list(RENDER_PASSES)}")
+    # Preserve canonical order, de-duped.
+    return tuple(p for p in RENDER_PASSES if p in names)
+
+
+def render_filename(view: str, pass_name: str) -> str:
+    """PNG filename for a (view, pass).  Shaded keeps the bare ``{view}.png`` name
+    so existing galleries/manifests/parquet columns stay valid; other passes get
+    a ``{view}_{pass}.png`` sibling."""
+    return f"{view}.png" if pass_name == "shaded" else f"{view}_{pass_name}.png"
+
 
 def render_deps_available() -> bool:
     """True if the optional GPU render stack (moderngl + EGL + trimesh) works."""
@@ -227,21 +284,28 @@ def export_renders(
     size: int = 512,
     ssaa: int = 2,
     base_color: tuple[float, float, float] | None = None,
+    passes: tuple[str, ...] = ("shaded",),
+    edge_crispness: float = 0.6,
 ) -> dict[str, Path]:
     """
-    Render shaded thumbnail PNGs of a mesh from multiple viewpoints, headless.
+    Render thumbnail PNGs of a mesh from multiple viewpoints, headless.
 
-    One PNG is written per named view into out_dir (e.g. ``out_dir/iso.png``).
-    ``views`` maps a view name to (elevation_deg, azimuth_deg); defaults to
-    ``STANDARD_VIEWS``.  ``base_color`` overrides the surface color; when None a
-    deterministic per-part color is derived from the file stem.  Returns
-    {view_name: png_path}.
+    One PNG is written per (view, pass) into out_dir.  ``views`` maps a view name
+    to (elevation_deg, azimuth_deg); defaults to ``STANDARD_VIEWS``.  ``passes``
+    is any subset of ``RENDER_PASSES`` (``shaded``/``normal``/``depth``/``edge``);
+    the shaded pass keeps the bare ``{view}.png`` name while the others land as
+    ``{view}_{pass}.png`` siblings (see :func:`render_filename`).
+    ``base_color`` overrides the surface color; when None a deterministic
+    per-part color is derived from the file stem.  ``edge_crispness`` (0..1) tunes
+    the feature-edge pass — lower it for noisy real scans.  Returns
+    {key: png_path} keyed by view (shaded) or ``view_pass``.
 
     Rendering is done on the GPU via a headless EGL OpenGL context (moderngl):
-    a deferred pipeline with a real depth buffer, screen-space ambient
-    occlusion and soft hemispherical + positional-key lighting, supersampled
-    for clean edges.  The mesh is uploaded once and only the camera moves
-    between views, so eight angles cost little more than one.  See
+    an orthographic deferred pipeline with a real depth buffer, screen-space
+    ambient occlusion and soft hemispherical + positional-key lighting,
+    supersampled for clean edges.  The G-buffer (view-space normals + depth) is
+    reused across passes, and the mesh is uploaded once with only the camera
+    moving between views, so extra views/passes cost little.  See
     :mod:`cadquarry.render`.
     """
     try:
@@ -266,15 +330,18 @@ def export_renders(
 
     renderer = _render.get_renderer(size=size, ssaa=ssaa)
     images = renderer.render_mesh(
-        mesh.vertices, mesh.faces, views=views, base_color=base_color
+        mesh.vertices, mesh.faces, views=views, base_color=base_color,
+        passes=passes, edge_crispness=edge_crispness,
     )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, Path] = {}
-    for name, arr in images.items():
-        out_path = out_dir / f"{name}.png"
-        Image.fromarray(arr, "RGBA").save(str(out_path))
-        written[name] = out_path
+    for view_name, by_pass in images.items():
+        for pass_name, arr in by_pass.items():
+            out_path = out_dir / render_filename(view_name, pass_name)
+            Image.fromarray(arr, "RGBA").save(str(out_path))
+            key = view_name if pass_name == "shaded" else f"{view_name}_{pass_name}"
+            written[key] = out_path
     return written
 
 
@@ -303,6 +370,9 @@ def export_corpus_geometry(
     timeout: float = 60.0,
     verbose: bool = False,
     n_points: int = 2048,
+    render_views: dict[str, tuple[float, float]] | None = None,
+    render_passes: tuple[str, ...] = ("shaded",),
+    edge_crispness: float = 0.6,
 ) -> dict[str, int]:
     """
     Export geometry for all parts in a dataset directory.
@@ -438,7 +508,8 @@ def export_corpus_geometry(
         ]
         rn_bar = progress_bar(total=len(tasks), desc="  render", unit="part")
         rn_results = _render.render_stls(
-            tasks, n_workers=rn_workers, progress_cb=rn_bar.update
+            tasks, n_workers=rn_workers, progress_cb=rn_bar.update,
+            views=render_views, passes=render_passes, edge_crispness=edge_crispness,
         )
         rn_bar.close()
         for pid, (ok, err) in rn_results.items():

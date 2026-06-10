@@ -231,6 +231,50 @@ RENDER_VIEWS: list[str] = [
     "iso_fr", "iso_fl", "iso_br", "iso_bl",
 ]
 
+# Extra (non-shaded) render passes export.export_renders can emit per view.
+RENDER_PASS_VARIANTS: tuple[str, ...] = ("normal", "depth", "edge")
+
+
+def render_columns(
+    render_views: list[str], render_passes: tuple[str, ...]
+) -> list[tuple[str, str]]:
+    """
+    (column_name, png_filename) pairs for the requested views × passes.
+
+    The shaded pass keeps the historical ``render_{view}`` column / ``{view}.png``
+    filename; other passes get ``render_{view}_{pass}`` / ``{view}_{pass}.png`` so
+    nothing about the existing schema changes unless extra passes are requested.
+    """
+    cols: list[tuple[str, str]] = []
+    for v in render_views:
+        for p in render_passes:
+            if p == "shaded":
+                cols.append((f"render_{v}", f"{v}.png"))
+            else:
+                cols.append((f"render_{v}_{p}", f"{v}_{p}.png"))
+    return cols
+
+
+def available_render_passes(renders_base: Path, render_views: list[str]) -> tuple[str, ...]:
+    """
+    Detect which passes were actually rendered for a corpus by probing its render
+    files.  Always includes ``shaded`` (the bare ``{view}.png``); adds each extra
+    pass for which at least one ``{view}_{pass}.png`` exists.  Lets the packer and
+    dataset card agree on columns without a separate manifest of render options.
+    """
+    passes: list[str] = ["shaded"]
+    if not renders_base.is_dir():
+        return tuple(passes)
+    # Renders are produced uniformly across the corpus, so one part's dir is
+    # representative — probe the first rather than stat'ing every part.
+    sample = next((d for d in sorted(renders_base.iterdir()) if d.is_dir()), None)
+    if sample is None:
+        return tuple(passes)
+    for p in RENDER_PASS_VARIANTS:
+        if any((sample / f"{v}_{p}.png").exists() for v in render_views):
+            passes.append(p)
+    return tuple(passes)
+
 
 def pack_corpus_parquet(
     dataset_dir: Path,
@@ -241,6 +285,8 @@ def pack_corpus_parquet(
     include_step: bool = False,
     tier_max: int | None = None,
     batch_size: int = 512,
+    render_views: list[str] | None = None,
+    render_passes: tuple[str, ...] = ("shaded",),
 ) -> int:
     """
     Pack a corpus into a single Parquet file.
@@ -278,6 +324,10 @@ def pack_corpus_parquet(
     renders_base = dataset_dir / "renders"
     geo_base = dataset_dir / "geometry"
 
+    if render_views is None:
+        render_views = RENDER_VIEWS
+    render_cols = render_columns(render_views, render_passes)
+
     base_cols: list[tuple[str, Any]] = [
         ("part_id", pa.string()),
         ("family", pa.string()),
@@ -297,8 +347,8 @@ def pack_corpus_parquet(
             ("params", pa.string()),
         ]
     if include_renders:
-        for v in RENDER_VIEWS:
-            base_cols.append((f"render_{v}", pa.binary()))
+        for col, _fname in render_cols:
+            base_cols.append((col, pa.binary()))
     if include_stl:
         base_cols.append(("stl_bytes", pa.large_binary()))
     if include_step:
@@ -375,9 +425,9 @@ def pack_corpus_parquet(
 
         if include_renders:
             rdir = renders_base / pid
-            for v in RENDER_VIEWS:
-                png = rdir / f"{v}.png"
-                row[f"render_{v}"] = png.read_bytes() if png.exists() else None
+            for col, fname in render_cols:
+                png = rdir / fname
+                row[col] = png.read_bytes() if png.exists() else None
 
         if include_stl:
             stl_p = geo_base / f"{pid}.stl"

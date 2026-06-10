@@ -42,9 +42,11 @@ from pathlib import Path
 from . import __version__ as GEN_VERSION
 from .dataset import (
     RENDER_VIEWS,
+    available_render_passes,
     load_manifest,
     pack_corpus_jsonl,
     pack_corpus_parquet,
+    render_columns,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -172,6 +174,7 @@ def pack_variant(
     include_renders: bool,
     include_stl: bool,
     include_step: bool,
+    render_passes: tuple[str, ...] = ("shaded",),
 ) -> tuple[str, str] | None:
     """
     Pack one (tier slice × content variant) into the upload tree. Returns
@@ -209,6 +212,7 @@ def pack_variant(
             include_stl=include_stl,
             include_step=include_step,
             tier_max=tier_max,
+            render_passes=render_passes,
         )
         data_file = f"{rel_prefix}{fname}"
 
@@ -241,7 +245,12 @@ def discover_packed(
 
 # ── README / dataset card ─────────────────────────────────────────────────────
 
-def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool) -> str:
+def _features_yaml(
+    include_renders: bool,
+    include_stl: bool,
+    include_step: bool,
+    render_passes: tuple[str, ...] = ("shaded",),
+) -> str:
     base = [
         "  features:",
         "  - name: part_id",
@@ -272,8 +281,8 @@ def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool)
         "    dtype: string",
     ]
     if include_renders:
-        for v in RENDER_VIEWS:
-            base += [f"  - name: render_{v}", "    dtype: image"]
+        for col, _fname in render_columns(RENDER_VIEWS, render_passes):
+            base += [f"  - name: {col}", "    dtype: image"]
     if include_stl:
         base += ["  - name: stl_bytes", "    dtype: binary"]
     if include_step:
@@ -284,10 +293,12 @@ def _features_yaml(include_renders: bool, include_stl: bool, include_step: bool)
 def _configs_yaml(
     built: dict[str, list[tuple[str, str, bool, bool, bool]]],
     all_tags: list[str],
+    passes_by_tag: dict[str, tuple[str, ...]] | None = None,
 ) -> str:
     lines: list[str] = []
     first_code = True
     for tag in all_tags:
+        rp = (passes_by_tag or {}).get(tag, ("shaded",))
         for config_name, data_file, inc_r, inc_s, inc_sp in built[tag]:
             is_code_only = not (inc_r or inc_s or inc_sp)
             lines.append(f'- config_name: "{config_name}"')
@@ -296,7 +307,7 @@ def _configs_yaml(
                 lines.append("  default: true")
                 first_code = False
             if not is_code_only:
-                lines.append(_features_yaml(inc_r, inc_s, inc_sp))
+                lines.append(_features_yaml(inc_r, inc_s, inc_sp, render_passes=rp))
     return "\n".join(lines)
 
 
@@ -304,6 +315,7 @@ def build_dataset_readme(
     repo_id: str,
     built: dict[str, list[tuple[str, str, bool, bool, bool]]],
     ladder: dict[str, dict],
+    passes_by_tag: dict[str, tuple[str, ...]] | None = None,
 ) -> str:
     all_tags = sorted(built.keys(), key=tag_to_int)
 
@@ -348,7 +360,7 @@ def build_dataset_readme(
         "size_categories:",
         f"  - {size_cat}",
         "configs:",
-        _configs_yaml(built, all_tags),
+        _configs_yaml(built, all_tags, passes_by_tag),
         "---",
         "",
     ]
@@ -518,6 +530,9 @@ with `tier == 3`. Data files live under `{{tag}}/` (all tiers) and
 | `step_bytes` | binary | `-step`, `-full` |
 
 Render views: `front`, `top`, `right`, `iso`, `iso_fr`, `iso_fl`, `iso_br`, `iso_bl`.
+When a corpus was rendered with extra passes, each view also carries
+`render_{view}_normal` (view-space normal map), `render_{view}_depth` (linear
+depth) and/or `render_{view}_edge` (feature-edge overlay) image columns.
 
 ---
 
@@ -651,6 +666,9 @@ def publish(
 
     # {tag: [(config_name, data_file, inc_r, inc_s, inc_sp), …]}
     built: dict[str, list[tuple[str, str, bool, bool, bool]]] = {}
+    # {tag: render passes present on disk} — keeps render_* parquet columns and
+    # the dataset card's feature schema in agreement for each corpus.
+    passes_by_tag: dict[str, tuple[str, ...]] = {}
 
     for tag in sorted(tags, key=tag_to_int):
         spec = ladder[tag]
@@ -671,6 +689,11 @@ def publish(
         print(f"\n=== {tag}: {spec['count']:,} parts (seed {spec['seed']}) ===")
         corpus_dir = resolve_corpus_dir(corpus_root, tag, spec["count"])
 
+        # Which render passes this corpus actually has on disk (shaded + any
+        # normal/depth/edge variants), so render columns/card schema match.
+        corpus_passes = available_render_passes(corpus_dir / "renders", RENDER_VIEWS)
+        passes_by_tag[tag] = corpus_passes
+
         tag_dir = upload_root / tag
         built[tag] = []
         print("  · packing variants …")
@@ -680,6 +703,7 @@ def publish(
                     corpus_dir, tag, tag_dir,
                     tier_subdir, tier_part, tier_max,
                     sfx, inc_r, inc_s, inc_sp,
+                    render_passes=corpus_passes,
                 )
                 if result is not None:
                     cfg, data_file = result
@@ -706,7 +730,9 @@ def publish(
             f"Run a normal `cadquarry publish` (without --upload-only) first."
         )
 
-    readme = build_dataset_readme(repo_id, {t: v for t, v in built.items() if v}, ladder)
+    readme = build_dataset_readme(
+        repo_id, {t: v for t, v in built.items() if v}, ladder, passes_by_tag
+    )
     (upload_root / "README.md").write_text(readme, encoding="utf-8")
 
     if dry_run:
