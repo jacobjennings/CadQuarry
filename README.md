@@ -236,11 +236,23 @@ Measured on an **AMD Ryzen Threadripper 9960X (24C/48T)** with the default
 | 20,000  | ~36 m 30 s | 9.1 part/s |
 | 50,000  | ~1 h 30 m  | 9.2 part/s |
 | 100,000 | ~2 h 50 m  | 9.8 part/s |
+| 200,000 | **~6 h** (est.) | ~9 part/s |
 
 Throughput climbs slightly with corpus size as the fixed worker warm-up
-amortizes. Dropping the `mech` families (or lowering their weight in
+amortizes, then settles near **~9–10 parts/s**. The table is the measured
+`v0.5.0` benchmark; `v0.6.0` adds the `tapped` family, lifting the solver-paced
+`mech` share to ~14% and nudging steady-state throughput marginally lower, so a
+full **200k generation lands around ~6 hours** (validated, no export) on this
+class of workstation — the bolded row above is that extrapolation, not a fresh
+measurement. Because this rate is paced almost entirely by the solver-built
+`mech` families, dropping them (or lowering their weight in
 `configs/default.toml`) pushes throughput up by more than an order of magnitude,
 since the remaining primitive families build in milliseconds.
+
+> Note: meaningful throughput numbers require a corpus large enough to amortize
+> per-worker warm-up (each worker imports the OCP kernel once, ~1–1.5 s). Small
+> timing runs — especially at high worker counts — are dominated by that startup
+> and **understate** steady-state throughput; benchmark at ≥10k parts.
 
 Tune the pool with `--workers N` (default: `min(cores, 24)`). **The best worker
 count is system-dependent**: it scales with core count, but the solver-built
