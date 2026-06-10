@@ -77,21 +77,6 @@
       "status": "linkout",
       "reason": "DeepCAD is distributed as CAD command-sequences, not meshes — its geometry is a curated subset of ABC (shown above). Producing meshes needs running its reconstruction pipeline.",
       "note": "The MIT license covers the modeling/learning code; the shapes come from ABC."
-    },
-    {
-      "name": "ShapeNet",
-      "year": 2015,
-      "citation": "Chang et al., 2015",
-      "license": { "label": "ShapeNet ToU — no redistribution", "tier": "gated" },
-      "parametric": "No — annotated triangle meshes",
-      "format": "OBJ",
-      "provenance": "3D Warehouse / Yobi3D",
-      "models": "~51,000 (core) / 3M+ (full)",
-      "redistributable": "No — terms require registration and forbid re-hosting",
-      "source_url": "https://shapenet.org/",
-      "status": "linkout",
-      "reason": "ShapeNet's surface meshes sit behind a signed-agreement login; the only ungated mirrors are point clouds / SDFs / renders, not meshes. Bandwidth doesn't help — it's a gating restriction.",
-      "note": "To include it, download under your own ShapeNet account and drop the OBJs into models/shapenet/."
     }
   ]
 }

@@ -226,6 +226,8 @@ __marimo__/
 
 # Editor / agent local settings
 .claude/
+# VS Code "Local History" extension backups (timestamped copies of edits).
+.history/
 # Local, machine-specific agent scratch notes (venv/workflow specifics)
 /AGENTS.md
 
