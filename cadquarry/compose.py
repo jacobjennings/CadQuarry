@@ -673,6 +673,11 @@ def sample_block(rng: Random, tier: int, config: dict, seed: int, index: int) ->
             r_param="fillet_r2", enabled_param="filleted2",
         )
         if "filleted2" not in params:
+            # Off by default: filleting all vertical edges a second time (after a
+            # tier-2 |Z fillet and/or corner holes that break those edges) often
+            # fails, so keep the canonical (defaults) instance valid and leave
+            # the fillet as an opt-in customizer toggle.
+            p["filleted2"].default = False
             params.update(p)
             ops.append(op)
 
@@ -2020,14 +2025,82 @@ def _sample_polygon_standoff(rng: Random, tier: int, config: dict, seed: int, in
     )
 
 
+def _sample_lofted_adapter(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    A lofted transition/reducer — a square or round base smoothly lofted up to a
+    smaller round/square top — finished with a short bored neck on the small end:
+    a hopper, duct transition, or nozzle adapter.  Combines the loft op with a
+    unioned attachment (and a tier-3 chamfer) for a genuine multi-operation
+    assembly that the primitive families can't produce.
+    """
+    base_kind, top_kind = rng.sample(["rect", "circle"], 2)
+    base_def = _nice(rng, 40.0, 80.0)
+    top_def = round(base_def * rng.uniform(0.35, 0.7), 1)
+    h_def = round(base_def * rng.uniform(0.5, 1.1), 1)
+
+    params: dict[str, ParamSpec] = {
+        "adapter_base": ParamSpec(
+            type="float", default=base_def, min=round(base_def * 0.6, 1),
+            max=round(base_def * 1.5, 1), step=1.0, group="Body", label="Base size (mm)"),
+        "adapter_top": ParamSpec(
+            type="float", default=top_def, min=round(top_def * 0.5, 1),
+            max=round(base_def, 1), step=1.0, group="Body", label="Top size (mm)"),
+        "adapter_h": ParamSpec(
+            type="float", default=h_def, min=round(h_def * 0.4, 1),
+            max=round(h_def * 2.0, 1), step=1.0, group="Body", label="Transition height (mm)"),
+    }
+
+    stations = [LoftStation(profile=_loft_profile(base_kind, "adapter_base"))]
+    if tier >= 2:
+        params["adapter_mid"] = ParamSpec(
+            type="float", default=round((base_def + top_def) / 2, 1),
+            min=round(top_def * 0.5, 1), max=round(base_def, 1), step=1.0,
+            group="Body", label="Mid size (mm)")
+        stations.append(LoftStation(
+            profile=_loft_profile("circle", "adapter_mid"), offset=scaled("adapter_h", 0.5)))
+        stations.append(LoftStation(
+            profile=_loft_profile(top_kind, "adapter_top"), offset=scaled("adapter_h", 0.5)))
+    else:
+        stations.append(LoftStation(
+            profile=_loft_profile(top_kind, "adapter_top"), offset=ref("adapter_h")))
+    ops: list[Operation] = [LoftOp(stations=stations)]
+
+    # Bored neck/spout on the small (top) face.
+    neck_d_def = round(top_def * rng.uniform(0.55, 0.85), 1)
+    prof, np_, min_ext = _sample_attach_section(
+        rng, neck_d_def, round(top_def, 1), "neck", "Neck", kinds=["circle", "polygon"])
+    params.update(np_)
+    nl_def = round(top_def * rng.uniform(0.4, 0.9), 1)
+    params["neck_l"] = ParamSpec(
+        type="float", default=nl_def, min=round(nl_def * 0.4, 1),
+        max=round(nl_def * 2.5, 1), step=1.0, group="Neck", label="Neck length (mm)")
+    bore_expr, bp = _maybe_bore(rng, "neck", min_ext, "Neck", prob=0.8,
+                                label="Neck bore diameter (mm)")
+    params.update(bp)
+    ops.append(AttachOp(profile=prof, length=ref("neck_l"), bore_d=bore_expr, face=">Z"))
+
+    if tier >= 3:
+        op, p = sample_chamfer(rng, edge_selector=">Z")
+        params.update(p)
+        ops.append(op)
+
+    return PartIR(
+        id=_make_id(seed, "compound", index),
+        params=params, operations=ops,
+        metadata=PartMetadata(seed=seed, generator_version=GENERATOR_VERSION,
+                              family="compound", tier=tier, op_count=len(ops)),
+    )
+
+
 # Compound archetype sampling weights; overridable via config.
 DEFAULT_COMPOUND_ARCHETYPE_WEIGHTS = {
-    "manifold":         0.22,
-    "stepped_shaft":    0.20,
-    "polygon_standoff": 0.16,
-    "block_tube":       0.16,
-    "pedestal":         0.14,
-    "block_tab":        0.12,
+    "manifold":         0.20,
+    "stepped_shaft":    0.18,
+    "lofted_adapter":   0.12,
+    "polygon_standoff": 0.14,
+    "block_tube":       0.14,
+    "pedestal":         0.12,
+    "block_tab":        0.10,
 }
 
 _COMPOUND_SAMPLERS = {
@@ -2037,6 +2110,7 @@ _COMPOUND_SAMPLERS = {
     "manifold":         _sample_manifold,
     "stepped_shaft":    _sample_stepped_shaft,
     "polygon_standoff": _sample_polygon_standoff,
+    "lofted_adapter":   _sample_lofted_adapter,
 }
 
 
@@ -2052,6 +2126,7 @@ def sample_compound(rng: Random, tier: int, config: dict, seed: int, index: int)
       block_tube        block + a single side spigot (round/polygon/slot/rect)
       pedestal          flat base plate + a column (round or polygonal) on top
       block_tab         block + flat mounting tab with bolt holes
+      lofted_adapter    lofted square/round reducer + a bored neck (hopper/nozzle)
 
     Archetype weights come from ``[families.compound] archetype_weights`` in the
     config, falling back to ``DEFAULT_COMPOUND_ARCHETYPE_WEIGHTS``.

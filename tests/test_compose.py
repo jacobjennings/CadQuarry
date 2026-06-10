@@ -162,6 +162,31 @@ class TestCompose(unittest.TestCase):
             self.assertIn("IsoThread(major_diameter=", code)
             self.assertIn("external=False", code)
 
+    def test_lofted_adapter_archetype(self):
+        from cadquarry.compose import _COMPOUND_SAMPLERS, _sample_lofted_adapter
+        from random import Random
+        self.assertIn("lofted_adapter", _COMPOUND_SAMPLERS)
+        for tier in (1, 2, 3):
+            part = _sample_lofted_adapter(Random(4), tier=tier, config={}, seed=4, index=0)
+            self.assertEqual(part.metadata.family, "compound")
+            op_types = [op.type for op in part.operations]
+            self.assertEqual(op_types[0], "loft")        # lofted base
+            self.assertIn("attach", op_types)            # unioned neck
+            code = emit_source(part)
+            self.assertTrue(_valid_python(code))
+
+    def test_block_tier3_second_fillet_off_by_default(self):
+        """The tier-3 block's redundant |Z fillet is opt-in (keeps defaults valid)."""
+        from cadquarry.compose import sample_block
+        from random import Random
+        saw = False
+        for seed in range(30):
+            part = sample_block(Random(seed), tier=3, config={}, seed=seed, index=0)
+            if "filleted2" in part.params:
+                saw = True
+                self.assertFalse(part.params["filleted2"].default)
+        self.assertTrue(saw, "tier-3 block never added a second fillet param")
+
     def test_block_tier3_can_angle_side_holes(self):
         """Some tier-3 blocks drill an angled hole into a side face."""
         from cadquarry.compose import sample_block

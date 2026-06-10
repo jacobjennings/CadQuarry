@@ -124,7 +124,8 @@ tier_max      = 3
 #   block_tube       — block + a single side spigot (round/polygon/slot/rect)
 #   pedestal         — flat base plate + a round/polygon column on top
 #   block_tab        — block + flat mounting tab with bolt holes
-archetype_weights = { manifold = 0.22, stepped_shaft = 0.20, polygon_standoff = 0.16, block_tube = 0.16, pedestal = 0.14, block_tab = 0.12 }
+#   lofted_adapter   — lofted square/round reducer + a bored neck (hopper/nozzle)
+archetype_weights = { manifold = 0.20, stepped_shaft = 0.18, lofted_adapter = 0.12, polygon_standoff = 0.14, block_tube = 0.14, pedestal = 0.12, block_tab = 0.10 }
 
 [families.enclosure]
 width_min          = 30.0
