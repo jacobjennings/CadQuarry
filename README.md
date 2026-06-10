@@ -25,7 +25,7 @@ onto the platforms instead of needing prose:
 | **Full corpus** | [Hugging Face dataset](https://huggingface.co/datasets/jacobjennings/cadquarry) | CC0-1.0 | a nested size ladder (1k → 100k, each size a prefix of the next), browsable in the dataset viewer, `load_dataset`-able |
 
 The published corpus is a **convenience artifact** — the generator plus the
-seed list ([`seeds/v3.toml`](seeds/v3.toml)) is the canonical source. Everything
+seed list ([`seeds/seeds.toml`](seeds/seeds.toml)) is the canonical source. Everything
 is reproducible bit-for-bit from a seed.
 
 ### 🔎 Live in-browser preview (no install)
@@ -200,7 +200,7 @@ to the dedup tolerance (3 significant figures), so dedup and seed-reproducible
 *selection* hold. Exact STEP/STL **bytes**, however, come out of a numeric
 NURBS/thread solver and are not guaranteed bit-identical across platforms or
 library versions the way the primitive families are — pin the `mech` versions
-(recorded in [`seeds/v3.toml`](seeds/v3.toml)) if byte-level reproduction
+(recorded in [`seeds/seeds.toml`](seeds/seeds.toml)) if byte-level reproduction
 matters.
 
 ---
@@ -418,7 +418,7 @@ good source.
 ## Build everything in one pass — nested-prefix ladder
 
 The published size ladder (`[[publish.corpus]]` in
-[`seeds/v3.toml`](seeds/v3.toml)) is **one base corpus, sliced**. Generation is a
+[`seeds/seeds.toml`](seeds/seeds.toml)) is **one base corpus, sliced**. Generation is a
 deterministic prefix stream — each attempt is a pure function of `(seed, index)`
 and the accept/dedup decision runs in strict attempt order — so the first *N*
 accepted parts of the base **are** the `count=N` corpus. Every size tag
@@ -572,14 +572,14 @@ Each content config is also published limited to **complexity tiers 0–2**
 `<tag>-t0-2-full` — for consumers who want to exclude the most complex (tier-3)
 parts. The unlabeled configs include all tiers (0–3).
 
-Available `<tag>` sizes (from [`seeds/v3.toml`](seeds/v3.toml)): `1k`, `2k`,
+Available `<tag>` sizes (from [`seeds/seeds.toml`](seeds/seeds.toml)): `1k`, `2k`,
 `5k`, `10k`, `20k`, `50k`, `100k` — extensible to larger sizes by growing the
 base (`cadquarry build --extend-to N`). For example,
 `load_dataset("jacobjennings/cadquarry", "50k-stl")` or
 `load_dataset("jacobjennings/cadquarry", "50k-t0-2")`.
 
 Every part is reproducible bit-for-bit from its seed, so the published data is a
-**convenience artifact** — the generator plus `seeds/v3.toml` is the canonical
+**convenience artifact** — the generator plus `seeds/seeds.toml` is the canonical
 source.
 
 ---
@@ -604,7 +604,7 @@ cadquarry build_sample build publish
 - `cadquarry build` — generates **and** exports the single **base** corpus that
   the size ladder slices from, into `datasets/base/` with STEP + STL + renders.
   It uses the seed list matching the current generator version
-  (`seeds/v3.toml`) and regenerates if the existing base was built by an older
+  (`seeds/seeds.toml`) and regenerates if the existing base was built by an older
   generator (this is the slow part; the base + rendering takes a while).
   `--extend-to N` builds or grows the base to N parts, reusing everything already
   on disk; `--force` rebuilds unconditionally.
@@ -632,7 +632,7 @@ cadquarry publish --sizes 1k --out /data/cadquarry
 **Secrets.** Publishing reads your token from the `HF_TOKEN` environment
 variable (or a prior `huggingface-cli login`) and **never prints, logs, or
 commits it**. Nothing secret is stored in the repo, so it works as-is for anyone
-with their own HF account. The ladder is defined in the active `seeds/v*.toml`:
+with their own HF account. The ladder is defined in the active `seeds/seeds.toml`:
 the shared `base_seed` and `mode = "prefix"` under `[publish]`, and the per-size
 prefix lengths under `[[publish.corpus]]`.
 

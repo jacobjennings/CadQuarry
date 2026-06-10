@@ -1,0 +1,97 @@
+# CadQuarry seed list (single, consolidated)
+#
+# Everything reproducible is pinned here.  There are exactly TWO seeds, and
+# within each, only the part COUNT changes between entries:
+#
+#   * sample_seed — the canonical sample corpora ([[corpus]]): `smoke` (100) and
+#     `demo-1k` (1000, the corpus committed under sample/demo-1k/ and served on
+#     GitHub Pages).
+#   * base_seed   — the published Hugging Face size ladder ([publish]): 1k…100k.
+#
+# Generation is a deterministic prefix stream — each attempt is a pure function
+# of (seed, index) and the accept/dedup decision runs in strict attempt order —
+# so the first N accepted parts of a run ARE the count=N corpus.  Every size is
+# therefore a `head -N` slice of the same base, and a base can be EXTENDED to
+# larger sizes later without redoing work (`cadquarry build --extend-to N`).
+#
+# Reproduce any corpus:
+#   cadquarry generate --seed <seed> --count <count> \
+#       --config configs/default.toml --out <dir>
+#
+# The `gear` / `threaded` / `tapped` families require the `mech` extra:
+#   uv pip install -e ".[mech]"
+
+[meta]
+generator_version = "0.6.0"   # cadquarry.__version__ this list targets
+signature_version = 2         # geometry-signature definition (filter.SIGNATURE_VERSION)
+config            = "configs/default.toml"
+data_license      = "CC0-1.0"
+sample_seed       = 1234       # all [[corpus]] sample sizes are prefixes of this
+
+# Pinned versions of the optional `mech` stack used by the gear / threaded /
+# tapped families.  Recorded for reproducibility; py_gearworks has no PyPI
+# release and is pinned to a git commit.
+[meta.mech]
+cadquery     = ">=2.5.2"      # OCP 7.8 line (cadquery-ocp 7.8.1.x)
+build123d    = ">=0.10.0"
+bd_warehouse = ">=0.2.0"
+py_gearworks = "git+https://github.com/GarryBGoode/py_gearworks@2fc2a13d82a9997a65f30c870498f0bb3be62318"
+
+# ---------------------------------------------------------------------------
+# Canonical sample corpora — prefixes of `sample_seed` (only count varies).
+# `demo-1k` is the corpus committed under sample/demo-1k/ and served on Pages;
+# `smoke` is its first 100 parts.
+# ---------------------------------------------------------------------------
+[[corpus]]
+name  = "smoke"
+count = 100
+
+[[corpus]]
+name  = "demo-1k"
+count = 1000
+
+# ---------------------------------------------------------------------------
+# Published HuggingFace size ladder — NESTED PREFIX MODE
+# ---------------------------------------------------------------------------
+# All sizes are prefixes of ONE base corpus (shared base_seed):
+#   * `cadquarry build` generates/exports/renders only the base once; every
+#     smaller tag is a zero-cost `head -N` slice of it at publish time.
+#   * Grow the dataset without redoing work: `cadquarry build --extend-to N`
+#     appends only new parts; existing parts/STEP/STL/renders are reused, and
+#     smaller tags stay byte-identical as the base grows.
+
+[publish]
+repo_id   = "cadquarry"
+mode      = "prefix"      # tags are prefixes of one base corpus (shared base_seed)
+base_seed = 220220        # the single seed all ladder sizes are drawn from
+base_tag  = "base"        # base corpus dir name under the build root
+# base_count is the largest tag below (currently 100k). Raise it (or add a
+# larger tag) and run `cadquarry build --extend-to N` to grow the dataset.
+
+[[publish.corpus]]
+tag = "1k"
+count = 1000
+
+[[publish.corpus]]
+tag = "2k"
+count = 2000
+
+[[publish.corpus]]
+tag = "5k"
+count = 5000
+
+[[publish.corpus]]
+tag = "10k"
+count = 10000
+
+[[publish.corpus]]
+tag = "20k"
+count = 20000
+
+[[publish.corpus]]
+tag = "50k"
+count = 50000
+
+[[publish.corpus]]
+tag = "100k"
+count = 100000

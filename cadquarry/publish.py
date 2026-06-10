@@ -15,8 +15,9 @@ Design goals
 * **No secrets in the repo.** The HF token is read from the environment
   (``HF_TOKEN``, falling back to ``HUGGING_FACE_HUB_TOKEN``) or a prior
   ``huggingface-cli login``. It is never printed, logged, or written to disk.
-* **Reproducible.** Every size is pinned to a ``(count, seed)`` in the active
-  ``seeds/v*.toml`` under ``[[publish.corpus]]``.
+* **Reproducible.** Every size is a prefix length of one base corpus (shared
+  ``base_seed``), pinned in ``seeds/seeds.toml`` under ``[publish]`` /
+  ``[[publish.corpus]]``.
 * **Six content variants per corpus** × **two complexity-tier slices** so
   consumers fetch exactly the columns/tiers they need.
 
@@ -63,10 +64,15 @@ class PublishError(Exception):
 
 def default_seeds_path() -> Path:
     """
-    The published seed list matching the current generator version: the
-    ``seeds/v*.toml`` whose ``[meta].generator_version == cadquarry.__version__``,
-    else the highest-numbered list (falling back to ``v1.toml``).
+    The active seed list: the single consolidated ``seeds/seeds.toml``.  Falls
+    back to a legacy version-pinned ``seeds/v*.toml`` (matched by
+    ``[meta].generator_version``, else the highest-numbered) only if no
+    consolidated list is present.
     """
+    single = SEEDS_DIR / "seeds.toml"
+    if single.exists():
+        return single
+
     def _vnum(p: Path) -> int:
         digits = "".join(ch for ch in p.stem if ch.isdigit())
         return int(digits) if digits else 0
@@ -85,7 +91,7 @@ def default_seeds_path() -> Path:
         return match
     if candidates:
         return candidates[-1]
-    return SEEDS_DIR / "v1.toml"
+    return single
 
 
 def load_publish_ladder(seeds_path: Path | None = None) -> tuple[str, dict[str, dict]]:

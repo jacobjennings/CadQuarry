@@ -84,11 +84,7 @@ def _add_render_flags(p: argparse.ArgumentParser, default_views: str) -> None:
 
 
 def _default_seeds_path() -> Path:
-    """
-    The published seed list matching the current generator version (the
-    ``seeds/v*.toml`` whose ``[meta].generator_version`` equals
-    ``cadquarry.__version__``). Shared with the publisher.
-    """
+    """The active seed list (``seeds/seeds.toml``); shared with the publisher."""
     from .publish import default_seeds_path
     return default_seeds_path()
 
@@ -130,14 +126,20 @@ def _load_publish_meta(seeds_path: Path) -> dict:
 
 
 def _load_corpus_list(seeds_path: Path) -> dict[str, dict]:
-    """Return {name: {"seed", "count", "config"}} from the [[corpus]] entries."""
+    """
+    Return {name: {"seed", "count", "config"}} from the [[corpus]] entries.  The
+    canonical sample corpora share one ``[meta].sample_seed`` (only count varies,
+    so each size is a prefix of the next); a per-entry ``seed`` still overrides.
+    """
     with open(seeds_path, "rb") as f:
         data = tomllib.load(f)
-    default_config = data.get("meta", {}).get("config")
+    meta = data.get("meta", {})
+    default_config = meta.get("config")
+    sample_seed = meta.get("sample_seed")
     corpora: dict[str, dict] = {}
     for entry in data.get("corpus", []):
         corpora[str(entry["name"])] = {
-            "seed": int(entry["seed"]),
+            "seed": int(entry.get("seed", sample_seed)),
             "count": int(entry["count"]),
             "config": entry.get("config", default_config),
         }
@@ -1082,7 +1084,7 @@ def build_parser() -> argparse.ArgumentParser:
     bld.add_argument("--formats", default="step,stl,render", help="Export formats per corpus (default: step,stl,render)")
     bld.add_argument("--no-export", action="store_true", help="Generate only; skip geometry export")
     bld.add_argument("--config", default=None, metavar="TOML", help="Config file (default: configs/default.toml)")
-    bld.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: the seeds/v*.toml matching this generator version)")
+    bld.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: seeds/seeds.toml)")
     bld.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export (hang detection; generous for slow gear/threaded parts)")
     bld.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
     bld.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
@@ -1101,7 +1103,7 @@ def build_parser() -> argparse.ArgumentParser:
     smp.add_argument("--out", default=None, metavar="DIR", help="Output dir (default: sample/<name>/ in the repo)")
     smp.add_argument("--formats", default="step,stl,render", help="Export formats (default: step,stl,render)")
     smp.add_argument("--config", default=None, metavar="TOML", help="Config file (default: the corpus entry's config)")
-    smp.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: the seeds/v*.toml matching this generator version)")
+    smp.add_argument("--seeds", default=None, metavar="TOML", help="Seed list (default: seeds/seeds.toml)")
     smp.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export")
     smp.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
     # The Pages preview gallery references the full eight-view set, so keep it.
