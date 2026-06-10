@@ -549,6 +549,18 @@ calls; a per-part color is hashed deterministically from its id so renders are
 stable regardless of order or parallelism. Rendering parallelizes across
 processes that share one GPU.
 
+\textbf{Multiple output passes.} The geometry pass' G-buffer is reused to emit
+four \emph{legibility-first} image variants per view at almost no extra cost, so
+each viewpoint yields a small multi-modal stack rather than a single picture:
+the \textbf{shaded} thumbnail above; a \textbf{normal} map (view-space normals
+encoded as RGB); a \textbf{depth} map (linearized view depth, near bright); and
+an \textbf{edge} overlay (creases, silhouette and depth steps as black lines on
+a transparent background, i.e.\ a technical-drawing layer, with a tunable
+crispness so noisy real scans can be softened). The shaded pass is the default
+and keeps the bare \code{\{view\}.png} name; the others are written as
+\code{\{view\}\_\{pass\}.png} siblings and, when present, surface as extra
+\code{render\_\{view\}\_\{normal,depth,edge\}} image columns.
+
 % ===========================================================================
 \section{The Corpus: Records, Distribution, and Formats}\label{sec:corpus}
 % ===========================================================================
@@ -578,7 +590,7 @@ configs (\cref{tab:configs}).
 \multicolumn{2}{@{}l}{\textit{\color{accentd}Geometry} \;(geometry configs only)}\\
 \code{step\_bytes} & STEP B-rep solid.\\
 \code{stl\_bytes}  & Triangulated STL mesh.\\
-\code{render\_*}   & The eight fixed-viewpoint GPU renders (\cref{sec:render}).\\
+\code{render\_*}   & The eight fixed-viewpoint GPU renders---shaded by default, with optional normal / depth / edge passes per view (\cref{sec:render}).\\
 \addlinespace
 \multicolumn{2}{@{}l}{\textit{\color{accentd}Provenance \& structure}}\\
 \code{part\_id}, \code{family}, \code{tier} & Stable identifier, part family, and complexity tier.\\
@@ -776,8 +788,7 @@ The multi-format ladder supports both lightweight code-only and full-geometry
 workflows.
 
 \textbf{Limitations.} The vocabulary, while broad, is mechanical-part oriented and
-does not cover free-form/organic surfaces; tapered pipe threads (NPT/BSPT) are a
-documented future addition, not a present capability; solver-built families are
+does not cover free-form/organic surfaces; solver-built families are
 byte-reproducible only against pinned \code{mech} versions
 (\cref{sec:mech}); and the distribution reflects our sampling choices, which
 consumers should re-weight as needed via config. The procedural design space is
