@@ -95,12 +95,35 @@ def load_publish_ladder(seeds_path: Path | None = None) -> tuple[str, dict[str, 
         data = tomllib.load(f)
     pub = data.get("publish", {})
     repo_id = pub.get("repo_id", "cadquarry")
+    base_seed = pub.get("base_seed")
     ladder: dict[str, dict] = {}
     for entry in pub.get("corpus", []):
-        ladder[str(entry["tag"])] = {"count": int(entry["count"]), "seed": int(entry["seed"])}
+        # Prefix-mode seed lists omit the per-tag seed (all share base_seed).
+        ladder[str(entry["tag"])] = {
+            "count": int(entry["count"]),
+            "seed": int(entry.get("seed", base_seed)),
+        }
     if not ladder:
         raise PublishError(f"No [[publish.corpus]] entries found in {seeds_path}")
     return repo_id, ladder
+
+
+def load_publish_meta(seeds_path: Path | None = None) -> dict:
+    """
+    Return ``{mode, base_seed, base_tag, base_count}`` for the active seed list.
+    ``mode`` is ``"prefix"`` (sizes are nested prefixes of one base corpus, so
+    every tag packs as a length-N slice of the base) or ``"independent"``.
+    """
+    seeds_path = seeds_path or default_seeds_path()
+    with open(seeds_path, "rb") as f:
+        pub = tomllib.load(f).get("publish", {})
+    counts = [int(e["count"]) for e in pub.get("corpus", [])]
+    return {
+        "mode": pub.get("mode", "independent"),
+        "base_seed": pub.get("base_seed"),
+        "base_tag": pub.get("base_tag", "base"),
+        "base_count": max(counts) if counts else 0,
+    }
 
 
 def tag_to_int(tag: str) -> int:
@@ -175,10 +198,14 @@ def pack_variant(
     include_stl: bool,
     include_step: bool,
     render_passes: tuple[str, ...] = ("shaded",),
+    limit: int | None = None,
 ) -> tuple[str, str] | None:
     """
     Pack one (tier slice × content variant) into the upload tree. Returns
     (config_name, relative_data_file), or None if required geometry is missing.
+
+    ``limit`` packs only the first N parts of ``corpus_dir`` (prefix-ladder mode:
+    every size tag is a length-N slice of one shared base corpus).
     """
     config_name = f"{tag}{tier_part}{suffix}"
 
@@ -200,7 +227,8 @@ def pack_variant(
 
     if not suffix:
         out = dest / "corpus.jsonl"
-        n = pack_corpus_jsonl(corpus_dir, out, include_source=True, tier_max=tier_max)
+        n = pack_corpus_jsonl(corpus_dir, out, include_source=True,
+                              tier_max=tier_max, limit=limit)
         data_file = f"{rel_prefix}corpus.jsonl"
     else:
         fname = f"corpus{suffix}.parquet"
@@ -213,6 +241,7 @@ def pack_variant(
             include_step=include_step,
             tier_max=tier_max,
             render_passes=render_passes,
+            limit=limit,
         )
         data_file = f"{rel_prefix}{fname}"
 
@@ -612,6 +641,8 @@ def publish(
     upload without re-packing the (large) Parquet variants.
     """
     default_repo, ladder = load_publish_ladder()
+    meta = load_publish_meta()
+    prefix_mode = meta["mode"] == "prefix"
 
     if all_sizes or not sizes:
         tags = list(ladder)
@@ -687,7 +718,13 @@ def publish(
             continue
 
         print(f"\n=== {tag}: {spec['count']:,} parts (seed {spec['seed']}) ===")
-        corpus_dir = resolve_corpus_dir(corpus_root, tag, spec["count"])
+        # Prefix mode: every tag is a length-N slice of the one base corpus.
+        if prefix_mode:
+            corpus_dir = resolve_corpus_dir(corpus_root, meta["base_tag"], spec["count"])
+            limit: int | None = spec["count"]
+        else:
+            corpus_dir = resolve_corpus_dir(corpus_root, tag, spec["count"])
+            limit = None
 
         # Which render passes this corpus actually has on disk (shaded + any
         # normal/depth/edge variants), so render columns/card schema match.
@@ -704,6 +741,7 @@ def publish(
                     tier_subdir, tier_part, tier_max,
                     sfx, inc_r, inc_s, inc_sp,
                     render_passes=corpus_passes,
+                    limit=limit,
                 )
                 if result is not None:
                     cfg, data_file = result

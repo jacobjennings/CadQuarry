@@ -80,54 +80,55 @@ config      = "configs/default.toml"
 description = "Large corpus for downstream dataset use."
 
 # ---------------------------------------------------------------------------
-# Published HuggingFace size ladder
+# Published HuggingFace size ladder — NESTED PREFIX MODE
 # ---------------------------------------------------------------------------
-# These are the corpora `cadquarry publish` packs and uploads as
-# configs of the HuggingFace dataset.  Each `tag` becomes a load_dataset
-# config name; `seed` + `count` + the generator version pin it bit-for-bit.
+# All sizes are prefixes of ONE deterministic base corpus (shared base_seed).
+# The generator's attempt stream is a pure function of (seed, index) and dedup
+# runs in strict attempt order, so the first N accepted parts of the base ARE
+# the count=N corpus.  Consequences:
+#   * `cadquarry build` generates/exports/renders only the base once; every
+#     smaller tag is a zero-cost `head -N` slice of it at publish time.
+#   * The base can be EXTENDED to larger sizes later without redoing work:
+#     `cadquarry build --extend-to 500000` replays the attempt stream from the
+#     recorded high-water mark and appends only the new parts (existing parts,
+#     STEP, STL, and renders are reused untouched).  Smaller tags stay
+#     byte-identical as the base grows; only new larger sizes appear.
 
 [publish]
 # Default destination dataset name. With no "user/" namespace it resolves to
 # "<your-hf-username>/cadquarry" from your token, so this works for anyone.
 # Override with --repo-id or the CADQUARRY_HF_REPO env var.
-repo_id = "cadquarry"
+repo_id   = "cadquarry"
+mode      = "prefix"      # tags are prefixes of one base corpus (shared base_seed)
+base_seed = 220220        # the single seed all sizes are drawn from
+base_tag  = "base"        # base corpus dir name under the build root
+# base_count is the largest tag below (currently 100k). Raise it (or add a
+# larger tag) and run `cadquarry build --extend-to N` to grow the dataset.
 
 [[publish.corpus]]
 tag = "1k"
 count = 1000
-seed = 1234
 
 [[publish.corpus]]
 tag = "2k"
 count = 2000
-seed = 2468
 
 [[publish.corpus]]
 tag = "5k"
 count = 5000
-seed = 50500
 
 [[publish.corpus]]
 tag = "10k"
 count = 10000
-seed = 20260610
 
 [[publish.corpus]]
 tag = "20k"
 count = 20000
-seed = 200200
 
 [[publish.corpus]]
 tag = "50k"
 count = 50000
-seed = 770077
 
 [[publish.corpus]]
 tag = "100k"
 count = 100000
-seed = 100100
-
-[[publish.corpus]]
-tag = "200k"
-count = 200000
-seed = 220220

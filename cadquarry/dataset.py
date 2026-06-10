@@ -39,6 +39,13 @@ class DatasetWriter:
         self._records: list[dict[str, Any]] = []
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
+    def preload(self, records: list[dict[str, Any]]) -> None:
+        """
+        Seed the writer with already-accepted records (in accept order) so a
+        resumed/extended generation rewrites the manifest as existing-then-new.
+        """
+        self._records = list(records)
+
     def add_record(
         self,
         meta: dict[str, Any],
@@ -57,14 +64,19 @@ class DatasetWriter:
             record["geometry_signature"] = geo_signature
         self._records.append(record)
 
-    def finalize(self) -> Path:
-        """Write manifest.jsonl and DATASET_CARD.md.  Returns manifest path."""
+    def finalize(self, attempted: int | None = None) -> Path:
+        """
+        Write manifest.jsonl, DATASET_CARD.md, and (when ``attempted`` is given)
+        state.json — the resume cursor.  Returns the manifest path.
+        """
         manifest_path = self.out_dir / "manifest.jsonl"
         with manifest_path.open("w", encoding="utf-8") as f:
             for rec in self._records:
                 f.write(json.dumps(rec) + "\n")
 
         self._write_dataset_card()
+        if attempted is not None:
+            write_state(self.out_dir, self.seed, len(self._records), attempted)
         return manifest_path
 
     def _write_dataset_card(self) -> None:
@@ -123,6 +135,36 @@ class DatasetWriter:
         (self.out_dir / "DATASET_CARD.md").write_text(card, encoding="utf-8")
 
 
+STATE_FILE = "state.json"
+
+
+def write_state(out_dir: Path, seed: int, accepted: int, attempted: int) -> None:
+    """
+    Persist the resume cursor for a corpus: the seed, generator version, the
+    number of accepted parts, and the high-water *attempt* index reached.  A
+    later ``generate --extend`` replays the deterministic attempt stream from
+    ``attempted`` so the existing parts are never recomputed.
+    """
+    state = {
+        "seed": seed,
+        "generator_version": __version__,
+        "accepted": accepted,
+        "attempted": attempted,
+    }
+    (Path(out_dir) / STATE_FILE).write_text(json.dumps(state, indent=2), encoding="utf-8")
+
+
+def load_state(dataset_dir: Path) -> dict[str, Any] | None:
+    """Load the resume cursor written by :func:`write_state`, or None if absent."""
+    path = Path(dataset_dir) / STATE_FILE
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
 def load_manifest(dataset_dir: Path) -> list[dict[str, Any]]:
     """Load all records from manifest.jsonl."""
     path = dataset_dir / "manifest.jsonl"
@@ -153,6 +195,7 @@ def pack_corpus_jsonl(
     out_path: Path,
     include_source: bool = True,
     tier_max: int | None = None,
+    limit: int | None = None,
 ) -> int:
     """
     Flatten a corpus directory into a single self-contained JSONL file.
@@ -167,9 +210,12 @@ def pack_corpus_jsonl(
     and source (the full .py text, when ``include_source``).
 
     ``tier_max`` (inclusive) drops any record whose complexity ``tier`` exceeds
-    it; ``None`` keeps every tier.
+    it; ``None`` keeps every tier.  ``limit`` keeps only the first N records in
+    manifest (= accept) order — how a nested-prefix size tag slices its base.
     """
     records = load_manifest(dataset_dir)
+    if limit is not None:
+        records = records[:limit]
     out_path.parent.mkdir(parents=True, exist_ok=True)
     n = 0
     with out_path.open("w", encoding="utf-8") as out:
@@ -287,6 +333,7 @@ def pack_corpus_parquet(
     batch_size: int = 512,
     render_views: list[str] | None = None,
     render_passes: tuple[str, ...] = ("shaded",),
+    limit: int | None = None,
 ) -> int:
     """
     Pack a corpus into a single Parquet file.
@@ -321,6 +368,8 @@ def pack_corpus_parquet(
         ) from exc
 
     records = load_manifest(dataset_dir)
+    if limit is not None:
+        records = records[:limit]
     renders_base = dataset_dir / "renders"
     geo_base = dataset_dir / "geometry"
 

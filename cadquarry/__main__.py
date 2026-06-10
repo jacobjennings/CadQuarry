@@ -94,16 +94,39 @@ def _default_seeds_path() -> Path:
 
 
 def _load_publish_ladder(seeds_path: Path) -> dict[str, dict]:
-    """Return {tag: {"count": int, "seed": int}} from [[publish.corpus]]."""
+    """
+    Return {tag: {"count": int, "seed": int}} from [[publish.corpus]].  In
+    ``mode = "prefix"`` seed lists the per-tag seed defaults to ``base_seed``
+    (all sizes are prefixes of one base corpus).
+    """
     with open(seeds_path, "rb") as f:
         data = tomllib.load(f)
+    pub = data.get("publish", {})
+    base_seed = pub.get("base_seed")
     ladder: dict[str, dict] = {}
-    for entry in data.get("publish", {}).get("corpus", []):
+    for entry in pub.get("corpus", []):
         ladder[str(entry["tag"])] = {
             "count": int(entry["count"]),
-            "seed": int(entry["seed"]),
+            "seed": int(entry.get("seed", base_seed)),
         }
     return ladder
+
+
+def _load_publish_meta(seeds_path: Path) -> dict:
+    """
+    Return the publish-ladder mode metadata: ``{mode, base_seed, base_tag,
+    base_count}``.  ``mode`` is ``"prefix"`` (sizes are nested prefixes of one
+    base corpus) or ``"independent"`` (legacy: each tag its own seed).
+    """
+    with open(seeds_path, "rb") as f:
+        pub = tomllib.load(f).get("publish", {})
+    counts = [int(e["count"]) for e in pub.get("corpus", [])]
+    return {
+        "mode": pub.get("mode", "independent"),
+        "base_seed": pub.get("base_seed"),
+        "base_tag": pub.get("base_tag", "base"),
+        "base_count": max(counts) if counts else 0,
+    }
 
 
 def _load_corpus_list(seeds_path: Path) -> dict[str, dict]:
@@ -171,7 +194,46 @@ def cmd_generate(args: argparse.Namespace) -> int:
     skipped_invalid = 0
     skipped_dup = 0
 
-    print(f"CadQuarry v{__version__} — generating {count} parts (seed={seed})")
+    # --extend: resume an existing corpus and append up to the new (larger)
+    # --count.  The attempt stream is a pure function of (seed, i) and dedup runs
+    # in strict attempt order, so replaying from the recorded high-water attempt
+    # index with the existing dedup state appends parts that are bit-identical to
+    # a from-scratch count=N run — the existing parts are never recomputed.
+    if getattr(args, "extend", False):
+        from .dataset import load_manifest, load_state
+        from .filter import GeometrySignature
+
+        state = load_state(out_dir)
+        records = load_manifest(out_dir)
+        if state is None or not records:
+            print(f"error: --extend given but no resumable corpus in {out_dir} "
+                  f"(need manifest.jsonl + state.json)", file=sys.stderr)
+            return 1
+        if not getattr(args, "force", False):
+            if int(state.get("seed", seed)) != seed:
+                print(f"error: existing corpus seed {state.get('seed')} != {seed}; "
+                      f"refusing to extend (use --force to override)", file=sys.stderr)
+                return 1
+            if str(state.get("generator_version")) != __version__:
+                print(f"error: existing corpus generator {state.get('generator_version')} "
+                      f"!= {__version__}; refusing to extend (use --force)", file=sys.stderr)
+                return 1
+        for rec in records:
+            gs = rec.get("geometry_signature")
+            geo = GeometrySignature.from_dict(gs) if gs else None
+            if rec.get("ir_hash"):
+                dedup.register(rec["ir_hash"], geo)
+        writer.preload(records)
+        accepted = len(records)
+        attempted = int(state.get("attempted", accepted))
+        if accepted >= count:
+            print(f"Corpus in {out_dir} already has {accepted} parts "
+                  f"(>= target {count}); nothing to do.")
+            return 0
+        print(f"CadQuarry v{__version__} — extending {out_dir} from {accepted} "
+              f"to {count} parts (seed={seed})")
+    else:
+        print(f"CadQuarry v{__version__} — generating {count} parts (seed={seed})")
     print(f"Output: {out_dir}")
     if no_exec:
         print("  (--no-exec: skipping execution validation)")
@@ -189,6 +251,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
     # of time, in parallel.  Execution results are pure functions of the source,
     # so this is bit-for-bit identical to the old sequential path — only faster.
     pbar = progress_bar(total=count, desc="  generate", unit="part")
+    if accepted:
+        pbar.update(accepted)  # extend: bar starts at the preloaded count
 
     def accept_one(part, geo_sig) -> None:
         nonlocal accepted
@@ -292,7 +356,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
             pool.close()
 
     pbar.close()
-    manifest = writer.finalize()
+    manifest = writer.finalize(attempted=attempted)
     print(
         f"\nDone. {accepted} parts written to {out_dir}\n"
         f"  attempts={attempted}  invalid={skipped_invalid}  duplicates={skipped_dup}\n"
@@ -304,6 +368,93 @@ def cmd_generate(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 # build — generate (and export) every corpus in the seed ladder in one pass
 # ---------------------------------------------------------------------------
+
+def _corpus_state(out_dir: Path) -> tuple[int, str | None]:
+    """Return (existing part count, stale generator version or None) for a corpus dir."""
+    manifest = out_dir / "manifest.jsonl"
+    if not manifest.exists():
+        return 0, None
+    lines = manifest.open(encoding="utf-8").read().splitlines()
+    stale = None
+    if lines:
+        try:
+            gv = json.loads(lines[0]).get("generator_version")
+            if gv != __version__:
+                stale = gv
+        except Exception:
+            pass
+    return len(lines), stale
+
+
+def _build_prefix_base(args: argparse.Namespace, meta: dict, ladder: dict) -> int:
+    """
+    Build (or grow) the single base corpus that every size tag is a prefix of.
+    ``--extend-to N`` sets the target part count (for an initial build or to
+    grow an existing base); a bare build targets the largest ladder tag.
+    """
+    from .export import export_corpus_geometry
+
+    base_tag = meta["base_tag"]
+    base_seed = meta["base_seed"]
+    target = getattr(args, "extend_to", None) or meta["base_count"]
+    out_dir = Path(args.out) / base_tag
+    do_export = not args.no_export
+    formats = [f.strip() for f in args.formats.split(",")] if do_export else None
+
+    print(
+        f"CadQuarry v{__version__} — prefix ladder: building base corpus "
+        f"'{base_tag}' to {target:,} parts (seed {base_seed}) -> {out_dir}"
+    )
+    if do_export:
+        print(f"  export formats: {formats}")
+
+    existing_n, stale = _corpus_state(out_dir)
+    skip_gen = False
+    extend = False
+    if stale is not None and not args.force:
+        print(f"  · regenerating from scratch (existing base is generator "
+              f"{stale}, current is {__version__})")
+    elif existing_n >= target and not args.force:
+        print(f"  · reusing existing base ({existing_n:,} parts >= {target:,})")
+        skip_gen = True
+    elif existing_n > 0:
+        print(f"  · extending base from {existing_n:,} to {target:,} parts "
+              f"(reusing existing parts + geometry)")
+        extend = True
+
+    if not skip_gen:
+        gen_args = argparse.Namespace(
+            count=target, seed=base_seed, out=str(out_dir),
+            config=args.config, timeout=args.timeout, no_exec=False,
+            workers=args.workers, family=None, tier=None, verbose=args.verbose,
+            extend=extend, force=args.force,
+        )
+        if cmd_generate(gen_args) != 0:
+            print("error: base generation failed", file=sys.stderr)
+            return 1
+
+    if do_export:
+        print(f"  · exporting {formats} (incremental — skips already-exported parts) …")
+        try:
+            counts = export_corpus_geometry(
+                out_dir, formats=formats, n_workers=args.workers,
+                timeout=args.timeout, verbose=args.verbose, **_render_opts(args),
+            )
+            for fmt, cnt in counts.items():
+                print(f"    {fmt}: {cnt} files written")
+        except Exception as exc:
+            print(f"error: base export failed: {exc}", file=sys.stderr)
+            return 1
+
+    sizes = ", ".join(sorted(ladder, key=_tag_to_int))
+    print(
+        f"\nDone. Base corpus '{base_tag}' built at {out_dir}.\n"
+        f"  `cadquarry publish` slices the size ladder ({sizes}) from this one "
+        f"corpus — no per-size rebuild.\n"
+        f"  Grow it later with `cadquarry build --extend-to <N>` (reuses everything)."
+    )
+    return 0
+
 
 def cmd_build(args: argparse.Namespace) -> int:
     from .export import export_corpus_geometry
@@ -317,6 +468,12 @@ def cmd_build(args: argparse.Namespace) -> int:
     if not ladder:
         print(f"error: no [[publish.corpus]] entries in {seeds_path}", file=sys.stderr)
         return 1
+
+    # Prefix-mode ladders are one base corpus + zero-cost slices: build the base
+    # once (optionally growing it with --extend-to) instead of per-tag corpora.
+    meta = _load_publish_meta(seeds_path)
+    if meta["mode"] == "prefix":
+        return _build_prefix_base(args, meta, ladder)
 
     tags = args.sizes or list(ladder)
     unknown = [t for t in tags if t not in ladder]
@@ -907,6 +1064,12 @@ def build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--workers", type=int, default=0, metavar="N", help="Parallel execution workers (0 = auto)")
     gen.add_argument("--family", default=None, help="Force a part family (plate, revolved, block, …)")
     gen.add_argument("--tier", type=int, default=None, help="Force a complexity tier (0-3)")
+    gen.add_argument("--extend", action="store_true",
+                     help="Resume an existing corpus in --out and append parts up to --count "
+                          "(reuses prior parts; replays the deterministic attempt stream)")
+    gen.add_argument("--force", action="store_true",
+                     help="With --extend, proceed even if the existing corpus was made by a "
+                          "different seed or generator version")
     gen.add_argument("--verbose", "-v", action="store_true")
 
     # build
@@ -923,6 +1086,9 @@ def build_parser() -> argparse.ArgumentParser:
     bld.add_argument("--timeout", type=float, default=120.0, metavar="SEC", help="Per-part timeout for generate and export (hang detection; generous for slow gear/threaded parts)")
     bld.add_argument("--workers", type=int, default=0, metavar="N", help="Workers for generation and export (0 = auto)")
     bld.add_argument("--force", action="store_true", help="Regenerate even if a corpus already exists")
+    bld.add_argument("--extend-to", type=int, default=None, metavar="N",
+                     help="Prefix-ladder mode: set the base-corpus target part count "
+                          "(builds or grows the base to N, reusing existing parts)")
     _add_render_flags(bld, default_views="all")
     bld.add_argument("--verbose", "-v", action="store_true")
 

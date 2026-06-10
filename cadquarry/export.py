@@ -373,6 +373,7 @@ def export_corpus_geometry(
     render_views: dict[str, tuple[float, float]] | None = None,
     render_passes: tuple[str, ...] = ("shaded",),
     edge_crispness: float = 0.6,
+    skip_existing: bool = True,
 ) -> dict[str, int]:
     """
     Export geometry for all parts in a dataset directory.
@@ -421,6 +422,34 @@ def export_corpus_geometry(
     run_formats = list(brep)
     if need_stl and "stl" not in run_formats:
         run_formats.append("stl")
+
+    # Incremental export (default): skip parts whose requested artifacts already
+    # exist, so extending a corpus only exports/renders the newly-appended tail.
+    # A part is re-exported if *any* requested artifact is missing, so partial or
+    # interrupted prior exports self-heal.
+    renders_dir = dataset_dir / "renders"
+    pc_dir = dataset_dir / "pointclouds"
+
+    def _needs_export(stem: str) -> bool:
+        if "step" in brep and not (geo_dir / f"{stem}.step").exists():
+            return True
+        if stl_requested and not (geo_dir / f"{stem}.stl").exists():
+            return True
+        if "svg" in brep and not (geo_dir / f"{stem}.svg").exists():
+            return True
+        if "render" in mesh and not (renders_dir / stem).is_dir():
+            return True
+        if "pointcloud" in mesh and not (pc_dir / f"{stem}.ply").exists():
+            return True
+        return False
+
+    if skip_existing:
+        kept = [p for p in py_files if _needs_export(p.stem)]
+        n_skip = len(py_files) - len(kept)
+        if n_skip:
+            print(f"  · skipping {n_skip} parts already exported "
+                  f"({len(kept)} to export)")
+        py_files = kept
 
     geo_dir.mkdir(parents=True, exist_ok=True)
 
