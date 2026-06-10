@@ -184,11 +184,47 @@ def _sample_symmetry(rng: Random, config: dict, family: str) -> str:
 # Family: plate
 # ---------------------------------------------------------------------------
 
+# Inset fraction (of the part dimension) of the hole nearest a corner, per
+# layout — derived from each sampler's construction spacing: corners use a 0.70
+# rect (inset 0.15), grid uses 0.80 (inset 0.10), staggered uses 0.75 (0.125).
+# bolt_circle holes sit on a centred circle and never approach the corners.
+_CORNER_INSET_FRAC = {"corners": 0.15, "grid": 0.10, "staggered": 0.125}
+
+
+def _corner_fillet_clearance(op: Any, params: dict[str, ParamSpec], md: float) -> float | None:
+    """
+    Clearance (mm) from a plate corner to the nearest hole edge, so a following
+    ``|Z`` corner fillet can be kept clear of it.  Returns ``None`` when the
+    layout keeps holes away from the corner vertical edges (bolt circle).
+    """
+    inset = _CORNER_INSET_FRAC.get(getattr(op, "placement", ""), None)
+    if inset is None:
+        return None
+    hd = params["hole_d"].default if "hole_d" in params else 4.0
+    if op.type == "counterbore":
+        reach = (params["cb_d"].default / 2) if "cb_d" in params else hd
+    elif op.type == "countersink":
+        reach = hd                        # countersink outer ≈ 2× clearance dia
+    else:
+        shape = getattr(op, "shape", "round")
+        if shape == "square":
+            reach = hd * 0.71             # half-diagonal of the square cut
+        elif shape == "slot":
+            sl = params.get("hole_slot_len")
+            reach = max(hd, sl.default if sl else hd) / 2
+        else:
+            reach = hd / 2                # round clearance hole
+    return inset * md - reach
+
+
 def sample_plate(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
     """
     Flat rectangular plate with optional holes, fillets, chamfers.
-    Tier 0 → bare plate; Tier 1 → holes; Tier 2 → fillet + hole type variety;
-    Tier 3 → pocket or boss added.
+    Tier 0 → bare plate; Tier 1 → holes; Tier 2 → hole-type variety + a |Z corner
+    fillet or chamfer (clamped to stay clear of the holes); Tier 3 → pocket or boss.
+
+    Wide footprints get proportionally thicker stock so the bounding-box aspect
+    stays under the validity filter's cap instead of being generated and discarded.
     """
     fcfg = config.get("families", {}).get("plate", {})
 
@@ -204,6 +240,14 @@ def sample_plate(rng: Random, tier: int, config: dict, seed: int, index: int) ->
     asp = rng.uniform(asp_lo, asp_hi)
     d_def = round(max(w_lo * 0.5, min(w_hi, w_def / asp)), 1)
     t_def = snap_to_stock_thickness(rng, t_lo, t_hi)
+
+    # Keep the bounding-box aspect under the validity filter's cap (max 20:1) so
+    # wide-thin plates aren't generated only to be discarded — a wide footprint
+    # gets proportionally thicker stock.
+    max_aspect = fcfg.get("max_aspect_for_thickness", 18.0)
+    min_t = max(w_def, d_def) / max_aspect
+    if t_def < min_t:
+        t_def = snap_to_stock_thickness(rng, min_t, max(t_hi, min_t))
 
     params: dict[str, ParamSpec] = {
         "plate_w": ParamSpec(
@@ -260,12 +304,38 @@ def sample_plate(rng: Random, tier: int, config: dict, seed: int, index: int) ->
         ops.append(op)
 
     if tier >= 2:
-        fillet_op, fp = sample_fillet(rng, "plate_w", "plate_d", edge_selector="|Z")
-        params.update(fp)
-        ops.append(fillet_op)
+        # Corner treatment on the vertical (|Z) edges — a fillet or an equivalent
+        # chamfer — kept clear of any corner holes (rounding/chamfering a vertical
+        # edge a nearby hole has broken into fails).  We clamp to the corner-to-
+        # hole clearance and skip it entirely when a large corner cut leaves no
+        # room.  Both target |Z (not >Z), so neither touches the holes' top rims.
+        md = min(w_def, d_def)
+        clearance = _corner_fillet_clearance(ops[-1], params, md) if tier >= 1 else None
+        if clearance is None:
+            f_lo, f_hi = 0.04, 0.12
+        else:
+            f_hi = min(0.12, max(0.0, clearance) * 0.75 / md)
+            f_lo = min(0.04, max(0.02, f_hi * 0.6))
+        if clearance is None or f_hi >= 0.025:
+            if rng.random() < 0.5:
+                op, p = sample_fillet(
+                    rng, "plate_w", "plate_d", edge_selector="|Z",
+                    factor_lo=f_lo, factor_hi=f_hi,
+                )
+            else:
+                d_lo = round(max(0.5, f_lo * md), 1)
+                d_hi = max(d_lo, round(f_hi * md, 1))
+                op, p = sample_chamfer(
+                    rng, dist_lo=d_lo, dist_hi=d_hi, edge_selector="|Z",
+                )
+            params.update(p)
+            ops.append(op)
 
     if tier >= 3:
-        extra = rng.choice(["pocket", "boss", "chamfer"])
+        # Substantive top feature (both robust on a holed plate); the fragile
+        # >Z face chamfer that used to live here was dropped — it chamfered every
+        # hole rim and routinely failed.
+        extra = rng.choice(["pocket", "boss"])
         if extra == "pocket":
             op, p = sample_pocket(
                 rng, "plate_w", "plate_d", "thickness",
@@ -273,12 +343,8 @@ def sample_plate(rng: Random, tier: int, config: dict, seed: int, index: int) ->
             )
             params.update(p)
             ops.append(op)
-        elif extra == "boss":
-            op, p = sample_boss(rng, "thickness", t_def)
-            params.update(p)
-            ops.append(op)
         else:
-            op, p = sample_chamfer(rng, edge_selector=">Z")
+            op, p = sample_boss(rng, "thickness", t_def)
             params.update(p)
             ops.append(op)
 

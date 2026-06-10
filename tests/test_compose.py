@@ -175,6 +175,19 @@ class TestCompose(unittest.TestCase):
             code = emit_source(part)
             self.assertTrue(_valid_python(code))
 
+    def test_plate_bbox_aspect_under_filter_cap(self):
+        """Plate canonical dims stay under the 20:1 bbox cap (no discard waste)."""
+        from cadquarry.compose import sample_plate
+        from random import Random
+        for seed in range(80):
+            for tier in range(4):
+                part = sample_plate(Random(seed), tier=tier, config={}, seed=seed, index=0)
+                d = part.default_params()
+                dims = [d["plate_w"], d["plate_d"], d["thickness"]]
+                ratio = max(dims) / min(dims)
+                self.assertLessEqual(
+                    ratio, 20.0, f"plate seed={seed} tier={tier} bbox aspect {ratio:.1f}")
+
     def test_block_tier3_second_fillet_off_by_default(self):
         """The tier-3 block's redundant |Z fillet is opt-in (keeps defaults valid)."""
         from cadquarry.compose import sample_block
