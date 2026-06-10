@@ -22,7 +22,7 @@ onto the platforms instead of needing prose:
 | | Home | License | Contents |
 |---|---|---|---|
 | **Generator** | this GitHub repo | Apache-2.0 | code, seed lists, docs, a committed **1,000-part sample** in [`sample/demo-1k/`](sample/demo-1k/) |
-| **Full corpus** | [Hugging Face dataset](https://huggingface.co/datasets/jacobjennings/cadquarry) | CC0-1.0 | the size ladder (1k → 200k), browsable in the dataset viewer, `load_dataset`-able |
+| **Full corpus** | [Hugging Face dataset](https://huggingface.co/datasets/jacobjennings/cadquarry) | CC0-1.0 | a nested size ladder (1k → 100k, each size a prefix of the next), browsable in the dataset viewer, `load_dataset`-able |
 
 The published corpus is a **convenience artifact** — the generator plus the
 seed list ([`seeds/v3.toml`](seeds/v3.toml)) is the canonical source. Everything
@@ -549,7 +549,9 @@ with open("part.step", "wb") as f:
 ### Configs
 
 Each corpus size is published as **six content configs**, so you fetch only what
-you need. Swap the `1k` prefix for any size in the ladder:
+you need. The sizes are **nested prefixes** of one base corpus (the `1k` is the
+first 1,000 parts of the `2k`, and so on), so a larger size is always a superset
+of every smaller one. Swap the `1k` prefix for any size in the ladder:
 
 | Config | Contents | Format |
 |---|---|---|
@@ -571,7 +573,8 @@ Each content config is also published limited to **complexity tiers 0–2**
 parts. The unlabeled configs include all tiers (0–3).
 
 Available `<tag>` sizes (from [`seeds/v3.toml`](seeds/v3.toml)): `1k`, `2k`,
-`5k`, `10k`, `20k`, `50k`, `100k`, `200k`. For example,
+`5k`, `10k`, `20k`, `50k`, `100k` — extensible to larger sizes by growing the
+base (`cadquarry build --extend-to N`). For example,
 `load_dataset("jacobjennings/cadquarry", "50k-stl")` or
 `load_dataset("jacobjennings/cadquarry", "50k-t0-2")`.
 
@@ -616,8 +619,8 @@ cadquarry build_sample build publish
   columns. If a size hasn't been built yet it stops and tells you what to build.
 
 ```bash
-# subset to your own repo
-cadquarry build --sizes 1k 2k 5k && cadquarry publish --sizes 1k 2k 5k --repo-id <user>/cadquarry
+# build the base, then publish a subset of sizes to your own repo
+cadquarry build && cadquarry publish --sizes 1k 2k 5k --repo-id <user>/cadquarry
 
 # pack locally without uploading (inspect .hf_build/)
 cadquarry publish --sizes 1k --dry-run
@@ -629,8 +632,9 @@ cadquarry publish --sizes 1k --out /data/cadquarry
 **Secrets.** Publishing reads your token from the `HF_TOKEN` environment
 variable (or a prior `huggingface-cli login`) and **never prints, logs, or
 commits it**. Nothing secret is stored in the repo, so it works as-is for anyone
-with their own HF account. The size ladder's seeds live in the active
-`seeds/v*.toml` under `[[publish.corpus]]`.
+with their own HF account. The ladder is defined in the active `seeds/v*.toml`:
+the shared `base_seed` and `mode = "prefix"` under `[publish]`, and the per-size
+prefix lengths under `[[publish.corpus]]`.
 
 ---
 

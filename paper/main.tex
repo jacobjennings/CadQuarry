@@ -175,12 +175,13 @@ families---involute/cycloid \emph{gears}, standards-based \emph{threads}
 threads---raising the complexity ceiling beyond the fixed sketch-extrude
 sequences of prior corpora. Validity is guaranteed by execution
 and duplicates are removed by a rotation/translation-invariant geometry
-signature; across our largest corpus all 200{,}000 accepted parts are
-geometrically distinct. The data is published on the Hugging Face Hub as a size
-ladder (1k--200k) in six content configs---code-only JSONL plus Parquet with
-binary STEP, STL, and eight-view GPU renders---and is browsable through a
-committed in-browser gallery, and any corpus can be regenerated from a versioned
-seed list. Generation sustains \mbox{$\sim$10} validated parts/s on a 24-core
+signature; across a 200{,}000-part generation all 200{,}000 accepted parts are
+geometrically distinct. The data is published on the Hugging Face Hub as a
+\emph{nested} size ladder (1k--100k, each size a prefix of the next and
+extensible to larger sizes without re-generation) in six content
+configs---code-only JSONL plus Parquet with binary STEP, STL, and eight-view GPU
+renders---and is browsable through a committed in-browser gallery, and any corpus
+can be regenerated from a versioned seed list. Generation sustains \mbox{$\sim$10} validated parts/s on a 24-core
 workstation, paced by the solver-built mechanical families.
 \end{tcolorbox}
 
@@ -269,7 +270,7 @@ DeepCAD~\cite{deepcad}    & $\sim$178k & sketch-extrude seq.       & from ABC   
 Fusion 360~\cite{fusion360}& 8{,}625   & seq.\ $+$ timeline         & human       & \no & non-comm.\ res.\\
 Text2CAD~\cite{text2cad}  & $\sim$170k & seq.\ $+$ text             & aug.\ DeepCAD& \no & CC BY-NC-SA\\
 CAD-Recode~\cite{cadrecode}& 1M        & CadQuery code (fixed)     & procedural  & \no & CC BY-NC\\
-\rowcolor{panel}\textbf{CadQuarry} & up to 200k\textsuperscript{c} & \textbf{parametric CadQuery} $+$ B-rep, STL, renders & procedural & \yes & \textbf{\cc{}}\\
+\rowcolor{panel}\textbf{CadQuarry} & $\geq$100k\textsuperscript{c} & \textbf{parametric CadQuery} $+$ B-rep, STL, renders & procedural & \yes & \textbf{\cc{}}\\
 \bottomrule
 \end{tabularx}
 \caption{CadQuarry in context. \textsuperscript{a}\,Programs are functions of
@@ -281,8 +282,9 @@ repositories' MIT license covers their code, not the models. Fusion~360 Gallery
 is non-commercial research-only (no full redistribution); Text2CAD is
 CC~BY-NC-SA~4.0; CAD-Recode's corpus is CC~BY-NC~4.0. CadQuarry is the only
 public-domain (\cc{}) corpus here---the only one usable commercially with no
-attribution. \textsuperscript{c}\,Published ladder; the generator is unbounded,
-and any corpus is reproducible from its seed.}
+attribution. \textsuperscript{c}\,Published as a nested ladder topping at 100k;
+the generator is unbounded, the base extends to larger sizes without
+re-generation, and any size is reproducible from the seed.}
 \label{tab:compare}
 \end{table}
 
@@ -485,7 +487,7 @@ orientation and placement never matter. Quantities are computed from the B-rep
 been seen is dropped.
 
 \begin{keybox}[Empirical diversity]
-On the published \textbf{200k} corpus, \textbf{all 200{,}000} accepted parts have
+On a \textbf{200k} generation, \textbf{all 200{,}000} accepted parts have
 distinct geometry signatures---0 collisions at the dedup tolerance. Dedup also
 acts as a natural governor on families with a small design space: the
 \fm{threaded} family, sampled at $\sim$5\%, realizes a smaller share of the
@@ -493,10 +495,11 @@ corpus, because the finite ISO/ACME standards space saturates and later
 collisions are dropped.
 \end{keybox}
 
-\textbf{Reproducibility.} A versioned seed list pins each published corpus to a
-tuple of \code{seed}, \code{count}, \code{config}, and generator version, so the
-published Parquet/JSONL is a \emph{convenience artifact}: the generator plus the
-seed list is the canonical source, and any corpus can be regenerated rather than
+\textbf{Reproducibility.} A versioned seed list pins the published ladder to a
+single base seed, a \code{config}, and a generator version; each size tag is a
+prefix length of that one base corpus. So the published Parquet/JSONL is a
+\emph{convenience artifact}: the generator plus the seed list is the canonical
+source, and any size can be regenerated (or the base extended) rather than
 relying on a hosted copy. The geometry signature is itself versioned, so the
 dedup rule travels with the seed list.
 
@@ -633,7 +636,7 @@ configs of \cref{tab:configs}.}
 \legend{realized (200k), sampling weight}
 \end{axis}
 \end{tikzpicture}
-\caption{Realized family distribution on the 200k corpus vs.\ the configured
+\caption{Realized family distribution on a 200k generation vs.\ the configured
 sampling weights. Realized shares drift below weight for low-diversity families
 (\fm{threaded}, \fm{profiled}) because dedup removes saturating repeats, and
 above weight where tier clamps add parts (\fm{bracket}). All weights are tunable
@@ -649,16 +652,24 @@ bare-primitive share down from its nominal 25\%. These are characterization
 numbers, not targets; every knob is exposed in config.
 
 \subsection{Formats and the size ladder}
-The corpus is published on the Hugging Face
-Hub~\cite{huggingfacedatasets} as a size ladder---\code{1k}, \code{2k}, \code{5k},
-\code{10k}, \code{20k}, \code{50k}, \code{100k}, \code{200k}---each in six content
-configs (\cref{tab:configs}) so a consumer fetches only what they need, from a
-few-megabyte code-only pull to full geometry. Code-only data is JSONL with the
-parametric \code{source} and \code{params} inlined; geometry configs are
-Snappy-compressed Parquet with typed binary columns (\code{render\_*} images,
-\code{stl\_bytes}, \code{step\_bytes}). Each config is also published restricted to
-tiers~0--2 (a \code{-t0-2} suffix) for consumers who want to exclude the most
-complex parts.
+The corpus is published on the Hugging Face Hub~\cite{huggingfacedatasets} as a
+\emph{nested} size ladder---\code{1k}, \code{2k}, \code{5k}, \code{10k},
+\code{20k}, \code{50k}, \code{100k}---in which each size is a prefix of the next.
+Generation is a deterministic prefix stream (each attempt is a pure function of
+the seed and its index, and the accept/dedup decision runs in strict attempt
+order), so the first $N$ accepted parts of a run \emph{are} the size-$N$ corpus.
+Every tag is therefore a zero-cost \code{head -N} slice of one base corpus
+(shared seed): the base is generated, validated, exported, and rendered once,
+and it can be \emph{extended} to larger sizes later by replaying the attempt
+stream from a recorded high-water mark and appending only the new parts---reusing
+the existing parts and geometry untouched, with no re-generation.
+Each size comes in six content configs (\cref{tab:configs}) so a consumer fetches
+only what they need, from a few-megabyte code-only pull to full geometry.
+Code-only data is JSONL with the parametric \code{source} and \code{params}
+inlined; geometry configs are Snappy-compressed Parquet with typed binary columns
+(\code{render\_*} images, \code{stl\_bytes}, \code{step\_bytes}). Each config is
+also published restricted to tiers~0--2 (a \code{-t0-2} suffix) for consumers who
+want to exclude the most complex parts.
 
 \begin{table}[h]
 \centering\small\setlength{\tabcolsep}{6pt}
@@ -738,11 +749,12 @@ customizer: move the sliders defined by \code{PARAMS} and the 3D view updates in
 milliseconds---no regeneration, no ML---directly demonstrating the parametric
 contract. The same tool browses a generated corpus as a filterable gallery.
 
-\textbf{One-command pipeline.} \code{build} generates and exports every size in
-the ladder; \code{publish} packs and uploads them as Hugging Face configs;
-\code{build\_sample} refreshes the committed preview. Builds are resumable and
-secrets (the HF token) are read from the environment and never logged or
-committed.
+\textbf{One-command pipeline.} \code{build} generates and exports the single base
+corpus the ladder slices from (and \code{build~-{}-extend-to~N} grows it in place,
+reusing prior work); \code{publish} packs each size as a prefix slice and uploads
+them as Hugging Face configs; \code{build\_sample} refreshes the committed
+preview. Builds are resumable and secrets (the HF token) are read from the
+environment and never logged or committed.
 
 \textbf{Versioned generator for community improvement.} Because the corpus is a
 function of the generator and a seed list, contributions compose cleanly: a new
