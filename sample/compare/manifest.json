@@ -1,0 +1,96 @@
+{
+  "_comment": "Drives compare.html. To turn any third-party dataset cell into a live 3D viewer, set its `mesh` to a relative path of an STL you have CONFIRMED you may redistribute, and add the matching entry to THIRD_PARTY_LICENSES.md. Leave `mesh` null to keep a link-out card. Nothing here under a third-party `name` is CC0 — see THIRD_PARTY_LICENSES.md.",
+  "cadquarry": {
+    "name": "CadQuarry",
+    "tagline": "Procedurally generated parametric CAD",
+    "license": { "label": "CC0-1.0 (data) · Apache-2.0 (code)", "tier": "open" },
+    "parametric": "Yes — every part is a PARAMS schema + build(p) function",
+    "format": "CadQuery .py · STEP · STL",
+    "provenance": "Generated from scratch, reproducible bit-for-bit from a seed",
+    "models": "demo-1k: 1,000 · corpora to 200k",
+    "redistributable": "Yes — public domain, no attribution required",
+    "source_url": "https://github.com/jacobjennings/CadQuarry",
+    "parts": [
+      { "id": "gear_498d6ae5_1007",      "label": "Spur gear",        "family": "gear" },
+      { "id": "threaded_498d6721_0043",  "label": "Threaded stud",    "family": "threaded" },
+      { "id": "flanged_498d67e0_0234",   "label": "Flanged hub",      "family": "flanged" },
+      { "id": "enclosure_498d677c_0134", "label": "Enclosure",        "family": "enclosure" },
+      { "id": "bracket_498d6802_0268",   "label": "Bracket",          "family": "bracket" },
+      { "id": "ribbed_498d68ba_0452",    "label": "Ribbed plate",     "family": "ribbed" },
+      { "id": "compound_498d6803_0269",  "label": "Compound part",    "family": "compound" },
+      { "id": "plate_498d6943_0589",     "label": "Plate w/ holes",   "family": "plate" }
+    ]
+  },
+  "datasets": [
+    {
+      "name": "ABC Dataset",
+      "year": 2019,
+      "citation": "Koch et al., CVPR 2019",
+      "license": { "label": "Per-model (Onshape authors)", "tier": "restricted" },
+      "parametric": "No — B-rep solids only, no parametric program",
+      "format": "STEP · OBJ · feature / yaml",
+      "provenance": "Collected from Onshape public documents",
+      "models": "~1,000,000",
+      "redistributable": "Inconsistent — each model keeps its original Onshape author license",
+      "source_url": "https://deep-geometry.github.io/abc-dataset/",
+      "mesh": null,
+      "note": "There is no single dataset-wide license: individual models retain whatever license their original Onshape author chose, so a blanket 'redistribute' grant does not exist."
+    },
+    {
+      "name": "DeepCAD",
+      "year": 2021,
+      "citation": "Wu et al., ICCV 2021",
+      "license": { "label": "MIT (code) · data from ABC", "tier": "restricted" },
+      "parametric": "Construction sequences (sketch + extrude commands), not free-parameter schemas",
+      "format": "JSON command sequence · reconstructed B-rep",
+      "provenance": "Derived from the ABC dataset (Onshape)",
+      "models": "~178,000",
+      "redistributable": "Code is MIT; the underlying geometry inherits ABC/Onshape provenance",
+      "source_url": "https://github.com/ChrisWu1997/DeepCAD",
+      "mesh": null,
+      "note": "The MIT license covers the modeling/learning code. The shapes themselves come from ABC, so their redistribution rights are ABC's, not MIT."
+    },
+    {
+      "name": "Fusion 360 Gallery",
+      "year": 2021,
+      "citation": "Willis et al., Autodesk",
+      "license": { "label": "Research-only (Autodesk terms)", "tier": "gated" },
+      "parametric": "Timeline / construction sequences",
+      "format": "Per sub-dataset (reconstruction, segmentation, assembly)",
+      "provenance": "User designs from the Autodesk Online Gallery",
+      "models": "~8,000+ designs",
+      "redistributable": "No — Autodesk research license restricts redistribution",
+      "source_url": "https://github.com/AutodeskAILab/Fusion360GalleryDataset",
+      "mesh": null,
+      "note": "Distributed under an Autodesk research license that does not grant re-hosting of the models."
+    },
+    {
+      "name": "Thingi10K",
+      "year": 2016,
+      "citation": "Zhou & Jacobson, 2016",
+      "license": { "label": "Per-model (Thingiverse)", "tier": "restricted" },
+      "parametric": "No — triangle meshes (3D-printing models)",
+      "format": "STL · OBJ",
+      "provenance": "Scraped from Thingiverse uploads",
+      "models": "10,000",
+      "redistributable": "Per-model: a mix of CC0, CC BY, CC BY-SA, CC BY-NC, CC BY-ND and all-rights-reserved",
+      "source_url": "https://ten-thousand-models.appspot.com/",
+      "mesh": null,
+      "note": "Some models forbid derivatives (ND) or any reuse; you must check each model's individual Thingiverse license before re-hosting it."
+    },
+    {
+      "name": "ShapeNet",
+      "year": 2015,
+      "citation": "Chang et al., 2015",
+      "license": { "label": "ShapeNet ToU — no redistribution", "tier": "gated" },
+      "parametric": "No — annotated triangle meshes",
+      "format": "OBJ",
+      "provenance": "3D Warehouse / Yobi3D",
+      "models": "~51,000 (core) / 3M+ (full)",
+      "redistributable": "No — terms require registration and forbid re-hosting",
+      "source_url": "https://shapenet.org/",
+      "mesh": null,
+      "note": "Access is gated behind a signed agreement; the terms of use explicitly prohibit redistribution, so no sample can be shown here even for demonstration."
+    }
+  ]
+}
