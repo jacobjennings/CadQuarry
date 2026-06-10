@@ -123,6 +123,60 @@ class TestCompose(unittest.TestCase):
         self.assertIn("extrude", base_ops)
         self.assertIn("sketched_revolve", base_ops)
 
+    def test_stage2_families_available(self):
+        from cadquarry.compose import _FAMILY_SAMPLERS
+        for fam in ("lofted", "swept", "tapped"):
+            self.assertIn(fam, _FAMILY_SAMPLERS)
+            part = compose(seed=42, family=fam)
+            self.assertEqual(part.metadata.family, fam)
+
+    def test_lofted_emits_loft(self):
+        from cadquarry.compose import sample_lofted
+        from random import Random
+        for tier in range(4):
+            part = sample_lofted(Random(3), tier=tier, config={}, seed=3, index=0)
+            self.assertEqual(part.operations[0].type, "loft")
+            code = emit_source(part)
+            self.assertTrue(_valid_python(code))
+            self.assertIn(".loft(combine=True)", code)
+
+    def test_swept_emits_sweep(self):
+        from cadquarry.compose import sample_swept
+        from random import Random
+        part = sample_swept(Random(9), tier=1, config={}, seed=9, index=0)
+        self.assertEqual(part.operations[0].type, "sweep")
+        code = emit_source(part)
+        self.assertTrue(_valid_python(code))
+        self.assertIn(".spline(", code)
+        self.assertIn(".sweep(_path)", code)
+
+    def test_tapped_emits_mech_thread(self):
+        from cadquarry.compose import sample_tapped
+        from random import Random
+        for tier in range(4):
+            part = sample_tapped(Random(5), tier=tier, config={}, seed=5, index=0)
+            self.assertEqual(part.operations[0].type, "tapped")
+            code = emit_source(part)
+            self.assertTrue(_valid_python(code))
+            self.assertIn("from bd_warehouse import thread as _bdt", code)
+            self.assertIn("IsoThread(major_diameter=", code)
+            self.assertIn("external=False", code)
+
+    def test_block_tier3_can_angle_side_holes(self):
+        """Some tier-3 blocks drill an angled hole into a side face."""
+        from cadquarry.compose import sample_block
+        from random import Random
+        saw_side_face = saw_tilt = False
+        for seed in range(40):
+            part = sample_block(Random(seed), tier=3, config={}, seed=seed, index=0)
+            for op in part.operations:
+                if op.type == "holes" and op.face != ">Z":
+                    saw_side_face = True
+                    if op.tilt is not None:
+                        saw_tilt = True
+        self.assertTrue(saw_side_face, "no multi-face (side) holes ever sampled")
+        self.assertTrue(saw_tilt, "no angled (tilted) holes ever sampled")
+
 
 class TestFamilySamplers(unittest.TestCase):
     def _check(self, part: PartIR) -> None:

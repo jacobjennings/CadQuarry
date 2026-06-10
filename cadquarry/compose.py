@@ -26,6 +26,10 @@ from .ir import (
     GearOp,
     HolesOp,
     LBracketOp,
+    LoftOp,
+    LoftStation,
+    SweepOp,
+    TappedHolesOp,
     ThreadedOp,
     ZBracketOp,
     PartIR,
@@ -53,6 +57,7 @@ from .profiles import (
     sample_slot_profile,
     sample_sketched_profile,
     sample_sketched_revolve_profile,
+    ACME_PITCH_BY_SIZE,
     ACME_THREAD_SIZES,
     METRIC_THREAD_PITCHES,
     METRIC_TRAP_THREAD_SIZES,
@@ -87,6 +92,9 @@ DEFAULT_FAMILY_WEIGHTS = {
     "enclosure":0.05,
     "profiled": 0.04,
     "sketched": 0.06,
+    "lofted":   0.05,
+    "swept":    0.04,
+    "tapped":   0.05,
     "gear":     0.06,
     "threaded": 0.06,
 }
@@ -106,6 +114,9 @@ FAMILY_TIER_SPANS = {
     "enclosure": (1, 3),
     "profiled":  (0, 2),
     "sketched":  (0, 3),
+    "lofted":    (0, 3),
+    "swept":     (0, 2),
+    "tapped":    (0, 3),
     "gear":      (0, 3),
     "threaded":  (0, 3),
 }
@@ -665,6 +676,30 @@ def sample_block(rng: Random, tier: int, config: dict, seed: int, index: int) ->
             params.update(p)
             ops.append(op)
 
+        # 45% chance: a centered hole drilled into a *side* face (multi-face
+        # coverage), sometimes angled (tilted drill) — genuine angled-hole +
+        # multi-face-hole variety.  A single centered hole stays inside the face.
+        if rng.random() < 0.45:
+            hface = rng.choice(_SIDE_FACES)
+            hd = snap_fastener_diameter(rng, 3.0, 7.0)
+            params["face_hole_d"] = ParamSpec(
+                type="float", default=hd, min=2.0, max=round(hd * 1.8, 1), step=0.5,
+                group="Holes", label="Side hole diameter (mm)",
+            )
+            tilt_expr = None
+            if rng.random() < 0.5:
+                ta = round(rng.uniform(8.0, 22.0), 1)
+                params["face_hole_tilt"] = ParamSpec(
+                    type="float", default=ta, min=0.0, max=30.0, step=1.0,
+                    group="Holes", label="Side hole angle (deg)",
+                )
+                tilt_expr = ref("face_hole_tilt")
+            ops.append(HolesOp(
+                diameter=ref("face_hole_d"), placement="grid",
+                nx=lit(1), ny=lit(1), spacing_x=lit(10.0), spacing_y=lit(10.0),
+                face=hface, tilt=tilt_expr,
+            ))
+
         # 40% chance: add a side tube attachment for multi-section complexity.
         if rng.random() < 0.40:
             face = rng.choice(_SIDE_FACES)
@@ -1105,7 +1140,18 @@ def sample_sketched(rng: Random, tier: int, config: dict, seed: int, index: int)
         min=round(t_def * 0.4, 1), max=round(t_def * 2.2, 1), step=1.0,
         group="Body", label="Thickness (mm)",
     )
-    ops = [ExtrudeOp(profile=profile, distance=ref("sk_t"))]
+    # Occasionally give the prism a draft angle (a tapered extrude).  Skip it
+    # when a centered through-hole will follow, since a strong taper can shrink
+    # the top face below the hole.
+    taper_expr = None
+    if tier == 0 and rng.random() < 0.35:
+        ang_def = round(rng.uniform(2.0, 8.0), 1)
+        params["sk_draft"] = ParamSpec(
+            type="float", default=ang_def, min=0.0, max=12.0, step=0.5,
+            group="Body", label="Draft angle (deg)",
+        )
+        taper_expr = ref("sk_draft")
+    ops = [ExtrudeOp(profile=profile, distance=ref("sk_t"), taper=taper_expr)]
 
     if tier >= 1:
         # Single centered through-hole — a 1×1 rarray sits exactly at the face
@@ -1153,6 +1199,237 @@ def sample_sketched(rng: Random, tier: int, config: dict, seed: int, index: int)
             tier=tier,
             op_count=len(ops),
         ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Family: lofted (smooth transitions through stacked cross-sections)
+# ---------------------------------------------------------------------------
+
+def _loft_profile(kind: str, size_param: str) -> Any:
+    """A square-rect / circle / hex cross-section driven by a single size param."""
+    if kind == "circle":
+        return CircleProfile(diameter=ref(size_param))
+    if kind == "polygon":
+        # Circumscribed radius ≈ half the across-size, so footprints stay comparable.
+        return PolygonProfile(sides=lit(6), circumscribed_r=scaled(size_param, 0.5))
+    return RectProfile(width=ref(size_param), depth=ref(size_param))
+
+
+def sample_lofted(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    A solid lofted through 2–3 stacked cross-sections — reducers and adapters
+    (square→round, round→square, large→small) that the primitive families can't
+    express.  Higher tiers add an intermediate station and an axial through-bore.
+    """
+    base_kind, top_kind = rng.sample(["rect", "circle", "polygon"], 2)
+    base_def = _nice(rng, 30.0, 70.0)
+    top_def = round(base_def * rng.uniform(0.3, 0.8), 1)
+    h_def = round(base_def * rng.uniform(0.5, 1.3), 1)
+
+    params: dict[str, ParamSpec] = {
+        "loft_base": ParamSpec(
+            type="float", default=base_def, min=round(base_def * 0.5, 1),
+            max=round(base_def * 1.6, 1), step=1.0, group="Body", label="Base size (mm)"),
+        "loft_top": ParamSpec(
+            type="float", default=top_def, min=round(top_def * 0.4, 1),
+            max=round(base_def * 1.2, 1), step=1.0, group="Body", label="Top size (mm)"),
+        "loft_h": ParamSpec(
+            type="float", default=h_def, min=round(h_def * 0.4, 1),
+            max=round(h_def * 2.0, 1), step=1.0, group="Body", label="Height (mm)"),
+    }
+
+    stations = [LoftStation(profile=_loft_profile(base_kind, "loft_base"))]
+    if tier >= 2:
+        # Intermediate station halfway up, sized between base and top.
+        mid_kind = rng.choice([base_kind, top_kind, "circle"])
+        params["loft_mid"] = ParamSpec(
+            type="float", default=round((base_def + top_def) / 2, 1),
+            min=round(top_def * 0.5, 1), max=round(base_def * 1.2, 1), step=1.0,
+            group="Body", label="Mid size (mm)")
+        stations.append(LoftStation(
+            profile=_loft_profile(mid_kind, "loft_mid"),
+            offset=scaled("loft_h", 0.5)))
+        stations.append(LoftStation(
+            profile=_loft_profile(top_kind, "loft_top"),
+            offset=scaled("loft_h", 0.5)))
+    else:
+        stations.append(LoftStation(
+            profile=_loft_profile(top_kind, "loft_top"), offset=ref("loft_h")))
+
+    ops: list[Operation] = [LoftOp(stations=stations)]
+
+    if tier >= 1:
+        # Axial through-bore (centered) — a 1×1 rarray on the top face.
+        bd_def = round(top_def * rng.uniform(0.35, 0.6), 1)
+        params["loft_bore_d"] = ParamSpec(
+            type="float", default=bd_def, min=2.0, max=round(top_def * 0.8, 1),
+            step=0.5, group="Holes", label="Bore diameter (mm)")
+        ops.append(HolesOp(
+            diameter=ref("loft_bore_d"), placement="grid",
+            nx=lit(1), ny=lit(1), spacing_x=lit(10.0), spacing_y=lit(10.0)))
+
+    return PartIR(
+        id=_make_id(seed, "lofted", index),
+        params=params,
+        operations=ops,
+        metadata=PartMetadata(
+            seed=seed, generator_version=GENERATOR_VERSION,
+            family="lofted", tier=tier, op_count=len(ops)),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Family: swept (a section swept along a smooth spline path)
+# ---------------------------------------------------------------------------
+
+def _sweep_path_points(rng: Random) -> list[tuple[float, float]]:
+    """
+    A smooth, gently-curving normalized path: z rises monotonically 0→1 while x
+    drifts by small per-segment steps from 0.  Keeping the steps gentle avoids
+    the steep start tangent that can make a sweep self-intersect or invert
+    (negative volume).
+    """
+    n = rng.randint(2, 3)
+    zs = [0.0] + sorted(rng.uniform(0.2, 0.9) for _ in range(n)) + [1.0]
+    xs = [0.0]
+    for _ in zs[1:]:
+        step = rng.uniform(-0.25, 0.45)
+        xs.append(min(1.0, max(0.0, xs[-1] + step)))
+    return [(round(x, 4), round(z, 4)) for x, z in zip(xs, zs)]
+
+
+def sample_swept(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    A constant section swept along a smooth spline path — handles, hooks, bent
+    tubes, ducts.  The section is round or a rounded rectangle; the path is a
+    parametric spline scaled by in-plane and along-axis sliders.
+    """
+    section = rng.choice(["circle", "circle", "rect"])
+    path = _sweep_path_points(rng)
+    pw_def = _nice(rng, 30.0, 80.0)
+    ph_def = _nice(rng, 40.0, 110.0)
+
+    params: dict[str, ParamSpec] = {
+        "path_w": ParamSpec(
+            type="float", default=pw_def, min=round(pw_def * 0.5, 1),
+            max=round(pw_def * 1.8, 1), step=1.0, group="Path", label="Path width (mm)"),
+        "path_h": ParamSpec(
+            type="float", default=ph_def, min=round(ph_def * 0.5, 1),
+            max=round(ph_def * 1.8, 1), step=1.0, group="Path", label="Path length (mm)"),
+    }
+
+    if section == "circle":
+        d_def = round(rng.uniform(6.0, 18.0), 1)
+        params["sweep_d"] = ParamSpec(
+            type="float", default=d_def, min=round(d_def * 0.5, 1),
+            max=round(d_def * 1.8, 1), step=1.0, group="Section", label="Section diameter (mm)")
+        profile: Any = CircleProfile(diameter=ref("sweep_d"))
+    else:
+        a_def = round(rng.uniform(8.0, 22.0), 1)
+        b_def = round(a_def * rng.uniform(0.5, 0.9), 1)
+        params["sweep_a"] = ParamSpec(
+            type="float", default=a_def, min=round(a_def * 0.5, 1),
+            max=round(a_def * 1.8, 1), step=1.0, group="Section", label="Section width (mm)")
+        params["sweep_b"] = ParamSpec(
+            type="float", default=b_def, min=round(b_def * 0.5, 1),
+            max=round(b_def * 1.8, 1), step=1.0, group="Section", label="Section depth (mm)")
+        profile = RectProfile(width=ref("sweep_a"), depth=ref("sweep_b"))
+
+    ops: list[Operation] = [SweepOp(
+        profile=profile, path_points=path,
+        path_w_param="path_w", path_h_param="path_h")]
+
+    return PartIR(
+        id=_make_id(seed, "swept", index),
+        params=params,
+        operations=ops,
+        metadata=PartMetadata(
+            seed=seed, generator_version=GENERATOR_VERSION,
+            family="swept", tier=tier, op_count=len(ops)),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Family: tapped (real cut internal threads — requires the `mech` extra)
+# ---------------------------------------------------------------------------
+
+def sample_tapped(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
+    """
+    A plate/block or cylinder with genuine cut ISO internal threads (tapped
+    holes) via bd_warehouse.  Like the gear / threaded families, the emitted
+    file needs the `mech` extra to execute.
+    """
+    fcfg = config.get("families", {}).get("tapped", {})
+    d_lo = fcfg.get("iso_d_min", 4.0)
+    d_hi = fcfg.get("iso_d_max", 16.0)
+
+    # Pick a standard ISO major diameter + its coarse pitch from the table.
+    majors = [d for d in METRIC_THREAD_PITCHES if d_lo <= d <= d_hi]
+    major = rng.choice(majors) if majors else 6.0
+    pitch = METRIC_THREAD_PITCHES[major][0]
+
+    params: dict[str, ParamSpec] = {
+        "major_d": ParamSpec(
+            type="float", default=major, min=3.0, max=24.0, step=0.5,
+            group="Thread", label="Thread major Ø (mm)"),
+        "pitch": ParamSpec(
+            type="float", default=pitch, min=0.35, max=3.5, step=0.05,
+            group="Thread", label="Thread pitch (mm)"),
+    }
+
+    body = rng.choice(["box", "box", "cylinder"])
+    # Thread length = full body height; keep it a few pitches deep.
+    h_def = round(max(major * 1.6, rng.uniform(10.0, 22.0)), 1)
+    params["height"] = ParamSpec(
+        type="float", default=h_def, min=round(major * 1.2, 1), max=round(h_def * 1.8, 1),
+        step=1.0, group="Body", label="Thickness (mm)")
+
+    if body == "cylinder":
+        dia_def = round(major * rng.uniform(2.2, 3.2), 1)
+        params["body_d"] = ParamSpec(
+            type="float", default=dia_def, min=round(major * 1.8, 1),
+            max=round(dia_def * 1.6, 1), step=1.0, group="Body", label="Outer Ø (mm)")
+        op = TappedHolesOp(
+            body="cylinder", width=ref("body_d"), height=ref("height"),
+            major_d=ref("major_d"), pitch=ref("pitch"), placement="center")
+    else:
+        # Box plate sized so the hole pattern + bores sit comfortably inside.
+        pattern = rng.choice(["corners", "corners", "grid"]) if tier >= 1 else "center"
+        if pattern == "center":
+            w_def = round(major * rng.uniform(3.0, 4.5), 1)
+            d_def = w_def
+        else:
+            w_def = _nice(rng, 45.0, 90.0)
+            d_def = round(w_def * rng.uniform(0.6, 1.0), 1)
+        params["plate_w"] = ParamSpec(
+            type="float", default=w_def, min=round(w_def * 0.6, 1), max=round(w_def * 1.6, 1),
+            step=1.0, group="Body", label="Plate width (mm)")
+        params["plate_d"] = ParamSpec(
+            type="float", default=d_def, min=round(d_def * 0.6, 1), max=round(d_def * 1.6, 1),
+            step=1.0, group="Body", label="Plate depth (mm)")
+        kwargs: dict[str, Any] = dict(
+            body="box", width=ref("plate_w"), depth=ref("plate_d"),
+            height=ref("height"), major_d=ref("major_d"), pitch=ref("pitch"),
+            placement=pattern)
+        if pattern == "corners":
+            kwargs.update(spacing_x=scaled("plate_w", 0.6), spacing_y=scaled("plate_d", 0.6))
+        elif pattern == "grid":
+            nx, ny = rng.choice([(2, 2), (3, 2), (3, 3)])
+            kwargs.update(
+                nx=lit(nx), ny=lit(ny),
+                spacing_x=scaled("plate_w", 0.66 / max(nx - 1, 1)),
+                spacing_y=scaled("plate_d", 0.66 / max(ny - 1, 1)))
+        op = TappedHolesOp(**kwargs)
+
+    ops: list[Operation] = [op]
+    return PartIR(
+        id=_make_id(seed, "tapped", index),
+        params=params,
+        operations=ops,
+        metadata=PartMetadata(
+            seed=seed, generator_version=GENERATOR_VERSION,
+            family="tapped", tier=tier, op_count=len(ops)),
     )
 
 
@@ -1950,6 +2227,19 @@ def sample_gear(rng: Random, tier: int, config: dict, seed: int, index: int) -> 
 # Family: threaded (bd_warehouse, via the build123d -> CadQuery .wrapped bridge)
 # ---------------------------------------------------------------------------
 
+def _safe_thread_length(length: float, pitch: float) -> float:
+    """
+    Nudge a thread length to a half-pitch offset (k + 0.5 pitches).  bd_warehouse
+    degenerates the fractional end-loop when length/pitch is ~an integer, raising
+    a Standard_ConstructionError; targeting the half-pitch keeps the partial loop
+    well-formed regardless of pitch.
+    """
+    if pitch <= 0:
+        return length
+    k = round(length / pitch)
+    return round((k + 0.5) * pitch, 1)
+
+
 def sample_threaded(rng: Random, tier: int, config: dict, seed: int, index: int) -> PartIR:
     """
     Real threaded part built with bd_warehouse and bridged into CadQuery (see
@@ -1993,9 +2283,11 @@ def sample_threaded(rng: Random, tier: int, config: dict, seed: int, index: int)
             pitch_def = rng.choice(fines)
         else:
             pitch_def = coarse
-        # Length: a few diameters long, bounded and aspect-limited.
+        # Length: a few diameters long, bounded and aspect-limited.  Kept off an
+        # integer multiple of pitch so bd_warehouse's end-loop stays valid.
         raw_len = major_def * rng.uniform(2.0, 6.0)
         len_def = round(min(len_hi, max(len_lo, min(raw_len, major_def * 12.0))), 1)
+        len_def = _safe_thread_length(len_def, pitch_def)
 
         params["major_d"] = ParamSpec(
             type="float", default=major_def,
@@ -2021,7 +2313,15 @@ def sample_threaded(rng: Random, tier: int, config: dict, seed: int, index: int)
             group="Thread", label="Size designation",
         )
         size_expr = ref("thread_size")
+        # Pitch of the chosen lead-screw size: ACME from the table, trapezoidal
+        # "DxP" parsed from the designation.  Keep length off an integer multiple
+        # so bd_warehouse's end-loop stays valid.
+        if std == "acme":
+            pitch_val = ACME_PITCH_BY_SIZE.get(size_def, 0.0)
+        else:
+            pitch_val = float(size_def.split("x")[1])
         len_def = round(rng.uniform(max(len_lo, 25.0), len_hi), 1)
+        len_def = _safe_thread_length(len_def, pitch_val)
 
     params["thread_len"] = ParamSpec(
         type="float", default=len_def,
@@ -2069,6 +2369,9 @@ _FAMILY_SAMPLERS = {
     "ribbed": sample_ribbed,
     "profiled": sample_profiled,
     "sketched": sample_sketched,
+    "lofted": sample_lofted,
+    "swept": sample_swept,
+    "tapped": sample_tapped,
     "gear": sample_gear,
     "threaded": sample_threaded,
 }

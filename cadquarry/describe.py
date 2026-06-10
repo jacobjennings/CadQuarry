@@ -199,7 +199,10 @@ def _describe_op(op: Any, params: dict[str, Any]) -> str | None:  # noqa: C901
         return f"Rectangular body, {_num(w)} × {_num(d)} × {_num(h)} mm (W×D×H)."
 
     if isinstance(op, ir.ExtrudeOp):
-        return f"{_describe_profile(op.profile, params)}, extruded {_mm(_ev(op.distance, params))} thick."
+        s = f"{_describe_profile(op.profile, params)}, extruded {_mm(_ev(op.distance, params))} thick"
+        if op.taper is not None:
+            s += f" with a {_num(_ev(op.taper, params))}° draft"
+        return s + "."
 
     if isinstance(op, ir.RevolveOp):
         od, h = _ev(op.outer_d, params), _ev(op.height, params)
@@ -218,6 +221,22 @@ def _describe_op(op: Any, params: dict[str, Any]) -> str | None:  # noqa: C901
     if isinstance(op, ir.SketchedRevolveOp):
         return f"Revolved organic body from a {_describe_sketched(op.half_profile, params)} half-silhouette."
 
+    if isinstance(op, ir.LoftOp):
+        secs = [_describe_profile(st.profile, params) for st in op.stations]
+        chain = " → ".join(secs)
+        return f"Lofted body through {len(secs)} sections: {chain}."
+
+    if isinstance(op, ir.SweepOp):
+        w = _ev(ir.ParamRef(name=op.path_w_param), params)
+        h = _ev(ir.ParamRef(name=op.path_h_param), params)
+        span = ""
+        if isinstance(w, (int, float)) and isinstance(h, (int, float)):
+            span = f", ~{_num(max(w, h))} mm span"
+        return f"{_describe_profile(op.profile, params)} swept along a curved path{span}."
+
+    if isinstance(op, ir.TappedHolesOp):
+        return _describe_from_descriptor(op.describe(params))
+
     if isinstance(op, ir.HolesOp):
         n = _hole_count(op, params)
         d = _ev(op.diameter, params)
@@ -230,7 +249,11 @@ def _describe_op(op: Any, params: dict[str, Any]) -> str | None:  # noqa: C901
             feature = f"{size} {_plural(n, 'slot')}"
         else:
             feature = f"{_dia(d)} {_plural(n, 'hole')}"
-        return f"{_count_word(n)} {feature} {place}."
+        tilt = ""
+        if getattr(op, "tilt", None) is not None:
+            tilt = f", angled {_num(_ev(op.tilt, params))}°"
+        face = "" if op.face == ">Z" else f" on the {op.face} face"
+        return f"{_count_word(n)} {feature} {place}{tilt}{face}."
 
     if isinstance(op, ir.CounterboreHolesOp):
         n = _hole_count(op, params)
@@ -334,6 +357,11 @@ def _describe_from_descriptor(d: dict[str, Any]) -> str:
         kind = "internal" if not d.get("external", True) else "external"
         s = f"{d.get('designation')} {kind} thread, {_mm(d.get('length'))} long"
         return s + "."
+    if fam == "tapped":
+        n = d.get("hole_count", 1)
+        body = "cylinder" if d.get("body") == "cylinder" else "plate"
+        return (f"{_count_word(n)} {d.get('designation')} tapped "
+                f"{_plural(n, 'hole')} in a {body}.")
     return ""
 
 

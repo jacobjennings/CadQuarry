@@ -30,7 +30,7 @@ except Exception:
     HAS_MECH = False
 
 # Families that require the `mech` extra to execute.
-MECH_FAMILIES = {"gear", "threaded"}
+MECH_FAMILIES = {"gear", "threaded", "tapped"}
 
 # Generous timeout: gear/thread solving is far slower than primitive families.
 MECH_TIMEOUT = 120

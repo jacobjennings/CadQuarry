@@ -154,6 +154,55 @@ class TestDescribeDimensions(unittest.TestCase):
         self.assertIn("freeform sketched section", text)
         self.assertIn("extruded 10 mm", text)
 
+    def test_loft_summary(self):
+        from cadquarry.ir import LoftOp, LoftStation, RectProfile, CircleProfile
+        part = PartIR(
+            id="loft_desc_test",
+            params={"a": ParamSpec(type="float", default=40.0, group="B", label="a"),
+                    "d": ParamSpec(type="float", default=16.0, group="B", label="d"),
+                    "h": ParamSpec(type="float", default=30.0, group="B", label="h")},
+            operations=[LoftOp(stations=[
+                LoftStation(profile=RectProfile(width=ref("a"), depth=ref("a"))),
+                LoftStation(profile=CircleProfile(diameter=ref("d")), offset=ref("h")),
+            ])],
+            metadata=PartMetadata(seed=1, generator_version="test", family="lofted", tier=0, op_count=1),
+        )
+        text = describe_dimensions(part)["text"]
+        self.assertIn("Lofted body through 2 sections", text)
+
+    def test_sweep_summary(self):
+        from cadquarry.ir import SweepOp, CircleProfile
+        part = PartIR(
+            id="sweep_desc_test",
+            params={"pd": ParamSpec(type="float", default=10.0, group="B", label="pd"),
+                    "pw": ParamSpec(type="float", default=30.0, group="B", label="pw"),
+                    "ph": ParamSpec(type="float", default=60.0, group="B", label="ph")},
+            operations=[SweepOp(profile=CircleProfile(diameter=ref("pd")),
+                                path_points=[(0.0, 0.0), (0.5, 0.5), (0.2, 1.0)],
+                                path_w_param="pw", path_h_param="ph")],
+            metadata=PartMetadata(seed=1, generator_version="test", family="swept", tier=0, op_count=1),
+        )
+        text = describe_dimensions(part)["text"]
+        self.assertIn("swept along a curved path", text)
+
+    def test_tapped_summary(self):
+        from cadquarry.ir import TappedHolesOp
+        part = PartIR(
+            id="tapped_desc_test",
+            params={"w": ParamSpec(type="float", default=55.0, group="B", label="w"),
+                    "d": ParamSpec(type="float", default=45.0, group="B", label="d"),
+                    "h": ParamSpec(type="float", default=12.0, group="B", label="h"),
+                    "maj": ParamSpec(type="float", default=6.0, group="T", label="maj"),
+                    "pit": ParamSpec(type="float", default=1.0, group="T", label="pit")},
+            operations=[TappedHolesOp(body="box", width=ref("w"), depth=ref("d"),
+                                      height=ref("h"), major_d=ref("maj"), pitch=ref("pit"),
+                                      placement="corners")],
+            metadata=PartMetadata(seed=1, generator_version="test", family="tapped", tier=1, op_count=1),
+        )
+        text = describe_dimensions(part)["text"]
+        self.assertIn("M6x1 tapped", text)
+        self.assertIn("Four", text)
+
     def test_sketched_revolve_summary(self):
         from cadquarry.ir import SketchedProfile, SketchSeg, SketchedRevolveOp
         prof = SketchedProfile(

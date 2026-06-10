@@ -365,5 +365,98 @@ class TestSketchedEmit(unittest.TestCase):
         self.assertIn('p["sk_r"] *', code)
 
 
+class TestStage2Emit(unittest.TestCase):
+    """Pure-string checks for draft / loft / sweep / tapped ops."""
+
+    def test_extrude_taper(self):
+        from cadquarry.ir import RectProfile
+        part = PartIR(
+            id="taper_test",
+            params={"w": ParamSpec(type="float", default=40.0, group="B", label="w"),
+                    "t": ParamSpec(type="float", default=20.0, group="B", label="t"),
+                    "a": ParamSpec(type="float", default=6.0, group="B", label="a")},
+            operations=[ExtrudeOp(profile=RectProfile(width=ref("w"), depth=ref("w")),
+                                  distance=ref("t"), taper=ref("a"))],
+            metadata=PartMetadata(seed=1, generator_version="t", family="sketched", tier=0, op_count=1),
+        )
+        code = emit_source(part)
+        ast.parse(code)
+        self.assertIn('taper=p["a"]', code)
+
+    def test_loft(self):
+        from cadquarry.ir import LoftOp, LoftStation, RectProfile, CircleProfile
+        part = PartIR(
+            id="loft_test",
+            params={"a": ParamSpec(type="float", default=40.0, group="B", label="a"),
+                    "d": ParamSpec(type="float", default=16.0, group="B", label="d"),
+                    "h": ParamSpec(type="float", default=30.0, group="B", label="h")},
+            operations=[LoftOp(stations=[
+                LoftStation(profile=RectProfile(width=ref("a"), depth=ref("a"))),
+                LoftStation(profile=CircleProfile(diameter=ref("d")), offset=ref("h")),
+            ])],
+            metadata=PartMetadata(seed=1, generator_version="t", family="lofted", tier=0, op_count=1),
+        )
+        code = emit_source(part)
+        ast.parse(code)
+        self.assertIn(".workplane(offset=", code)
+        self.assertIn(".loft(combine=True)", code)
+
+    def test_sweep(self):
+        from cadquarry.ir import SweepOp, CircleProfile
+        part = PartIR(
+            id="sweep_test",
+            params={"pd": ParamSpec(type="float", default=10.0, group="B", label="pd"),
+                    "pw": ParamSpec(type="float", default=30.0, group="B", label="pw"),
+                    "ph": ParamSpec(type="float", default=60.0, group="B", label="ph")},
+            operations=[SweepOp(profile=CircleProfile(diameter=ref("pd")),
+                                path_points=[(0.0, 0.0), (0.5, 0.5), (0.2, 1.0)],
+                                path_w_param="pw", path_h_param="ph")],
+            metadata=PartMetadata(seed=1, generator_version="t", family="swept", tier=0, op_count=1),
+        )
+        code = emit_source(part)
+        ast.parse(code)
+        self.assertIn("_path = cq.Workplane('XZ').spline([", code)
+        self.assertIn(".sweep(_path)", code)
+        self.assertIn('p["pw"] *', code)
+
+    def test_tapped_imports_and_bridge(self):
+        from cadquarry.ir import TappedHolesOp
+        part = PartIR(
+            id="tapped_test",
+            params={"w": ParamSpec(type="float", default=55.0, group="B", label="w"),
+                    "d": ParamSpec(type="float", default=45.0, group="B", label="d"),
+                    "h": ParamSpec(type="float", default=12.0, group="B", label="h"),
+                    "maj": ParamSpec(type="float", default=6.0, group="T", label="maj"),
+                    "pit": ParamSpec(type="float", default=1.0, group="T", label="pit")},
+            operations=[TappedHolesOp(body="box", width=ref("w"), depth=ref("d"),
+                                      height=ref("h"), major_d=ref("maj"), pitch=ref("pit"),
+                                      placement="corners")],
+            metadata=PartMetadata(seed=1, generator_version="t", family="tapped", tier=1, op_count=1),
+        )
+        code = emit_source(part)
+        ast.parse(code)
+        self.assertIn("from bd_warehouse import thread as _bdt", code)
+        self.assertIn("import build123d as _bd", code)
+        self.assertIn("IsoThread(major_diameter=", code)
+        self.assertIn("external=False", code)
+        self.assertIn("cq.Solid(_body.wrapped)", code)
+
+    def test_tapped_meta_descriptor(self):
+        from cadquarry.ir import TappedHolesOp
+        part = PartIR(
+            id="tapped_desc_test",
+            params={"w": ParamSpec(type="float", default=22.0, group="B", label="w"),
+                    "h": ParamSpec(type="float", default=18.0, group="B", label="h"),
+                    "maj": ParamSpec(type="float", default=10.0, group="T", label="maj"),
+                    "pit": ParamSpec(type="float", default=1.5, group="T", label="pit")},
+            operations=[TappedHolesOp(body="cylinder", width=ref("w"), height=ref("h"),
+                                      major_d=ref("maj"), pitch=ref("pit"), placement="center")],
+            metadata=PartMetadata(seed=1, generator_version="t", family="tapped", tier=0, op_count=1),
+        )
+        meta = emit_meta_json(part)
+        self.assertEqual(meta["descriptor"]["designation"], "M10x1.5")
+        self.assertEqual(meta["descriptor"]["hole_count"], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

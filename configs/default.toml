@@ -25,6 +25,9 @@ ribbed    = 0.05   # base + patterned ribs / webs
 enclosure = 0.05   # shelled box / enclosures
 profiled  = 0.04   # long constant cross-section extrusions (incl. polygon bars)
 sketched  = 0.06   # freeform 2D sketches (line/arc/bezier/spline loops) extruded or revolved
+lofted    = 0.05   # smooth lofts through stacked cross-sections (reducers/adapters)
+swept     = 0.04   # a section swept along a smooth spline path (handles/tubes/ducts)
+tapped    = 0.05   # real cut ISO internal threads (bd_warehouse) — requires `mech`
 gear      = 0.06   # involute/cycloid gears (py_gearworks) — requires the `mech` extra
 threaded  = 0.06   # real ISO/ACME/trapezoidal threads (bd_warehouse) — requires `mech`
 
@@ -163,6 +166,26 @@ tier_max      = 2
 width_min     = 40.0
 width_max     = 90.0
 revolve_prob  = 0.4    # fraction sampled as revolves rather than extrusions
+tier_min      = 0
+tier_max      = 3
+
+[families.lofted]
+# Smooth solids lofted through 2-3 stacked cross-sections (square/round/hex
+# reducers and adapters).  Higher tiers add a mid station + an axial bore.
+tier_min      = 0
+tier_max      = 3
+
+[families.swept]
+# A constant section (round or rounded-rect) swept along a smooth spline path
+# — handles, bent tubes, ducts.  Paths are always smooth to stay valid.
+tier_min      = 0
+tier_max      = 2
+
+[families.tapped]
+# Plates/blocks and cylinders with real cut ISO internal threads (tapped
+# holes) via bd_warehouse — requires the `mech` extra to execute.
+iso_d_min     = 4.0    # ISO metric major-diameter range drawn from the
+iso_d_max     = 16.0   # standard coarse-pitch table (M4 .. M16)
 tier_min      = 0
 tier_max      = 3
 

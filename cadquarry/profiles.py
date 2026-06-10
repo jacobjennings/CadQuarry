@@ -65,6 +65,16 @@ ACME_THREAD_SIZES = [
     "1/4", "5/16", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1 1/4", "1 1/2",
 ]
 
+# Thread pitch (mm) for each ACME size, as reported by bd_warehouse's AcmeThread
+# (25.4 / standard TPI).  Used to keep a thread's length off integer multiples
+# of its pitch — bd_warehouse degenerates the partial end-loop when
+# length/pitch is ~integer (a Standard_ConstructionError).
+ACME_PITCH_BY_SIZE = {
+    "1/4": 1.5875, "5/16": 1.81429, "3/8": 2.11667, "1/2": 2.54,
+    "5/8": 3.175, "3/4": 4.23333, "7/8": 4.23333, "1": 5.08,
+    "1 1/4": 5.08, "1 1/2": 6.35,
+}
+
 # bd_warehouse metric-trapezoidal lead-screw designations ("DxP"), curated
 # subset of MetricTrapezoidalThread.sizes().
 METRIC_TRAP_THREAD_SIZES = [

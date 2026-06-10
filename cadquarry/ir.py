@@ -317,18 +317,20 @@ class BoxOp(BaseModel):
 
 
 class ExtrudeOp(BaseModel):
-    """Extrude a 2D profile."""
+    """Extrude a 2D profile, optionally with a draft angle (``taper``, degrees)."""
     type: Literal["extrude"] = "extrude"
     profile: Profile
     distance: Expr
     plane: str = "XY"
+    taper: Expr | None = None  # draft angle in degrees
 
     def to_code(self) -> list[str]:
+        taper = f", taper={self.taper.to_code()}" if self.taper is not None else ""
         return [
             f"    result = ("
             f"cq.Workplane({self.plane!r})"
             f"{self.profile.to_code()}"
-            f".extrude({self.distance.to_code()}))"
+            f".extrude({self.distance.to_code()}{taper}))"
         ]
 
 
@@ -412,6 +414,61 @@ class SketchedRevolveOp(BaseModel):
         ]
 
 
+class LoftStation(BaseModel):
+    """One cross-section of a loft, at an incremental Z offset from the previous."""
+    profile: Profile
+    offset: Expr | None = None  # None for the base (first) station
+
+
+class LoftOp(BaseModel):
+    """
+    Loft a smooth solid through a stack of 2D cross-sections (transition bodies:
+    rect→circle reducers, square→rect adapters, …).  Always a base operation.
+    Offsets are incremental Z gaps between successive stations.
+    """
+    type: Literal["loft"] = "loft"
+    stations: list[LoftStation]
+    plane: str = "XY"
+
+    def to_code(self) -> list[str]:
+        lines = ["    result = (", f"        cq.Workplane({self.plane!r})"]
+        for st in self.stations:
+            if st.offset is not None:
+                lines.append(f"        .workplane(offset={st.offset.to_code()})")
+            lines.append(f"        {st.profile.to_code()}")
+        lines.append("        .loft(combine=True)")
+        lines.append("    )")
+        return lines
+
+
+class SweepOp(BaseModel):
+    """
+    Sweep a 2D profile along a smooth spline path (pipes, handles, ducts).  The
+    path lives in ``path_plane`` and its points are normalized, scaled by
+    ``path_w_param`` (in-plane) and ``path_h_param`` (along-axis), so the path
+    stays parametric behind two sliders.  Always a base operation.  Sharp path
+    corners can self-intersect, so paths are always smooth splines.
+    """
+    type: Literal["sweep"] = "sweep"
+    profile: Profile
+    path_points: list[tuple[float, float]]
+    path_w_param: str
+    path_h_param: str
+    profile_plane: str = "XY"
+    path_plane: str = "XZ"
+
+    def to_code(self) -> list[str]:
+        pts = ", ".join(
+            f'(p["{self.path_w_param}"] * {a!r}, p["{self.path_h_param}"] * {b!r})'
+            for a, b in self.path_points
+        )
+        return [
+            f"    _path = cq.Workplane({self.path_plane!r}).spline([{pts}])",
+            f"    result = (cq.Workplane({self.profile_plane!r})"
+            f"{self.profile.to_code()}.sweep(_path))",
+        ]
+
+
 class HolesOp(BaseModel):
     """
     Drill or cut holes/slots on a face.
@@ -443,10 +500,16 @@ class HolesOp(BaseModel):
     bolt_circle_r: Expr | None = None
     n_bolts: Expr | None = None
     face: str = ">Z"
+    # optional drill tilt (degrees about the face's X axis) for angled holes
+    tilt: Expr | None = None
 
     def to_code(self) -> list[str]:  # noqa: C901
         face = self.face
         d = self.diameter.to_code()
+        # Tilt the positioning workplane to drill angled holes.
+        wp = "workplane()"
+        if self.tilt is not None:
+            wp += f".transformed(rotate=({self.tilt.to_code()}, 0, 0))"
 
         # Build the shape action string — what comes after the positioning step.
         if self.shape == "square":
@@ -462,7 +525,7 @@ class HolesOp(BaseModel):
             sy = self.spacing_y.to_code() if self.spacing_y else "20"
             return [
                 f"    result = (",
-                f"        result.faces({face!r}).workplane()",
+                f"        result.faces({face!r}).{wp}",
                 f"        .rect({sx}, {sy}, forConstruction=True)",
                 f"        .vertices(){action}",
                 f"    )",
@@ -474,7 +537,7 @@ class HolesOp(BaseModel):
             ny = self.ny.to_code() if self.ny else "2"
             return [
                 f"    result = (",
-                f"        result.faces({face!r}).workplane()",
+                f"        result.faces({face!r}).{wp}",
                 f"        .rarray({sx}, {sy}, {nx}, {ny})",
                 f"        {action}",
                 f"    )",
@@ -494,7 +557,7 @@ class HolesOp(BaseModel):
                 f"        + [(-_ssx * (_snx - 2) / 2 + _ssx * _i, _ssy / 2) for _i in range(_snx - 1)]",
                 f"    )",
                 f"    result = (",
-                f"        result.faces({face!r}).workplane()",
+                f"        result.faces({face!r}).{wp}",
                 f"        .pushPoints(_spts)",
                 f"        .hole({d})",
                 f"    )",
@@ -504,7 +567,7 @@ class HolesOp(BaseModel):
             n = self.n_bolts.to_code() if self.n_bolts else "4"
             return [
                 f"    result = (",
-                f"        result.faces({face!r}).workplane()",
+                f"        result.faces({face!r}).{wp}",
                 f"        .polarArray({r}, 0, 360, {n})",
                 f"        .hole({d})",
                 f"    )",
@@ -1270,9 +1333,119 @@ class ThreadedOp(BaseModel):
         return d
 
 
+class TappedHolesOp(BaseModel):
+    """
+    A body (plate/block or cylinder) with one or more *real* internal-thread
+    (tapped) holes — actual cut ISO metric threads via bd_warehouse, fused into
+    the body in build123d and bridged into CadQuery through the shared OCP
+    ``.wrapped`` handle (same pattern as ThreadedOp/GearOp).
+
+    For each hole location the body gets a clearance bore at the thread root
+    (major/2) and an internal IsoThread is unioned in, so the result is one
+    valid solid with genuine thread geometry.  Always the base (first) operation
+    for the ``tapped`` family.  Requires the `mech` extra (bd_warehouse,
+    build123d); the emitted file is NOT self-contained on cadquery alone.
+    """
+    type: Literal["tapped"] = "tapped"
+    body: Literal["box", "cylinder"] = "box"
+    width: Expr                    # box width, or cylinder diameter
+    height: Expr
+    major_d: Expr
+    pitch: Expr
+    depth: Expr | None = None      # box only
+    placement: Literal["center", "corners", "grid"] = "center"
+    spacing_x: Expr | None = None
+    spacing_y: Expr | None = None
+    nx: Expr | None = None
+    ny: Expr | None = None
+
+    def required_imports(self) -> list[str]:
+        return ["from bd_warehouse import thread as _bdt", "import build123d as _bd"]
+
+    def _loc_lines(self) -> list[str]:
+        if self.placement == "center":
+            return ["    _locs = [(0.0, 0.0)]"]
+        if self.placement == "corners":
+            sx = self.spacing_x.to_code() if self.spacing_x else "_W * 0.6"
+            sy = self.spacing_y.to_code() if self.spacing_y else "_D * 0.6"
+            return [
+                f"    _sx, _sy = {sx}, {sy}",
+                "    _locs = [(_xx, _yy) for _xx in (-_sx / 2, _sx / 2) "
+                "for _yy in (-_sy / 2, _sy / 2)]",
+            ]
+        # grid
+        sx = self.spacing_x.to_code() if self.spacing_x else "12"
+        sy = self.spacing_y.to_code() if self.spacing_y else "12"
+        nx = self.nx.to_code() if self.nx else "2"
+        ny = self.ny.to_code() if self.ny else "2"
+        return [
+            f"    _nx, _ny = max(1, int({nx})), max(1, int({ny}))",
+            f"    _sx, _sy = {sx}, {sy}",
+            "    _locs = [(_sx * (_i - (_nx - 1) / 2), _sy * (_j - (_ny - 1) / 2))",
+            "             for _i in range(_nx) for _j in range(_ny)]",
+        ]
+
+    def to_code(self) -> list[str]:
+        major = self.major_d.to_code()
+        pitch = self.pitch.to_code()
+        h = self.height.to_code()
+        if self.body == "box":
+            depth = self.depth.to_code() if self.depth is not None else self.width.to_code()
+            lines = [
+                f"    _W, _D, _H = {self.width.to_code()}, {depth}, {h}",
+                f"    _major, _pitch = {major}, {pitch}",
+                "    _body = _bd.Box(_W, _D, _H)",
+            ]
+        else:
+            lines = [
+                f"    _W = _D = {self.width.to_code()}",
+                f"    _H = {h}",
+                f"    _major, _pitch = {major}, {pitch}",
+                "    _body = _bd.Cylinder(radius=_W / 2, height=_H)",
+            ]
+        lines += self._loc_lines()
+        lines += [
+            "    for _x, _y in _locs:",
+            "        _body = _body - (_bd.Pos(_x, _y, 0) "
+            "* _bd.Cylinder(radius=_major / 2, height=_H))",
+            "        _thr = _bdt.IsoThread(major_diameter=_major, pitch=_pitch, "
+            "length=_H, external=False, end_finishes=('fade', 'fade'))",
+            "        _body = _body + (_bd.Location((_x, _y, -_H / 2)) * _thr)",
+            "    result = cq.Workplane('XY').add(cq.Solid(_body.wrapped))",
+        ]
+        return lines
+
+    def _count(self) -> int | None:
+        if self.placement == "center":
+            return 1
+        if self.placement == "corners":
+            return 4
+        return None  # grid count depends on params; resolved in describe()
+
+    def describe(self, params: dict[str, Any]) -> dict[str, Any]:
+        major = self.major_d.evaluate(params)
+        pitch = self.pitch.evaluate(params)
+        if self.placement == "grid":
+            nx = int(self.nx.evaluate(params)) if self.nx else 2
+            ny = int(self.ny.evaluate(params)) if self.ny else 2
+            count = max(1, nx) * max(1, ny)
+        else:
+            count = self._count()
+        return {
+            "family": "tapped",
+            "body": self.body,
+            "standard": "iso",
+            "major_diameter": major,
+            "pitch": pitch,
+            "designation": f"M{major:g}x{pitch:g}",
+            "hole_count": count,
+        }
+
+
 Operation = Annotated[
     Union[
         BoxOp, ExtrudeOp, RevolveOp, SketchedRevolveOp,
+        LoftOp, SweepOp, TappedHolesOp,
         HolesOp, CounterboreHolesOp, CountersinkHolesOp,
         FilletOp, ChamferOp,
         ShellOp, PocketOp, BossOp, RibsOp,
