@@ -78,7 +78,7 @@ from .features import (
 # Cross-cutting symmetry modes (Stage D regularity).
 SYMMETRY_MODES = ["mirror_x", "mirror_xy", "radial"]
 
-GENERATOR_VERSION = "0.5.0"
+GENERATOR_VERSION = "0.6.0"
 
 # Default family weights; overridden by config.
 DEFAULT_FAMILY_WEIGHTS = {

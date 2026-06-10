@@ -149,8 +149,13 @@ stl_bytes = get_stl("plate_deadbeef_0001.py", params={"plate_w": 60})
 ## Compatibility guarantee
 
 Any `.py` file conforming to this format:
-1. Can be executed by any Python 3.9+ environment with `cadquery>=2.4` installed.
-2. Contains no cadquarry-specific imports — only `cadquery` and the standard library.
+1. Can be executed by any Python 3.11+ environment with `cadquery>=2.5` installed.
+2. Contains **no cadquarry-specific imports**. Primitive-family parts (plate,
+   bracket, revolved, block, compound, flanged, ribbed, enclosure, profiled,
+   sketched, lofted, swept) need only `cadquery` and the standard library.
+   Parts from the `mech` families — `gear` (py_gearworks), `threaded` and
+   `tapped` (bd_warehouse) — additionally import the build123d stack, declared
+   at the top of the file; install it with the `mech` extra.
 3. Is guaranteed (by CadQuarry's execution filter) to produce a valid, non-empty solid with default parameters.
 4. Can be used with the `cadquarry serve --part` customizer without modification.
 
@@ -160,12 +165,13 @@ Any `.py` file conforming to this format:
 
 The geometry signature in `.meta.json` is a quantized fingerprint of the
 default-instance solid, used for deduplication.  Definition (versioned with
-the generator; version=1):
+the generator; current `version` = 2):
 
 | Field | Method | Notes |
 |---|---|---|
 | `volume` | `shape.Volume()` via OCC `GProp` | rounded to 3 sig-figs |
 | `surface_area` | `shape.Area()` | rounded to 3 sig-figs |
+| `principal_moments` | inertia principal moments via `GProp` | 3-tuple, rounded to 3 sig-figs |
 | `n_faces` | B-rep face count | exact integer |
 | `n_edges` | B-rep edge count | exact integer |
 | `n_vertices` | B-rep vertex count | exact integer |

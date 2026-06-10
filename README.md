@@ -5,8 +5,8 @@
 Every generated part is a pure Python function of its parameters — tweak any slider and the geometry updates in milliseconds, no regeneration, no ML. CadQuarry exists to be a clean, freely-usable source of CAD program data: permissively licensed code, CC0 data.
 
 > Most families emit self-contained programs that run on `cadquery` alone. The
-> two mechanical families — `gear` and `threaded` — emit programs built on the
-> [build123d](https://github.com/gumyr/build123d) stack
+> three mechanical families — `gear`, `threaded`, and `tapped` — emit programs
+> built on the [build123d](https://github.com/gumyr/build123d) stack
 > ([py_gearworks](https://github.com/GarryBGoode/py_gearworks),
 > [bd_warehouse](https://github.com/gumyr/bd_warehouse)) and bridged back into
 > CadQuery, so they require the optional **`mech`** extra to execute (see
@@ -25,7 +25,7 @@ onto the platforms instead of needing prose:
 | **Full corpus** | [Hugging Face dataset](https://huggingface.co/datasets/jacobjennings/cadquarry) | CC0-1.0 | the size ladder (1k → 200k), browsable in the dataset viewer, `load_dataset`-able |
 
 The published corpus is a **convenience artifact** — the generator plus the
-seed list ([`seeds/v1.toml`](seeds/v1.toml)) is the canonical source. Everything
+seed list ([`seeds/v3.toml`](seeds/v3.toml)) is the canonical source. Everything
 is reproducible bit-for-bit from a seed.
 
 ### 🔎 Live in-browser preview (no install)
@@ -38,7 +38,7 @@ The committed sample renders its real geometry directly in your browser:
 
 ## What it does
 
-- Generates large batches of unique, executable [CadQuery](https://cadquery.readthedocs.io) programs across a broad operation vocabulary (plates, shafts, blocks, enclosures, flanged hubs, ribbed structures, profiled extrusions, L/C/Z angle brackets, and multi-section compound assemblies — manifolds, stepped shafts, standoffs — with round, polygonal, slot, and rectangular cross-sections), plus two real mechanical families — involute/cycloid **gears** and standards-based **threaded** parts (ISO/ACME/trapezoidal) — built on build123d and bridged into CadQuery (opt-in `mech` extra). Render images and STL/STEP files are included using the default parameters for each object.
+- Generates large batches of unique, executable [CadQuery](https://cadquery.readthedocs.io) programs across a broad operation vocabulary: plates, shafts, blocks, enclosures, flanged hubs, ribbed structures, profiled extrusions, L/C/Z angle brackets, and multi-section compound assemblies (manifolds, stepped shafts, standoffs, lofted adapters) — with round, polygonal, slot, and rectangular cross-sections. Beyond those primitives it emits **freeform sketches** (closed line / arc / Bézier / spline loops, extruded or revolved into organic bodies), **lofts** through stacked cross-sections, **sweeps** along spline paths, draft-tapered extrudes, and angled / multi-face holes. Three real mechanical families add involute/cycloid **gears**, standards-based **threaded** parts (ISO/ACME/trapezoidal), and **tapped** holes with real cut ISO internal threads — all built on build123d and bridged into CadQuery (opt-in `mech` extra). Render images and STL/STEP files are included using the default parameters for each object.
 - Guarantees validity by execution — every accepted part actually builds to a non-empty solid.
 - Every program is **parametric by construction**: it declares a machine-readable `PARAMS` schema (typed, range-bounded, UI-labeled) and is a pure function `build(p)` of those parameters.
 - Ships a live **customizer**: open any part, move sliders, the 3D view updates.
@@ -65,8 +65,8 @@ uv venv --python 3.11
 uv pip install -e ".[dev,export]"
 
 # 4. (Optional) add the `mech` extra to generate/execute the gear + threaded
-#    families. This pulls in the build123d stack (build123d, bd_warehouse,
-#    py_gearworks). py_gearworks has no PyPI release, so git is required.
+#    + tapped families. This pulls in the build123d stack (build123d,
+#    bd_warehouse, py_gearworks). py_gearworks has no PyPI release, so git is required.
 uv pip install -e ".[mech]"
 ```
 
@@ -118,27 +118,33 @@ environment — if you prefer, run `source .venv/bin/activate` once and drop the
 
 ## Part families
 
-| Family | Description | Weight |
+| Family | Description | Share |
 |---|---|---|
-| `plate` | Flat rectangular plates with holes, fillets, pockets | 18% |
-| `bracket` | Angle brackets — L (single leg), C/channel (two legs), Z (cranked offset) — with per-leg holes and optional gussets | 14% |
-| `revolved` | Shafts, bushings, washers — solid of revolution | 14% |
-| `block` | Prismatic blocks/housings with pockets and bosses | 11% |
-| `compound` | Multi-section assemblies — manifolds (bored side ports), stepped shafts (+ polygon drive heads), polygon standoffs, pedestals, side spigots, mounting tabs. Sections use round, polygonal (hex/oct), slot, and rect cross-sections | 11% |
-| `flanged` | Revolved stub + polar bolt-circle pattern | 6% |
-| `ribbed` | Base plate + patterned thin ribs | 5% |
-| `enclosure` | Shelled box (hollow, open-top) | 5% |
-| `profiled` | Long constant cross-section — rod, tube, slot, or 3/4/5/6/8-sided polygon bar | 4% |
-| `gear` ⚙ | Real involute/cycloid gears — spur, helical (incl. herringbone), bevel, cycloid, inside-ring; ISO 54 modules, optional profile shift, root fillets, bore, hub | 6% |
-| `threaded` ⚙ | Real thread geometry — ISO metric external/internal, plus ACME and metric-trapezoidal lead screws | 6% |
+| `plate` | Flat rectangular plates with holes, fillets, chamfers, pockets, bosses | 15% |
+| `bracket` | Angle brackets — L (single leg), C/channel (two legs), Z (cranked offset) — with per-leg holes and optional gussets | 12% |
+| `revolved` | Shafts, bushings, washers — solid of revolution | 12% |
+| `block` | Prismatic blocks/housings with pockets, bosses, and angled / multi-face holes | 9% |
+| `compound` | Multi-section assemblies — manifolds (bored side ports), stepped shafts (+ polygon drive heads), polygon standoffs, pedestals, side spigots, mounting tabs, and lofted adapters (reducer + bored neck). Sections use round, polygonal (hex/oct), slot, and rect cross-sections | 9% |
+| `sketched` | **Freeform 2D sketches** — closed loops of line / arc / Bézier / spline segments, extruded into organic prisms or revolved into organic turned bodies | 5% |
+| `flanged` | Revolved stub + polar bolt-circle pattern | 5% |
+| `ribbed` | Base plate + patterned thin ribs | 4% |
+| `enclosure` | Shelled box (hollow, open-top) | 4% |
+| `profiled` | Long constant cross-section — rod, tube, slot, freeform sketch, or 3/4/5/6/8-sided polygon bar | 3% |
+| `lofted` | Smooth lofts through 2–3 stacked cross-sections — square↔round reducers and adapters | 4% |
+| `swept` | A section (round or rounded-rect) swept along a smooth spline path — handles, bent tubes, ducts | 3% |
+| `tapped` ⚙ | Plates/blocks and cylinders with **real cut ISO internal threads** (tapped holes) | 4% |
+| `gear` ⚙ | Real involute/cycloid gears — spur, helical (incl. herringbone), bevel, cycloid, inside-ring; ISO 54 modules, optional profile shift, root fillets, bore, hub | 5% |
+| `threaded` ⚙ | Real thread geometry — ISO metric external/internal, plus ACME and metric-trapezoidal lead screws | 5% |
 
-Family weights, tier distributions, and per-family dimension ranges are all tunable via `configs/default.toml`.
+Shares are the approximate sampling fraction of each family under the default
+config; the underlying relative weights, tier distributions, and per-family
+dimension ranges are all tunable via `configs/default.toml`.
 
-> ⚙ The `gear` and `threaded` families require the optional **`mech`** extra
-> (`uv pip install -e ".[mech]"`) and a compatible CadQuery/build123d pairing
-> to execute — their emitted programs are **not** self-contained on `cadquery`
-> alone. Consumers of the published dataset who only read the `source` text need
-> nothing extra; only re-executing these parts needs the `mech` stack.
+> ⚙ The `gear`, `threaded`, and `tapped` families require the optional **`mech`**
+> extra (`uv pip install -e ".[mech]"`) and a compatible CadQuery/build123d
+> pairing to execute — their emitted programs are **not** self-contained on
+> `cadquery` alone. Consumers of the published dataset who only read the `source`
+> text need nothing extra; only re-executing these parts needs the `mech` stack.
 
 ---
 
@@ -159,12 +165,12 @@ and the `compound` family scales section count with tier — a manifold sprouts
 
 ## Thread & gear standards (the `mech` families)
 
-The `gear` and `threaded` families build real, standards-based geometry through
-the [build123d](https://github.com/gumyr/build123d) stack and bridge it back
-into CadQuery via each object's shared OCP `.wrapped` handle — so a generated
-gear or thread is, after one line, an ordinary single-solid `cq.Workplane` that
-flows through the same execution, dedup, export, and customizer paths as every
-other family.
+The `gear`, `threaded`, and `tapped` families build real, standards-based
+geometry through the [build123d](https://github.com/gumyr/build123d) stack and
+bridge it back into CadQuery via each object's shared OCP `.wrapped` handle — so
+a generated gear or thread is, after one line, an ordinary single-solid
+`cq.Workplane` that flows through the same execution, dedup, export, and
+customizer paths as every other family.
 
 **Gears** ([py_gearworks](https://github.com/GarryBGoode/py_gearworks)):
 
@@ -181,6 +187,13 @@ other family.
 - **Lead screws**: ACME and metric-trapezoidal external threads, by standard
   size designation.
 
+**Tapped holes** ([bd_warehouse](https://github.com/gumyr/bd_warehouse)): a
+plate/block or cylinder with one or more **real cut ISO internal threads** — for
+each hole the body gets a clearance bore at the thread root and an internal
+`IsoThread` is unioned in, fused into one valid solid before the bridge. Hole
+patterns are centred, corner, or grid; the thread designation (e.g. `M6×1.0`)
+is recorded in the part descriptor.
+
 > **Roadmap:** tapered pipe threads (NPT/BSPT) are not yet supported because
 > bd_warehouse does not currently model them; they are a documented future
 > addition rather than a present capability.
@@ -191,7 +204,7 @@ to the dedup tolerance (3 significant figures), so dedup and seed-reproducible
 *selection* hold. Exact STEP/STL **bytes**, however, come out of a numeric
 NURBS/thread solver and are not guaranteed bit-identical across platforms or
 library versions the way the primitive families are — pin the `mech` versions
-(recorded in [`seeds/v2.toml`](seeds/v2.toml)) if byte-level reproduction
+(recorded in [`seeds/v3.toml`](seeds/v3.toml)) if byte-level reproduction
 matters.
 
 ---
@@ -202,9 +215,9 @@ Generation validates every part by execution. Importing CadQuery/OCP (~1–1.5s)
 is a fixed startup cost, amortized by a pool of **persistent workers** that
 import once and then build many parts each, fanning the work across cores. With
 the full default config the throughput floor is set by the solver-built
-**mechanical families** (`gear` + `threaded`, ~12% of the mix), which solve real
-involute/thread geometry and cost a meaningful fraction of a second each — so
-end-to-end generation runs at roughly **~9–10 validated parts/sec** rather than
+**mechanical families** (`gear` + `threaded` + `tapped`, ~14% of the mix), which
+solve real involute/thread geometry and cost a meaningful fraction of a second
+each — so end-to-end generation runs at roughly **~8–10 validated parts/sec** rather than
 the hundreds/sec the millisecond-scale primitive families alone would sustain.
 Sampling stays seeded per-part and the accept/dedup decision stays in strict
 attempt order, so output is **bit-for-bit identical regardless of worker count**
@@ -245,7 +258,7 @@ Every generated `.py` file is self-contained and customizer-compatible:
 ```python
 import cadquery as cq
 
-# Generated by CadQuarry v0.1.0 — seed 42 — CC0-1.0
+# Generated by CadQuarry v0.6.0 — seed 42 — CC0-1.0
 PARAMS = {
     "plate_w":  {"type": "float", "default": 80.0, "min": 30.0, "max": 150.0, "step": 1.0,
                  "group": "Body", "label": "Plate width (mm)"},
@@ -384,7 +397,7 @@ good source.
 
 `cadquarry build` is the single unified command that generates **and** exports
 every corpus in the seed ladder (`[[publish.corpus]]` in
-[`seeds/v1.toml`](seeds/v1.toml)), so you don't have to script a
+[`seeds/v3.toml`](seeds/v3.toml)), so you don't have to script a
 generate-then-export loop yourself.
 
 ```bash
@@ -514,13 +527,13 @@ Each content config is also published limited to **complexity tiers 0–2**
 `<tag>-t0-2-full` — for consumers who want to exclude the most complex (tier-3)
 parts. The unlabeled configs include all tiers (0–3).
 
-Available `<tag>` sizes (from [`seeds/v1.toml`](seeds/v1.toml)): `1k`, `2k`,
+Available `<tag>` sizes (from [`seeds/v3.toml`](seeds/v3.toml)): `1k`, `2k`,
 `5k`, `10k`, `20k`, `50k`, `100k`, `200k`. For example,
 `load_dataset("jacobjennings/cadquarry", "50k-stl")` or
 `load_dataset("jacobjennings/cadquarry", "50k-t0-2")`.
 
 Every part is reproducible bit-for-bit from its seed, so the published data is a
-**convenience artifact** — the generator plus `seeds/v1.toml` is the canonical
+**convenience artifact** — the generator plus `seeds/v3.toml` is the canonical
 source.
 
 ---
@@ -544,7 +557,7 @@ cadquarry build_sample build publish
 
 - `cadquarry build` — generates **and** exports every size in the ladder into
   `datasets/<tag>/` with STEP + STL + renders. It uses the seed list matching
-  the current generator version (`seeds/v2.toml`) and automatically regenerates
+  the current generator version (`seeds/v3.toml`) and automatically regenerates
   any corpus that was built by an older generator, so a bare `build` always
   produces an up-to-date dataset (this is the slow part; 200k + rendering takes
   a while). Use `--sizes 1k 2k 5k` for a subset or `--force` to rebuild
