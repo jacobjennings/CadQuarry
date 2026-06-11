@@ -690,5 +690,3 @@ Tests in `tests/` that don't touch the executor run without CadQuery. Execution 
 | Third-party dataset references under [`sample/compare/`](sample/compare/) | original owners' licenses — see [THIRD_PARTY_LICENSES.md](sample/compare/THIRD_PARTY_LICENSES.md) |
 
 CC0 makes the intent unambiguous: do whatever you want with the data, including commercial use, no attribution required.
-
-The **only** exception is [`sample/compare/`](sample/compare/), which compares CadQuarry against other CAD/geometry datasets. The CadQuarry parts shown there are CC0 like the rest; the third-party dataset names and facts are used for identification only, and **no third-party model files are committed** (their licenses don't permit re-hosting). Details and the per-asset table live in [`sample/compare/THIRD_PARTY_LICENSES.md`](sample/compare/THIRD_PARTY_LICENSES.md).
